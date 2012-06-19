@@ -22,7 +22,7 @@
 (define (load-config name)
   "This function is used for loading config file."
   (let* ((lazycat-home (string-append (getenv "HOME") "/.lazycat"))
-         ((config (string-append lazycat-home "/" name))))
+         (config (string-append lazycat-home "/" name)))
     (if (not (file-exists? lazycat-home))
         (system (string-append "mkdir " lazycat-home)))
     (if (file-exists? config)
