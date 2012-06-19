@@ -56,8 +56,8 @@ Here is the nice ASCII-art which shows you LazyCat architecture:
 
      USAGE
 
-After building it from lazy sources (see INSTALL for details about
-this process), you can run LazyCat from command line - just type
+After building LazyCat from lazy sources (see INSTALL for details
+about this process), you can run it from command line - just type
 follows:
 
      $ ./lazycat
