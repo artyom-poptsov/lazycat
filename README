@@ -3,7 +3,7 @@
     	 		LazyCat 
 
 LazyCat is a tool which allows you serve cluster of Linux hosts in
-comfortable way. The main idea is that you can intstall, upgrade or
+comfortable way. The main idea is that you can install, upgrade or
 remove software on all hosts at the same time, and get general view of
 what is going on with your cluster.
 
