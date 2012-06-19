@@ -1,0 +1,13 @@
+# -*- shell-script -*-
+
+*\~    # backup files
+*.o    # object files and static libraries
+
+config.log
+config.status
+depcomp
+.deps
+autom4te.cache
+
+TAGS
+tags

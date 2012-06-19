@@ -1,0 +1,7 @@
+-*- Mode: Outline -*-
+
+* Make use wchar for messages
+* Add authentification mechanisms for TCP proxy and host process
+* Think about the SSH as a way to run commands on a host.
+
+
