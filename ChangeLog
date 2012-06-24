@@ -1,5 +1,9 @@
 2012-06-24 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 
+	* missing: Add to the repository.
+
+2012-06-24 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+
 	* lazy-gtk-cat.scm: Migrate to guile-gnome. Add "Description"
 	column to the host list.
 
