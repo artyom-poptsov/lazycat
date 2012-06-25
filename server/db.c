@@ -427,7 +427,7 @@ get_free_node_for_host (struct Node_host* head)
 static struct Node_host*
 get_host_by_id (const int id, struct Node_host* head)
 {
-  if ((head->rec.id == id) || (head->next == NULL))
+  if (head == NULL || head->rec.id == id)
     return head;
   return get_host_by_id (id, head->next);
 }
@@ -449,7 +449,7 @@ get_free_node_for_proxy(struct Node_proxy* head)
 static struct Node_proxy*
 get_proxy_by_fd (const int fd, struct Node_proxy* head)
 {
-  if ((head->rec.fd == fd) || (head->next == NULL))
+  if (head == NULL || head->rec.fd == fd)
     return head;
   
   return get_proxy_by_fd (fd, head->next);

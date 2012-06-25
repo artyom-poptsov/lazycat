@@ -1,3 +1,18 @@
+2012-06-25 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+
+	* db.c (db_update_host): New function.
+	(get_host_by_id): Fix bug.
+	(get_proxy_by_fd): Fix bug.
+
+	* db.h: Fix coding style.
+	(db_update_host): New declaration.
+
+	* scmapi.c (scm_update_host): New function.
+
+	* scmapi.h (scm_update_host): New declaration.
+
+	* server.c (scm_thread): Add lc-update-host to API.
+
 2012-06-24 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 
 	* missing: Add to the repository.
