@@ -247,6 +247,30 @@ scm_rem_host (SCM host_id)
     }
 }
 
+SCM
+scm_update_host (SCM host_id, SCM field, SCM value)
+{
+  const static char SUBR_NAME[] = "scm_update_host";
+  int retval;
+  
+  SCM_ASSERT (SCM_NUMBERP (host_id), host_id, SCM_ARG1, SUBR_NAME);
+  SCM_ASSERT (scm_is_string (field), field,   SCM_ARG2, SUBR_NAME);
+  SCM_ASSERT (scm_is_string (value), value,   SCM_ARG3, SUBR_NAME);
+
+  retval = db_update_host (scm_to_int (host_id),
+			   scm_to_locale_string (field),
+			   scm_to_locale_string (value));
+
+  if (retval < 0)
+    {
+      return SCM_BOOL_F;
+    }
+  else
+    {
+      return SCM_BOOL_T;
+    }
+}
+
 /*
  * This function returns list of hosts
  */

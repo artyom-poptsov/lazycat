@@ -69,16 +69,18 @@ int db_get_hosts_list (int* count, int* list[]);
 int db_add_host (struct Rec_host* host);
 
 /* This function removes a host from DB. */
-int db_rem_host(const int id);
+int db_rem_host (const int id);
+
+int db_update_host (const int id, const char* field, const char* value);
 
 /* This function checks if host with given ID exists in DB. */
-int db_check_host(const int id);
+int db_check_host (const int id);
 
 /* This function is used for getting a record from DB for host with given ID. */
-int db_get_host_record(const int id, struct Rec_host* host);
+int db_get_host_record (const int id, struct Rec_host* host);
 
 /* This function is used for setting a new status for host with given ID. */
-int db_set_host_status(int id, enum STATUS new_status);
+int db_set_host_status (int id, enum STATUS new_status);
 
 /* This function makes new record in DB for protocol. */
 int db_add_proxy(struct Rec_proxy* proxy);

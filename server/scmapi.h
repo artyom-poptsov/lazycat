@@ -22,6 +22,7 @@
 SCM scm_send_msg (SCM dest, SCM msg);
 SCM scm_add_host (SCM proxy_name, SCM address, SCM name, SCM description);
 SCM scm_rem_host (SCM host_id);
+SCM scm_update_host (SCM host_id, SCM field, SCM value);
 SCM scm_get_host_list (void);
 
 #endif

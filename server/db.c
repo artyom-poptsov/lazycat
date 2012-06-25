@@ -197,6 +197,43 @@ db_rem_host (int id)
 }
 
 int
+db_update_host (const int id, const char* field, const char* value)
+{
+  extern struct Node_host* hosts_linked_list;
+  struct Node_host* node = get_host_by_id (id, hosts_linked_list);
+
+  if (field == NULL || value == NULL || node == NULL)
+    {
+      return -1;
+    }
+
+  if (!strncmp ("proxy_name", field, MAX_PROXY_NAME_LEN))
+    {
+      strncpy (node->rec.proxy_name, value, MAX_PROXY_NAME_LEN);
+      return 0;
+    }
+  else if (!strncmp ("address", field, MAX_ADDRESS_LEN))
+    {
+      strncpy (node->rec.address, field, MAX_ADDRESS_LEN);
+      return 0;
+    }
+  else if (!strncmp ("name", field, MAX_HOST_NAME_LEN))
+    {
+      strncpy (node->rec.name, field, MAX_HOST_NAME_LEN);
+      return 0;
+    }
+  else if (!strncmp ("description", field, MAX_HOST_DESC_LEN))
+    {
+      strncpy (node->rec.description, field, MAX_HOST_DESC_LEN);
+      return 0;
+    }
+  else
+    {
+      return -1;
+    }
+}
+
+int
 db_check_host (const int id)
 {
   extern struct Node_host* hosts_linked_list;

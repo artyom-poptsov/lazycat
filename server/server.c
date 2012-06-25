@@ -70,6 +70,10 @@ extern SCM scm_add_host (SCM proxy_name,
 			 SCM name,
 			 SCM description);
 
+extern SCM scm_update_host (SCM host_id,
+			    SCM field,
+			    SCM value);
+
 static int start_proxy (proxy_t proxy, char* name);
 static void scm_thread (void *closure, int argc, char **argv);
 
@@ -165,6 +169,7 @@ scm_thread (void* closure, int argc, char* argv[])
   scm_c_define_gsubr ("lc-send-msg",      2, 0, 0, scm_send_msg);
   scm_c_define_gsubr ("lc-add-host",      4, 0, 0, scm_add_host);
   scm_c_define_gsubr ("lc-rem-host",      1, 0, 0, scm_rem_host);
+  scm_c_define_gsubr ("lc-update-host",   3, 0, 0, scm_update_host);
   scm_c_define_gsubr ("lc-get-host-list", 0, 0, 0, scm_get_host_list);
 
   scm_shell (argc, argv);
