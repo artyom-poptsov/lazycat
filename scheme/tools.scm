@@ -34,10 +34,10 @@
     (set! diff-in (open-input-file diff-file))
 
     ;; Read diff result from file
-    (let f ((ret (read-char diff-out)))
+    (let f ((ret (read-char diff-in)))
       (if (eof-object? ret)
           ""
-          (string-append (string ret) (f (read-char diff-out)))))))
+          (string-append (string ret) (f (read-char diff-in)))))))
 
 (define (sdiff tmp-dir pattern output)
   "Function returns diff between strings PATTERN and OUTPUT"
