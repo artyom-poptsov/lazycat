@@ -23,6 +23,10 @@
 (use-modules (gnome gtk))
 (use-modules (ice-9 receive))
 
+(load "./tools.scm")
+
+(define tmp-dir "/tmp/lazycat")
+
 (define (load-config name)
   "This function is used for loading config file."
   (let* ((lazycat-home (string-append (getenv "HOME") "/.lazycat"))
@@ -71,51 +75,6 @@
     (gtk-box-pack-start (get-vbox dialog) label #f #f 0)
     (gtk-box-pack-start (get-vbox dialog) output-preview #t #t 0)
   dialog))
-
-(define (get-diff pattern output)
-  "Function returns diff between pattern and output"
-  (let* ((tmp-file-dir "/tmp/lazycat")
-         (tmp-file1     (string-append tmp-file-dir "/tmp1"))
-         (tmp-file2     (string-append tmp-file-dir "/tmp2")))
-
-    (define (diff file1 file2)
-      "Wrapper for diff tool."
-      (let ((diff-file (string-append tmp-file-dir "/diff"))
-            (diff-in   #f)
-            (ret       ""))
-
-        ;; Create file which will be used for store diff
-        (system (string-append "touch " diff-file))
-
-        (set! diff-in (open-input-file diff-file))
-      
-        (system (string-append "diff " file1 " " file2 " > " diff-file))
-
-        (let f ((ret (read-char diff-in)))
-          (if (eof-object? ret)
-              ""
-              (string-append (string ret) (f (read-char diff-in)))))))
-
-    (define (cut-timestamp output)
-      "Skip the first line of output. Dirty hack."
-      (let ((list (string->list output)))
-        (list->string
-         (let f ((list2 list))
-         (if (char=? (car list2) #\newline)
-             list2
-             (f (cdr list2)))))))
-
-    (system (string-append "touch " tmp-file1 " " tmp-file2))
-
-    (with-output-to-file tmp-file1
-      (lambda ()
-        (write (cut-timestamp pattern))))
-    
-    (with-output-to-file tmp-file2
-      (lambda ()
-        (write (cut-timestamp output))))
-    
-    (diff tmp-file1 tmp-file2)))
 
 (define (lazy-gtk-cat)
   "Main function of lazy-gtk-cat."
@@ -189,8 +148,20 @@
                                     (lc-send-msg host-id message) -1)))
         
         (define (fetch-and-analyse host-list pattern)
+          
+          (define (cut-timestamp output)
+            "Skip the first line of output. Dirty hack."
+            (let ((list (string->list output)))
+              (list->string
+               (let f ((list2 list))
+                 (if (char=? (car list2) #\newline)
+                     list2
+                     (f (cdr list2)))))))
+
           (define (compare host-id)
-            (let ((diff (get-diff pattern (lc-send-msg host-id message)))
+            (let ((diff (sdiff tmp-dir
+                               (cut-timestamp pattern)
+                               (cut-timestamp (lc-send-msg host-id message))))
                   (mark (gtk-text-buffer-create-mark text-buffer #f text-iter #t)))
 
               (gtk-text-buffer-insert text-buffer text-iter
@@ -227,8 +198,6 @@
             (let* ((host-id   (vector-ref host-vector 0))
                    (pattern   (lc-send-msg host-id message))
                    (host-list '()))
-
-
 
               (if (> (vector-length host-vector) 1)
                   ;; If there is more than one host in the list -

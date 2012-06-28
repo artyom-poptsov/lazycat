@@ -1,3 +1,10 @@
+2012-06-28 Artyom V. Poptsov  <poptsov.artyom@gmail.com>
+
+	* tools.scm: New file.
+	* lazy-gtk-cat.scm
+	(get-diff): Rename to sdiff.
+	(diff, sdiff): Move to tools.scm
+
 2012-06-25 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 
 	* db.c (db_update_host): New function.
