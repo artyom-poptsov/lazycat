@@ -1,3 +1,8 @@
+2012-06-29  Artyom V. Poptsov  <poptsov.artyom@gmail.com>
+
+	* lctcpd.c (main): Add setsid() call. Add closelog() call before
+	return.
+
 2012-06-28 Artyom V. Poptsov  <poptsov.artyom@gmail.com>
 
 	* tools.scm: New file.

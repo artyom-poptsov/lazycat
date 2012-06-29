@@ -88,7 +88,7 @@
 
          (main-vbox       (make <gtk-vbox> #:homogeneous #f #:spacing 0))
          (hbox            (make <gtk-hbox> #:homogeneous #f #:spacing 0))
-         
+
          (scrolled-win    (make <gtk-scrolled-window>
                             #:hscrollbar-policy 'automatic
                             #:vscrollbar-policy 'automatic))

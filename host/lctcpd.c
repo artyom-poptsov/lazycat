@@ -75,6 +75,7 @@ main (int argc, char* argv[])
   int port = 50001;
   int sfd_server;
   int pid;
+  int retval;
   
   openlog (SYSLOG_MSG, LOG_CONS, LOG_DAEMON);
   syslog (LOG_INFO, "-------------------------------------------------------");
@@ -88,6 +89,7 @@ main (int argc, char* argv[])
   else if (pid < 0)
     {
       syslog (LOG_ERR, "Unable to fork() process.");
+      closelog ();
       return EXIT_FAILURE;
     }
 
@@ -98,6 +100,18 @@ main (int argc, char* argv[])
   close (0);
   close (1);
   close (2);
+
+  /*
+   * Create new session for daemon
+   */
+
+  retval = setsid ();
+  if (retval < 0)
+    {
+      syslog (LOG_ERR, "Unable to become session leader.");
+      closelog ();
+      return EXIT_FAILURE;
+    }
 
   /*
    * Assign stderr and stdout to files
@@ -116,7 +130,8 @@ main (int argc, char* argv[])
   if (sfd_server < 0)
     {
       syslog (LOG_ERR, "Unable to open socket.");
-      return -1;
+      closelog ();
+      return EXIT_FAILURE;
     }
 
   main_loop (sfd_server);
