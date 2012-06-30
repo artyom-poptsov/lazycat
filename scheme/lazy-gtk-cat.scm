@@ -17,15 +17,15 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
-(use-modules (gnome-2))
-(use-modules (oop goops))
-(use-modules (gnome gobject))
-(use-modules (gnome gtk))
-(use-modules (ice-9 receive))
+(read-set! keywords 'prefix)
+
+(use-modules (gnome-2)
+             (oop goops)
+             (gnome gobject)
+             (gnome gtk)
+             (ice-9 receive))
 
 (load "./tools.scm")
-
-(define tmp-dir "/tmp/lazycat")
 
 (define (load-config name)
   "This function is used for loading config file."
@@ -36,17 +36,194 @@
     (if (file-exists? config)
         (load file))))
 
-;; This function was taken from file test-gtk.scm, which is one of
-;; examples shipped with guile-gtk
-(define (hack-gtk-radio-menu-item-new-with-label-from-widget group str)
-  (if group
-      (gtk-radio-menu-item-new-with-label-from-widget group str)
-      (let ((item  (make <gtk-radio-menu-item>))
-            (label (make <gtk-label> #:label str #:xalign 0 #:yalign 0.5)))
-        (gtk-widget-show label)
-        (gtk-container-add item label)
-        item)))
+;;; Global variables
 
+(define tmp-dir   "/tmp/lazycat")
+
+(define mode-raw  "raw-mode")
+(define mode-diff "diff-mode")
+(define mode      mode-raw)
+
+;;;   Create LazyCat GUI
+;;; =============================================================================
+
+;;
+;;   ----------------------------
+;;  | Main window
+;;  |  --------------------------
+;;  | | Main vbox
+;;  | |  ------------------------
+;;  | | | Menu bar
+;;  | | |------------------------
+;;  | | | Main paned
+;;  | | |
+;;
+
+;;
+;; Main window
+;;
+
+(define main-window (make <gtk-window> #:type  'toplevel #:title "LazyCat"))
+
+;;
+;; Main vbox
+;;
+
+(define main-vbox (make <gtk-vbox> #:homogeneous #f #:spacing 0))
+(gtk-container-add main-window main-vbox)
+
+;;
+;; Menu bar
+;;
+
+(define menubar        (make <gtk-menu-bar>))
+
+(define menu-item-file (make <gtk-menu-item> #:label "File"))
+(define menu-file      (make <gtk-menu>))
+(define menu-file-quit (make <gtk-menu-item> #:label "Quit"))
+
+(define menu-item-mode (make <gtk-menu-item> #:label "Mode"))
+(define menu-mode      (make <gtk-menu>))
+(define menu-mode-raw  (gtk-radio-menu-item-new-with-label #f "Raw"))
+(define menu-mode-diff (gtk-radio-menu-item-new-with-label
+                        (gtk-radio-menu-item-get-group menu-mode-raw)
+                        "Diff"))
+
+(append menubar menu-item-file)
+      
+(set-submenu menu-item-file menu-file)
+(append menu-file menu-file-quit)
+
+(append menubar menu-item-mode)
+
+(set-submenu menu-item-mode menu-mode)
+(append menu-mode menu-mode-raw)
+(gtk-menu-item-activate menu-mode-raw)
+(append menu-mode menu-mode-diff)
+
+;; Pack the Menu bar
+(pack-start main-vbox menubar #f #f 0)
+
+;;
+;; Main paned
+;;
+
+(define main-paned (make <gtk-hpaned> #:position 300))
+(pack-end main-vbox main-paned #t #t 0)
+
+;;
+;;   -----------------------------------------
+;;  | Main paned                              |
+;;  |  ----------------  :  ----------------  |
+;;  | | Left vbox      | : | Right vbox     | |
+;;  | |                | : |                | |
+;;
+
+;;
+;; Left vbox
+;;
+
+(define left-vbox (make <gtk-vbox> #:homogeneous #f #:spacing 0))
+(gtk-paned-add1 main-paned left-vbox)
+
+;;
+;; Right vbox
+;;
+
+(define right-vbox (make <gtk-vbox> #:homogeneous #f #:spacing 0))
+(gtk-paned-add2 main-paned right-vbox)
+
+;;
+;;   ---------------------
+;;  | Left vbox
+;;  |  -------------------
+;;  | | Tree view
+;;  | |
+;;  | |-------------------
+;;  | | Button hbox
+;;  | |
+;;  |  -------------------
+;;   ---------------------
+;;
+
+;;
+;; Tree view
+;;
+
+(define host-list      (gtk-tree-store-new (list <guint> <gchararray> <gchararray>)))
+(define tree-view      (make <gtk-tree-view> #:model host-list))
+(define host-list-menu (make <gtk-menu>))
+
+(define id-column      (make <gtk-tree-view-column> #:title "ID"))
+(define name-column    (make <gtk-tree-view-column> #:resizable #f #:title "Name"))
+(define desc-column    (make <gtk-tree-view-column> #:resizable #f #:title "Description"))
+(define text-renderer  (gtk-cell-renderer-text-new))
+
+;; Pack the Tree view
+(pack-start left-vbox tree-view #t #t 0)
+
+;;
+;; Button hbox
+;;
+
+(define button-hbox     (make <gtk-hbox> #:homogeneous #f #:spacing 0))
+(define add-host-button (make <gtk-button> #:label "Add host"))
+(define rem-host-button (make <gtk-button> #:label "Remove host"))
+
+;; Pack buttons
+(pack-start button-hbox add-host-button #t #t 0)
+(pack-end   button-hbox rem-host-button #t #t 0)
+
+;; Pack the Button hbox
+(pack-end left-vbox button-hbox #f #f 0)
+
+;;
+;;   ---------------------  
+;;  | Right vbox
+;;  |  -------------------
+;;  | | Scrolled window
+;;  | |
+;;  | |-------------------
+;;  | | Entry
+;;  | |
+;;  |  -------------------
+;;   ---------------------
+;;
+
+;;
+;; Scrolled window
+;;
+
+(define scrolled-window (make <gtk-scrolled-window>
+                          #:hscrollbar-policy 'automatic
+                          #:vscrollbar-policy 'automatic))
+
+(pack-start right-vbox scrolled-window #t #t 0)
+
+;;
+;; Entry
+;;
+
+(define entry           (make <gtk-entry>))
+
+(pack-end right-vbox entry #f #f 0)
+
+;;
+;;   ---------------------
+;;  | Scrolled window
+;;  |  -------------------
+;;  | | Text view
+;;  | |
+;;
+
+(define tag-table   (make <gtk-text-tag-table>))
+(define text-buffer (make <gtk-text-buffer> #:tag-table tag-table))
+(define text-view   (make <gtk-text-view> #:buffer text-buffer #:editable #f))
+
+(gtk-container-add scrolled-window text-view)
+
+;;;   Dialog windows
+;;; =============================================================================
 
 (define (output-preview-dialog output)
   (let* ((dialog         (make <gtk-dialog>))
@@ -76,348 +253,252 @@
     (gtk-box-pack-start (get-vbox dialog) output-preview #t #t 0)
   dialog))
 
-(define (lazy-gtk-cat)
-  "Main function of lazy-gtk-cat."
-  (read-set! keywords 'prefix)
 
-  (let* ((main-window     (make <gtk-window>
-                            #:type  'toplevel
-                            #:title "LazyCat"))
-         (menu            (make <gtk-menu>))
-         (menubar         (make <gtk-menu-bar>))
+(define (show-add-host-dialog . opt-dup)
+  "'Add host' dialog"
+  (let ((dialog                (make <gtk-dialog> #:title "Add host"))
 
-         (main-vbox       (make <gtk-vbox> #:homogeneous #f #:spacing 0))
-         (hbox            (make <gtk-hbox> #:homogeneous #f #:spacing 0))
+        (label-proxy-name       (make <gtk-label> #:label "Proxy"))
+        (cbox-proxy-name        (gtk-combo-box-new-text))
 
-         (scrolled-win    (make <gtk-scrolled-window>
-                            #:hscrollbar-policy 'automatic
-                            #:vscrollbar-policy 'automatic))
+        (label-address          (make <gtk-label> #:label "Address"))
+        (entry-address          (make <gtk-entry>))
 
-         (main-paned      (make <gtk-hpaned> #:position 300))
-         (left-vbox       (make <gtk-vbox> #:homogeneous #f #:spacing 0))
-         (right-vbox      (make <gtk-vbox> #:homogeneous #f #:spacing 0))
+        (label-host-name        (make <gtk-label> #:label "Host name"))
+        (entry-host-name        (make <gtk-entry>))
 
-         (host-list       (gtk-tree-store-new (list <guint> <gchararray> <gchararray>)))
-         (tree-view       (make <gtk-tree-view> #:model host-list))
-         
-         (id-column       (make <gtk-tree-view-column> #:title "ID"))
-         (name-column     (make <gtk-tree-view-column> #:resizable #f #:title "Name"))
-         (desc-column     (make <gtk-tree-view-column> #:resizable #f #:title "Description"))
-         (text-renderer   (gtk-cell-renderer-text-new))
-         
-         (button-hbox     (make <gtk-hbox> #:homogeneous #f #:spacing 0))
-         (add-host-button (make <gtk-button> #:label "Add host"))
-         (rem-host-button (make <gtk-button> #:label "Remove host"))
-         
-         (entry           (make <gtk-entry>))
+        (label-host-description (make <gtk-label> #:label "Host descripion"))
+        (entry-host-description (make <gtk-entry>))
 
-         (tag-table       (make <gtk-text-tag-table>))
-         (text-buffer     (make <gtk-text-buffer> #:tag-table tag-table))
-         (text            (make <gtk-text-view>
-                            #:buffer text-buffer
-                            #:editable #f))
+        (main-vbox              (make <gtk-vbox> #:homogeneous #f #:spacing 0))
+        (button-hbox            (make <gtk-hbox> #:homogeneous #f #:spacing 0))
 
-         ;; Variables
-         (selected-row    0)
-         (mode-raw        "raw-mode")
-         (mode-diff       "diff-mode")
-         (mode            ""))
-
-    ;;   Define needed functions
-    ;; ==========================================================================
-
-    (define (activate-entry . opt-dup)
-      (let ((host-vector (lc-get-host-list))
-            (message     (gtk-entry-get-text entry))
-            (text-iter   (gtk-text-buffer-get-end-iter text-buffer)))
-
-        (define (send-message host-id)
-          "Send message to the host."
-          (let ((mark (gtk-text-buffer-create-mark text-buffer #f text-iter #t)))
-            
-            ;; Insert label
-            (gtk-text-buffer-insert text-buffer text-iter
-                                    (string-append "<<<" (number->string host-id) "\n") -1)
-
-            (gtk-text-buffer-apply-tag-by-name text-buffer "normal"
-                                               (gtk-text-buffer-get-iter-at-mark text-buffer mark)
-                                               text-iter)
-
-            ;; Send message, get response from host and print it.
-            (gtk-text-buffer-insert text-buffer text-iter
-                                    (lc-send-msg host-id message) -1)))
-        
-        (define (fetch-and-analyse host-list pattern)
-          
-          (define (cut-timestamp output)
-            "Skip the first line of output. Dirty hack."
-            (let ((list (string->list output)))
-              (list->string
-               (let f ((list2 list))
-                 (if (char=? (car list2) #\newline)
-                     list2
-                     (f (cdr list2)))))))
-
-          (define (compare host-id)
-            (let ((diff (sdiff tmp-dir
-                               (cut-timestamp pattern)
-                               (cut-timestamp (lc-send-msg host-id message))))
-                  (mark (gtk-text-buffer-create-mark text-buffer #f text-iter #t)))
-
-              (gtk-text-buffer-insert text-buffer text-iter
-                                      (string-append "Host #" (number->string host-id) "... ") -1)
-
-              (gtk-text-buffer-apply-tag-by-name text-buffer "normal"
-                                                 (gtk-text-buffer-get-iter-at-mark text-buffer mark)
-                                                 text-iter)
-
-              (set! mark (gtk-text-buffer-create-mark text-buffer #f text-iter #t))
-
-              (if (string=? diff "")
-                  (begin
-                    (gtk-text-buffer-insert text-buffer text-iter "OK\n" -1)
-                    (gtk-text-buffer-apply-tag-by-name text-buffer "normal"
-                                                       (gtk-text-buffer-get-iter-at-mark text-buffer mark)
-                                                       text-iter))
-                  (begin
-                    (gtk-text-buffer-insert text-buffer text-iter "NOK\n" -1)
-                    (gtk-text-buffer-apply-tag-by-name text-buffer "error"
-                                                       (gtk-text-buffer-get-iter-at-mark text-buffer mark)
-                                                       text-iter)
-                    (gtk-text-buffer-insert text-buffer text-iter diff -1)))))
-          
-          (for-each compare host-list))
-
-        
-        (if (string=? mode mode-raw)
-            ;; Raw mode. Just send message to all hosts and print responses.
-            (for-each send-message (vector->list host-vector))
-            
-            ;; Diff mode.
-            ;; First host from list will be taken.
-            (let* ((host-id   (vector-ref host-vector 0))
-                   (pattern   (lc-send-msg host-id message))
-                   (host-list '()))
-
-              (if (> (vector-length host-vector) 1)
-                  ;; If there is more than one host in the list -
-                  ;; skip the host which is taken as pattern.
-                  (for-each (lambda (host-id)
-                              (if (not (= host-id 1))
-                                  (set! host-list (append host-list (list host-id)))))
-                            (vector->list host-vector))
-                  (append host-list (list host-id)))
-
-              (let ((dialog (output-preview-dialog pattern)))
-                (connect dialog 'response
-                         (lambda (w rsp)
-                           (if (= rsp 1) (fetch-and-analyse host-list pattern))))
-                (show-all dialog)))))
-
-      (gtk-entry-set-text entry ""))
+        (button-add             (make <gtk-button> #:label "Add"))
+        (button-cancel          (make <gtk-button> #:label "Cancel")))
 
     
-    (define (show-add-host-dialog . opt-dup)
-      "'Add host' dialog"
-      (let ((dialog                (make <gtk-dialog> #:title "Add host"))
+    (define (add-widgets-to-box box . widgets)
+      "This function adds widgets to given box"
+      (define (add-widget widget) (pack-start box widget #t #t 0))
+      (for-each add-widget widgets))
 
-            (label-proxy-name       (make <gtk-label> #:label "Proxy"))
-            (cbox-proxy-name        (gtk-combo-box-new-text))
+    (define (add-host-to-list)
+      "Add host to the host list and to DB"
+      (let ((host-id (lc-add-host
+                      (gtk-combo-box-get-active-text cbox-proxy-name)
+                      (gtk-entry-get-text entry-address)
+                      (gtk-entry-get-text entry-host-name)
+                      (gtk-entry-get-text entry-host-description)))
+            (top-level (gtk-tree-store-append host-list #f)))
 
-            (label-address          (make <gtk-label> #:label "Address"))
-            (entry-address          (make <gtk-entry>))
+        (gtk-tree-store-set-value host-list top-level 0 host-id)
+        (gtk-tree-store-set-value host-list top-level 1 (gtk-entry-get-text entry-host-name))
+        (gtk-tree-store-set-value host-list top-level 2 (gtk-entry-get-text entry-host-description))
 
-            (label-host-name        (make <gtk-label> #:label "Host name"))
-            (entry-host-name        (make <gtk-entry>))
-
-            (label-host-description (make <gtk-label> #:label "Host descripion"))
-            (entry-host-description (make <gtk-entry>))
-
-            (main-vbox              (make <gtk-vbox> #:homogeneous #f #:spacing 0))
-            (button-hbox            (make <gtk-hbox> #:homogeneous #f #:spacing 0))
-
-            (button-add             (make <gtk-button> #:label "Add"))
-            (button-cancel          (make <gtk-button> #:label "Cancel")))
-
-        
-        (define (add-widgets-to-box box . widgets)
-          "This function adds widgets to given box"
-          (define (add-widget widget) (pack-start box widget #t #t 0))
-          (for-each add-widget widgets))
-
-        (define (add-host-to-list)
-          "Add host to the host list and to DB"
-          (let ((host-id (lc-add-host
-                          (gtk-combo-box-get-active-text cbox-proxy-name)
-                          (gtk-entry-get-text entry-address)
-                          (gtk-entry-get-text entry-host-name)
-                          (gtk-entry-get-text entry-host-description)))
-                (top-level (gtk-tree-store-append host-list #f)))
-
-            (gtk-tree-store-set-value host-list top-level 0 host-id)
-            (gtk-tree-store-set-value host-list top-level 1 (gtk-entry-get-text entry-host-name))
-            (gtk-tree-store-set-value host-list top-level 2 (gtk-entry-get-text entry-host-description))
-
-            (destroy dialog)))
+        (destroy dialog)))
 
 
-        (gtk-combo-box-append-text cbox-proxy-name "tcp-proxy")
-        (gtk-combo-box-set-active  cbox-proxy-name 0)
-        
-        ;; Set default values
-        
-        (gtk-entry-set-text entry-address          "127.0.0.1:50001")
-        (gtk-entry-set-text entry-host-name        "localhost")
-        (gtk-entry-set-text entry-host-description "Lazy server")
-        
-        ;; Set up handlers for signals
-        
-        (connect button-add 'clicked
-                 (lambda (w) (add-host-to-list)))
-        
-        (connect button-cancel 'clicked
-                 (lambda (w) (destroy dialog)))
+    (gtk-combo-box-append-text cbox-proxy-name "tcp-proxy")
+    (gtk-combo-box-set-active  cbox-proxy-name 0)
 
-        ;; Assemble dialog
-        
-        (add-widgets-to-box main-vbox
-                            label-proxy-name
-                            cbox-proxy-name
-                            label-address
-                            entry-address
-                            label-host-name
-                            entry-host-name
-                            label-host-description
-                            entry-host-description)
-
-        (pack-start button-hbox button-add    #t #t 0)
-        (pack-end   button-hbox button-cancel #t #t 0)
-
-        (pack-start main-vbox button-hbox  #t #t 0)
-        (pack-start (get-vbox dialog) main-vbox  #t #t 0)
-
-        (show-all dialog)))
-
+    ;;
+    ;; Set default values
+    ;;
     
-    (define (remove-host-from-list w)
-      "This function removes host from DB and host list"
-      (let* ((selection   (gtk-tree-view-get-selection tree-view))
-             (host-id     0))
+    (gtk-entry-set-text entry-address          "127.0.0.1:50001")
+    (gtk-entry-set-text entry-host-name        "localhost")
+    (gtk-entry-set-text entry-host-description "Lazy server")
 
-        (receive (model iter) (gtk-tree-selection-get-selected selection)
-          (lc-rem-host (gtk-tree-model-get-value model iter 0))
-          (gtk-tree-store-remove model iter))))
-
-
-    (gtk-tree-view-append-column tree-view id-column   0)
-    (gtk-tree-view-append-column tree-view name-column 1)
-    (gtk-tree-view-append-column tree-view desc-column 2)
+    ;;
+    ;; Set up handlers for signals
+    ;;
     
-    (gtk-tree-view-column-pack-start id-column   text-renderer #t)
-    (gtk-tree-view-column-pack-start name-column text-renderer #t)
-    (gtk-tree-view-column-pack-end   desc-column text-renderer #t)
-
-    (gtk-tree-view-column-add-attribute id-column   text-renderer "text" 0)
-    (gtk-tree-view-column-add-attribute name-column text-renderer "text" 1)
-    (gtk-tree-view-column-add-attribute desc-column text-renderer "text" 2)
-
-
-    ;; Fill in table of tags for buffer
+    (connect button-add 'clicked
+             (lambda (w) (add-host-to-list)))
     
-    (gtk-text-tag-table-add tag-table (make <gtk-text-tag>
-                                        #:name       "normal"
-                                        #:background "grey"
-                                        #:foreground "black"))
+    (connect button-cancel 'clicked
+             (lambda (w) (destroy dialog)))
+
+    ;;
+    ;; Assemble dialog
+    ;;
     
-    (gtk-text-tag-table-add tag-table (make <gtk-text-tag>
-                                        #:name       "error"
-                                        #:background "grey"
-                                        #:foreground "red"))
+    (add-widgets-to-box main-vbox
+                        label-proxy-name
+                        cbox-proxy-name
+                        label-address
+                        entry-address
+                        label-host-name
+                        entry-host-name
+                        label-host-description
+                        entry-host-description)
+
+    (pack-start button-hbox button-add    #t #t 0)
+    (pack-end   button-hbox button-cancel #t #t 0)
+
+    (pack-start main-vbox button-hbox  #t #t 0)
+    (pack-start (get-vbox dialog) main-vbox  #t #t 0)
+
+    (show-all dialog)))
+
+;;;   Functions related to sending and receiving messages
+;;; =============================================================================
+
+(define (send-message w)
+  (let ((host-vector (lc-get-host-list))
+        (message     (gtk-entry-get-text entry))
+        (text-iter   (gtk-text-buffer-get-end-iter text-buffer)))
+
+    (define (just-send-and-print host-id)
+      "Send message to the host."
+      (let ((mark (gtk-text-buffer-create-mark text-buffer #f text-iter #t)))
         
-    ;; Set default mode
-    (set! mode mode-raw)
+        ;; Insert label
+        (gtk-text-buffer-insert text-buffer text-iter
+                                (string-append "<<<" (number->string host-id) "\n") -1)
+
+        (gtk-text-buffer-apply-tag-by-name text-buffer "normal"
+                                           (gtk-text-buffer-get-iter-at-mark text-buffer mark)
+                                           text-iter)
+
+        ;; Send message, get response from host and print it.
+        (gtk-text-buffer-insert text-buffer text-iter
+                                (lc-send-msg host-id message) -1)))
     
-    ;;   Connect handlers to signals
-    ;; ==========================================================================
-
-    (connect entry           'activate   activate-entry)
-    (connect add-host-button 'clicked    show-add-host-dialog)
-    (connect rem-host-button 'clicked    remove-host-from-list)
-    (connect main-window     'delete-event (lambda (w e) (gtk-main-quit) #f))
-
-    ;;   Setup the GUI
-    ;; ==========================================================================
-
-    ;; Pack left panel
-    ;; ---------------
-
-    ;; Pack buttons
-    (pack-start button-hbox add-host-button #t #t 0)
-    (pack-end   button-hbox rem-host-button #t #t 0)
-
-    (pack-start left-vbox tree-view   #t #t 0)
-    (pack-end   left-vbox button-hbox #f #f 0)
-
-    ;; Pack vbox
-    (gtk-paned-add1 main-paned left-vbox)
-
-    ;; Pack right panel
-    ;; ----------------
-
-    (gtk-container-add scrolled-win text)
-    
-    (pack-start right-vbox scrolled-win #t #t 0)
-    (pack-end   right-vbox entry        #f #f 0)
-    
-    (gtk-paned-add2 main-paned right-vbox)
-
-    ;; Pack menu
-    ;; ---------
-
-    (let ((menu-item-file (make <gtk-menu-item> #:label "File"))
-          (menu-file      (make <gtk-menu>))
-          (menu-file-quit (make <gtk-menu-item> #:label "Quit"))
-          (menu-item-mode (make <gtk-menu-item> #:label "Mode"))
-          (menu-mode      (make <gtk-menu>))
-          (group          #f)
-          (menu-mode-raw  #f)
-          (menu-mode-diff #f))
-
-      (set! menu-mode-raw  (hack-gtk-radio-menu-item-new-with-label-from-widget group "Raw" ))
-      (set! group menu-mode-raw)
-      (set! menu-mode-diff (hack-gtk-radio-menu-item-new-with-label-from-widget group "Diff"))
+    (define (fetch-and-analyse host-list pattern)
       
-      (append menubar menu-item-file)
+      (define (cut-timestamp output)
+        "Skip the first line of output. Dirty hack."
+        (let ((list (string->list output)))
+          (list->string
+           (let f ((list2 list))
+             (if (char=? (car list2) #\newline)
+                 list2
+                 (f (cdr list2)))))))
+
+      (define (compare host-id)
+        (let ((diff (sdiff tmp-dir
+                           (cut-timestamp pattern)
+                           (cut-timestamp (lc-send-msg host-id message))))
+              (mark (gtk-text-buffer-create-mark text-buffer #f text-iter #t)))
+
+          ;; Insert label
+          (gtk-text-buffer-insert text-buffer text-iter
+                                  (string-append "Host #" (number->string host-id) "... ") -1)
+
+          (gtk-text-buffer-apply-tag-by-name text-buffer "normal"
+                                             (gtk-text-buffer-get-iter-at-mark text-buffer mark)
+                                             text-iter)
+
+          (set! mark (gtk-text-buffer-create-mark text-buffer #f text-iter #t))
+
+          (if (string=? diff "")
+              ;; Response match to pattern. 
+              (begin
+                (gtk-text-buffer-insert text-buffer text-iter "OK\n" -1)
+                (gtk-text-buffer-apply-tag-by-name text-buffer "normal"
+                                                   (gtk-text-buffer-get-iter-at-mark text-buffer mark)
+                                                   text-iter))
+              ;; Response doesn't match to pattern.
+              ;; Print diff to the text buffer.
+              (begin
+                (gtk-text-buffer-insert text-buffer text-iter "NOK\n" -1)
+                (gtk-text-buffer-apply-tag-by-name text-buffer "error"
+                                                   (gtk-text-buffer-get-iter-at-mark text-buffer mark)
+                                                   text-iter)
+                (gtk-text-buffer-insert text-buffer text-iter diff -1)))))
       
-      (set-submenu menu-item-file menu-file)
-      (append menu-file menu-file-quit)
+      ;; Send message to every host from the host-list and compare response
+      ;; with pattern.
+      (for-each compare host-list))
 
-      (append menubar menu-item-mode)
+    (if (string=? mode mode-raw)
+        ;; Raw mode. Just send message to all hosts and print responses.
+        (for-each just-send-and-print (vector->list host-vector))
+        
+        ;; Diff mode.
+        ;; First host from list will be taken.
+        (let* ((host-id   (vector-ref host-vector 0))
+               (pattern   (lc-send-msg host-id message))
+               (host-list '()))
 
-      (set-submenu menu-item-mode menu-mode)
-      (append menu-mode menu-mode-raw)
-      (gtk-menu-item-activate menu-mode-raw)
-      (append menu-mode menu-mode-diff)
+          (if (> (vector-length host-vector) 1)
+              ;; If there is more than one host in the list -
+              ;; skip the host which is taken as pattern.
+              (for-each (lambda (host-id)
+                          (if (not (= host-id 1))
+                              (set! host-list (append host-list (list host-id)))))
+                        (vector->list host-vector))
+              (append host-list (list host-id)))
 
-      (connect menu-file-quit 'activate (lambda (w) (gtk-main-quit)))
-      (connect menu-mode-raw  'activate (lambda (w) (set! mode mode-raw)))
-      (connect menu-mode-diff 'activate (lambda (w) (set! mode mode-diff))))
+          ;; Show preview of output from the model host
+          (let ((dialog (output-preview-dialog pattern)))
+            (connect dialog 'response
+                     (lambda (w rsp)
+                       (if (= rsp 1) (fetch-and-analyse host-list pattern))))
+            (show-all dialog)))))
 
-    ;; Pack main window
-    ;; ----------------
+  (gtk-entry-set-text entry ""))
 
-    (pack-start main-vbox menubar    #f #f 0)
-    (pack-end   main-vbox main-paned #t #t 0)
+;;;   Basic initalization
+;;; =============================================================================
 
-    (gtk-container-add main-window main-vbox)
+;;
+;; Fill in table of tags for buffer
+;;
 
-    ;; Show all widgets
-    ;; ----------------
+(gtk-text-tag-table-add tag-table (make <gtk-text-tag>
+                                    #:name       "normal"
+                                    #:background "grey"
+                                    #:foreground "black"))
 
-    (show-all main-window))
-  (gtk-main))
+(gtk-text-tag-table-add tag-table (make <gtk-text-tag>
+                                    #:name       "error"
+                                    #:background "grey"
+                                    #:foreground "red"))
 
-(load-config "hosts")
+;;
+;; Setup the tree-view
+;; 
 
-;; Run main function
-(lazy-gtk-cat)
+(gtk-tree-view-append-column tree-view id-column   0)
+(gtk-tree-view-append-column tree-view name-column 1)
+(gtk-tree-view-append-column tree-view desc-column 2)
+    
+(gtk-tree-view-column-pack-start id-column   text-renderer #t)
+(gtk-tree-view-column-pack-start name-column text-renderer #t)
+(gtk-tree-view-column-pack-end   desc-column text-renderer #t)
+
+(gtk-tree-view-column-add-attribute id-column   text-renderer "text" 0)
+(gtk-tree-view-column-add-attribute name-column text-renderer "text" 1)
+(gtk-tree-view-column-add-attribute desc-column text-renderer "text" 2)
+
+;;; =============================================================================
+
+(define (remove-host-from-list w)
+  "This function removes host from DB and host list"
+  (let* ((selection   (gtk-tree-view-get-selection tree-view))
+         (host-id     0))
+
+    (receive (model iter) (gtk-tree-selection-get-selected selection)
+      (lc-rem-host (gtk-tree-model-get-value model iter 0))
+      (gtk-tree-store-remove model iter))))
+
+;;;   Connect handlers to signals
+;;; =============================================================================
+
+(connect entry           'activate   send-message)
+(connect add-host-button 'clicked    show-add-host-dialog)
+(connect rem-host-button 'clicked    remove-host-from-list)
+(connect main-window     'delete-event (lambda (w e) (gtk-main-quit) #f))
+
+(connect menu-file-quit 'activate (lambda (w) (gtk-main-quit)))
+(connect menu-mode-raw  'activate (lambda (w) (set! mode mode-raw)))
+(connect menu-mode-diff 'activate (lambda (w) (set! mode mode-diff)))
+
+;;;   Show main window
+;;; =============================================================================
+
+(show-all main-window)
+
+(gtk-main)

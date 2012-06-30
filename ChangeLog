@@ -1,3 +1,10 @@
+2012-06-30  Artyom V. Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazy-gtk-cat.scm: Rewrite code to improve readability. Add
+	comments.
+	(lazy-gtk-cat): Remove.
+	(hack-gtk-radio-menu-item-new-with-label-from-widget): Remove.
+
 2012-06-29  Artyom V. Poptsov  <poptsov.artyom@gmail.com>
 
 	* lctcpd.c (main): Add setsid() call. Add closelog() call before
