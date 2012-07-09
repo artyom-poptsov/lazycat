@@ -1,3 +1,7 @@
+2012-07-09  Artyom V. Poptsov  <poptsov.artyom@gmail.com>
+
+	* tcp-proxy.c (tcp_main_loop): Remove extra quotes.
+
 2012-06-30  Artyom V. Poptsov  <poptsov.artyom@gmail.com>
 
 	* lazy-gtk-cat.scm: Rewrite code to improve readability. Add

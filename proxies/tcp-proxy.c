@@ -60,7 +60,7 @@ tcp_main_loop (void)
 {
   static const char SYSLOG_MSG[] = "lazycat";
   
-  static const char ERROR_UNABLE_TO_CONNECT[] = "ERROR: Unable"" to connect to the remote host";
+  static const char ERROR_UNABLE_TO_CONNECT[] = "ERROR: Unable to connect to the remote host";
   static const char ERROR_WRONG_IP_ADDRESS[]  = "ERROR: Wrong IP address";
 
   const char PROXY_NAME[] = "tcp-proxy";
