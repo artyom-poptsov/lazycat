@@ -1,3 +1,9 @@
+2012-07-14  Artyom V. Poptsov  <poptsov.artyom@gmail.com>
+
+	Add basic support of grouping the hosts.
+	* lazy-gtk-cat.scm (host-list-add-group)
+	(host-list-rem-group): New function.
+
 2012-07-09  Artyom V. Poptsov  <poptsov.artyom@gmail.com>
 
 	* tcp-proxy.c (tcp_main_loop): Remove extra quotes.

@@ -23,6 +23,7 @@
              (oop goops)
              (gnome gobject)
              (gnome gtk)
+             (gnome gtk gdk-event)
              (ice-9 receive))
 
 (load "./tools.scm")
@@ -150,8 +151,8 @@
 ;; Tree view
 ;;
 
-(define host-list      (gtk-tree-store-new (list <guint> <gchararray> <gchararray>)))
-(define tree-view      (make <gtk-tree-view> #:model host-list))
+(define host-list      (gtk-tree-store-new (list <gchararray> <gchararray> <gchararray>)))
+(define tree-view      (make <gtk-tree-view> #:model host-list #:reorderable #t))
 (define host-list-menu (make <gtk-menu>))
 
 (define id-column      (make <gtk-tree-view-column> #:title "ID"))
@@ -222,6 +223,25 @@
 
 (gtk-container-add scrolled-window text-view)
 
+;;
+;; Popup menu:
+;;
+;;   ---------------------
+;;  | Create group
+;;  |---------------------
+;;  | Remove group
+;;   ---------------------
+;;
+
+(define popup-menu (make <gtk-menu>))
+(define popup-menu-item-create-group (make <gtk-menu-item> #:label "Create group"))
+(define popup-menu-item-remove-group (make <gtk-menu-item> #:label "Remove group"))
+
+(append popup-menu popup-menu-item-create-group)
+(append popup-menu popup-menu-item-remove-group)
+
+(show-all popup-menu)
+
 ;;;   Dialog windows
 ;;; =============================================================================
 
@@ -291,7 +311,7 @@
                       (gtk-entry-get-text entry-host-description)))
             (top-level (gtk-tree-store-append host-list #f)))
 
-        (gtk-tree-store-set-value host-list top-level 0 host-id)
+        (gtk-tree-store-set-value host-list top-level 0 (number->string host-id))
         (gtk-tree-store-set-value host-list top-level 1 (gtk-entry-get-text entry-host-name))
         (gtk-tree-store-set-value host-list top-level 2 (gtk-entry-get-text entry-host-description))
 
@@ -473,6 +493,7 @@
 (gtk-tree-view-column-add-attribute name-column text-renderer "text" 1)
 (gtk-tree-view-column-add-attribute desc-column text-renderer "text" 2)
 
+;;;   Handlers
 ;;; =============================================================================
 
 (define (remove-host-from-list w)
@@ -482,6 +503,32 @@
 
     (receive (model iter) (gtk-tree-selection-get-selected selection)
       (lc-rem-host (gtk-tree-model-get-value model iter 0))
+      (gtk-tree-store-remove model iter))))
+
+(define (host-list-add-group . w)
+  "Add group to the host list"
+  (let* ((dialog        (make <gtk-dialog> #:title "New group"))
+         (entry         (make <gtk-entry>))
+         (cancel-button (gtk-dialog-add-button dialog "Cancel" 0))
+         (ok-button     (gtk-dialog-add-button dialog "OK"     1))
+         (top-level     (gtk-tree-store-append host-list #f)))
+
+    (gtk-box-pack-start (get-vbox dialog) entry #f #f 0)
+    
+    (connect ok-button 'clicked
+             (lambda (w) (begin
+                           (gtk-tree-store-set-value host-list top-level 1
+                                                     (gtk-entry-get-text entry))
+                           (destroy dialog))))
+
+    (connect cancel-button 'clicked (lambda (w) (destroy dialog)))
+    
+    (show-all dialog)))
+
+(define (host-list-rem-group . w)
+  "Remove group from the  host list"
+  (let ((selection (gtk-tree-view-get-selection tree-view)))
+    (receive (model iter) (gtk-tree-selection-get-selected selection)
       (gtk-tree-store-remove model iter))))
 
 ;;;   Connect handlers to signals
@@ -495,6 +542,21 @@
 (connect menu-file-quit 'activate (lambda (w) (gtk-main-quit)))
 (connect menu-mode-raw  'activate (lambda (w) (set! mode mode-raw)))
 (connect menu-mode-diff 'activate (lambda (w) (set! mode mode-diff)))
+
+(connect tree-view 'button-press-event
+         (lambda (w e)
+           (cond ((= (gdk-event-button:button e) 3)
+                  (gtk-menu-popup popup-menu ; menu
+                                  #f         ; parent-menu-shell
+                                  #f         ; parent-menu-item
+                                  #f         ; func
+                                  3          ; button
+                                  0)         ; activate-time
+                  #t)
+                 (else #f))))
+
+(connect popup-menu-item-create-group 'activate (lambda (w) (host-list-add-group)))
+(connect popup-menu-item-remove-group 'activate (lambda (w) (host-list-rem-group)))
 
 ;;;   Show main window
 ;;; =============================================================================
