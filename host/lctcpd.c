@@ -63,6 +63,8 @@ static int main_loop (int sfd_server);
 static void reg_signal_handlers (void);
 static void termination_handler (int signum);
 
+static void print_help (const char* pname);
+
 /*
  * Main
  */
@@ -71,8 +73,10 @@ int
 main (int argc, char* argv[])
 {
   static const char SYSLOG_MSG[]  = "lctcpd";
+
+  int opt;
+  uint16_t port = 50001;
   
-  int port = 50001;
   int sfd_server;
   int pid;
   int retval;
@@ -81,6 +85,28 @@ main (int argc, char* argv[])
   syslog (LOG_INFO, "-------------------------------------------------------");
   syslog (LOG_INFO, "Log is opened.");
 
+  /*
+   * Parse command line arguments
+   */
+
+  while ((opt = getopt (argc, argv, "hp:")) > 0)
+    {
+      switch (opt)
+	{
+	case 'p':
+	  port = atoi (optarg);
+	  break;
+
+	case 'h':
+	  print_help (argv[0]);
+	  return 0;
+	}
+    }
+
+  /*
+   * Spawn the daemon
+   */
+  
   pid = fork ();
   if (pid > 0)
     {
@@ -255,3 +281,10 @@ termination_handler (int signum)
   closelog ();
 }
 
+static void
+print_help (const char* pname)
+{
+  printf ("Usage: %s [-p port] [-h]\n"
+	  "\t -p -- Port number\n"
+	  "\t -h -- Display this help and exit\n", pname);
+}

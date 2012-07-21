@@ -1,3 +1,9 @@
+2012-07-21  Artyom V. Poptsov  <poptsov.artyom@gmail.com>
+
+	* lctcpd.c (main): Replace the hard-coded port number with
+	variable.
+	(print_help): New function.
+
 2012-07-14  Artyom V. Poptsov  <poptsov.artyom@gmail.com>
 
 	Add basic support of grouping the hosts.
