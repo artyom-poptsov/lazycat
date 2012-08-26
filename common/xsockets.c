@@ -38,23 +38,17 @@
 #include "xsockets.h"
 
 /*
- *   Static functions
- * ==============================================================================
+ * Static functions
  */
 
 static int xsend (const int sfd, const void* data, size_t data_sz);
 static int xrecv (const int sfd, void* buf, size_t data_sz);
 
 /*
- *   Global definitions
- * ==============================================================================
+ * Global definitions
  */
 
 const char SOCK_DIR[] = "/tmp/lazycat";
-
-/*
- * ==============================================================================
- */
 
 /*
  * This function opens AF_LOCAL socket with given name
@@ -72,7 +66,7 @@ open_socket (const char* socket_name)
       switch (errno)
         {
         case EEXIST:
-          syslog (LOG_NOTICE, "mkdir(): Directory %s already exists.",
+	  syslog (LOG_NOTICE, "mkdir(): Directory %s already exists.",
 		  SOCK_DIR);
           break;
 
@@ -98,7 +92,7 @@ open_socket (const char* socket_name)
 	  return -1;
 	}
     }
-  
+
   sfd = socket (AF_LOCAL, SOCK_STREAM, 0);
   if (sfd < 0)
     {
@@ -117,7 +111,7 @@ open_socket (const char* socket_name)
       syslog (LOG_WARNING, "bind(): Unable to bind to the server socket.");
       return -1;
     }
-  
+
   return sfd;
 }
 
@@ -127,7 +121,7 @@ open_socket (const char* socket_name)
 int
 open_inet_socket (const uint16_t port)
 {
-  struct sockaddr_in sa;     
+  struct sockaddr_in sa;
   int                sa_size;
   int sfd_server;
   int retval;
@@ -169,11 +163,11 @@ connect_to_socket (const char* socket_name)
   struct sockaddr_un sa;
   int                sa_size;
   char*              socket_full_path;
-  
+
   sfd = socket (AF_UNIX, SOCK_STREAM, 0);
 
   sa.sun_family = AF_UNIX;
-  
+
   socket_full_path = (char*) calloc (strlen (SOCK_DIR) +
 				     strlen (socket_name) + 2,
 				     sizeof(char));
@@ -181,7 +175,7 @@ connect_to_socket (const char* socket_name)
   sprintf (socket_full_path, "%s/%s", SOCK_DIR, socket_name);
 
   strcpy (sa.sun_path, socket_full_path);
-  
+
   sa_size = sizeof (sa);
 
   while (connect (sfd, (struct sockaddr *) &sa, sa_size) < 0)
@@ -190,12 +184,12 @@ connect_to_socket (const char* socket_name)
       syslog(LOG_DEBUG, "\tSocket: %s", socket_full_path);
       sleep(1);
     }
-  
+
   return sfd;
 }
 
 /*
- * This function does connection to remote host with given address and port
+ * This function does connection to a remote host with given address and port
  */
 int
 connect_to_inet_socket (const uint32_t address, const uint16_t port)
@@ -207,9 +201,7 @@ connect_to_inet_socket (const uint32_t address, const uint16_t port)
 
   sfd = socket (PF_INET, SOCK_STREAM, 0);
   if (sfd < 0)
-    {
-      return -1;
-    }
+    return -1;
 
   sa_size = sizeof (sa);
   bzero (&sa, sa_size);
@@ -220,22 +212,20 @@ connect_to_inet_socket (const uint32_t address, const uint16_t port)
 
   retval = connect (sfd, (struct sockaddr*) &sa, sa_size);
   if (retval < 0)
-    {
-      return -1;
-    }
+    return -1;
 
   return sfd;
 }
 
 /*
- * This function sends data through socket with given file descriptor
+ * This function sends data through a socket with given file descriptor
  */
 int
 xsend_msg (const int sfd, const char* data, size_t data_sz)
 {
   int ndata_sz = htonl (data_sz);
   int ret = 0;
-    
+
   if ((ret = xsend (sfd, &ndata_sz, sizeof (ndata_sz)) < 0)
       || (ret = xsend (sfd, (void*) data, data_sz) < 0))
     {
@@ -246,7 +236,7 @@ xsend_msg (const int sfd, const char* data, size_t data_sz)
 }
 
 /*
- * This function receives data from socket with given file descriptor
+ * This function receives data from a socket with given file descriptor
  */
 int
 xrecv_msg (const int sfd, char** buf, size_t* buf_sz)
@@ -256,9 +246,7 @@ xrecv_msg (const int sfd, char** buf, size_t* buf_sz)
 
   ret = xrecv (sfd, &data_sz, sizeof (int));
   if (ret <= 0)
-    {
-      return ret;
-    }
+    return ret;
 
   *buf_sz = ntohl (data_sz);
   *buf = (char*) calloc (*buf_sz, sizeof (char));
@@ -269,28 +257,29 @@ xrecv_msg (const int sfd, char** buf, size_t* buf_sz)
 }
 
 /*
- *   Static functions
- * ==============================================================================
+ * Static functions
  */
 
 static int
 xrecv (const int sfd, void* buf, size_t data_sz)
 {
   int ret;
-  int tries   = 5;
-  int timeout = 1;
-  
+  int tries   = 5; /* Number of tries before giving up */
+  int timeout = 1; /* Basic timeout between tries */
+
   while (data_sz && (tries > 0))
     {
+      /* Read data from the socket */
       ret = recv (sfd, buf, data_sz, 0);
 
       if (ret < 0)
-	{
-	  return ret;
-	}
-      
+	return ret;
+
       if (ret == 0)
 	{
+	  /* There is no data to read. Here we waiting for a little
+	     time before the next try. Timeout grows after every
+	     attempt. */
 	  tries--;
 	  sleep (timeout++);
 	  continue;
@@ -302,7 +291,7 @@ xrecv (const int sfd, void* buf, size_t data_sz)
 
   return ret;
 }
-  
+
 static int
 xsend (const int sfd, const void* data, size_t data_sz)
 {
@@ -312,9 +301,7 @@ xsend (const int sfd, const void* data, size_t data_sz)
     {
       ret = send (sfd, data, data_sz, 0);
       if (ret < 0)
-	{
-	  return ret;
-	}
+	return ret;
 
       data    += ret;
       data_sz -= ret;
@@ -322,4 +309,3 @@ xsend (const int sfd, const void* data, size_t data_sz)
 
   return 0;
 }
-

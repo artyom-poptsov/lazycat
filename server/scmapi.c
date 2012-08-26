@@ -25,8 +25,7 @@
 #include "db.h"
 
 /*
- *   External variables and functions
- * ==============================================================================
+ * External variables and functions
  */
 
 extern char SERVER_NAME[];
@@ -38,8 +37,7 @@ extern int db_get_proxy_by_name (const char* name, struct Rec_proxy* proxy);
 extern int db_get_hosts_list (int* count, int* list[]);
 
 /*
- *   Static functions
- * ==============================================================================
+ * Static functions
  */
 
 static int send_msg_to_host (const int host_id,
@@ -47,10 +45,6 @@ static int send_msg_to_host (const int host_id,
 			     char* response[]);
 
 static char* calcpy (char** dest, const char* src);
-
-/*
- * ==============================================================================
- */
 
 /*
  * This function sends message to the remote host and returns response.
@@ -114,7 +108,6 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
   
   /*
    * Send host address
-   * -----------------
    */
 
   calcpy (&msg_buf, host.address);
@@ -136,7 +129,6 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
 
   /*
    * Send message
-   * ------------
    */
 
   syslog(LOG_INFO, "%s: Send the message", SERVER_NAME);
@@ -154,7 +146,6 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
 
   /*
    * Receive response
-   * ----------------
    */
 
   syslog(LOG_INFO, "%s: Receive message", SERVER_NAME);
@@ -177,7 +168,7 @@ calcpy (char** dest, const char* src)
 {
   size_t str_len = strlen (src);
   *dest = (char*) calloc (str_len, sizeof (char));
-  return strncpy (*dest, src, str_len);;
+  return strncpy (*dest, src, str_len);
 }
 
 /*
@@ -294,10 +285,7 @@ scm_get_host_list (void)
   
   retval = db_get_hosts_list (&count, &list);
   if (retval < 0)
-    {
-      return SCM_BOOL_F;
-    }
-
+    return SCM_BOOL_F;
 
   /* Convert C-array into Scheme-vector */
   

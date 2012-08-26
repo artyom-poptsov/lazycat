@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
  */
-       
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
@@ -32,8 +32,7 @@
 #include "tcp-proxy.h"
 
 /*
- *   External functions
- * ==============================================================================
+ * External functions
  */
 
 extern open_inet_socket (const uint16_t port);
@@ -42,8 +41,7 @@ extern int xsend_msg (const int sfd, const char* data, size_t data_sz);
 extern int xrecv_msg (const int sfd, char** buf, size_t* buf_sz);
 
 /*
- *   Static functions
- * ==============================================================================
+ * Static functions
  */
 
 static int parse_ip_addr (const char* str,
@@ -51,20 +49,20 @@ static int parse_ip_addr (const char* str,
 			  uint16_t* port);
 
 /*
- * ==============================================================================
+ * The entry point of this proxy
  */
-
-/* Entry point of the proxy */
 void
 tcp_main_loop (void)
 {
   static const char SYSLOG_MSG[] = "lazycat";
-  
-  static const char ERROR_UNABLE_TO_CONNECT[] = "ERROR: Unable to connect to the remote host";
-  static const char ERROR_WRONG_IP_ADDRESS[]  = "ERROR: Wrong IP address";
+
+  static const char ERR_UNABLE_TO_CONNECT[] = "ERROR: Unable to connect to the remote host";
+  static const char ERR_WRONG_IP_ADDRESS[]  = "ERROR: Wrong IP address";
 
   const char PROXY_NAME[] = "tcp-proxy";
-  
+
+  enum { BACKLOG = 1 };
+
   int sfd_proxy;
   int sfd_client;
   int sfd_remote;
@@ -82,94 +80,85 @@ tcp_main_loop (void)
 
   openlog (SYSLOG_MSG, LOG_CONS, LOG_DAEMON);
   syslog (LOG_INFO, "%s: Log is opened.", PROXY_NAME);
-  
+
+  /* Open a socket */
   sfd_proxy = open_socket (PROXY_NAME);
 
-  enum { BACKLOG = 1 };
-  
   if (listen (sfd_proxy, BACKLOG) < 0)
     {
-      HANDLE_ERROR ("%s: An error occured during listen() call.",
-		    PROXY_NAME);
+      syslog (LOG_ERR, "%s: -*- An error occured during listen() call.",
+	      PROXY_NAME);
+      goto err1;
     }
 
   sfd_client = accept (sfd_proxy, NULL, 0);
   if (sfd_client < 0)
     {
-      syslog (LOG_WARNING, "%s: -*- accept() error", PROXY_NAME);
-      return;
+      syslog (LOG_ERR, "%s: -*- accept() error", PROXY_NAME);
+      goto err2;
     }
-  
-  /* main loop */
-  
+
+  /*
+   * The main loop of the proxy
+   */
+
   while (TRUE)
     {
       /*
        * Receive destination address
-       * ---------------------------
        */
 
-      syslog (LOG_DEBUG, "%s: Receive destination address", PROXY_NAME);
+      syslog (LOG_DEBUG, "%s: -i- Receive a destination address", PROXY_NAME);
 
       retval = xrecv_msg (sfd_client, &ip_addr_str, &ip_addr_len);
       if (retval == 0)
 	{
 	  syslog (LOG_INFO, "%s: -i- xrecv_msg() server has performed "
 		  "an ordered shutdown.", PROXY_NAME);
-	  
-	  close (sfd_client);
-	  break;
+	  goto err3;
 	}
       else if (retval < 0)
 	{
 	  syslog (LOG_WARNING, "%s: -*- xrecv_msg() error", PROXY_NAME);
-	  
-	  free (ip_addr_str);
-	  close (sfd_client);
-	  break;
+	  goto err3;
 	}
 
       syslog(LOG_DEBUG, "%s: <-- address = %s", PROXY_NAME, ip_addr_str);
 
       /*
-       * Receive message
-       * ---------------
+       * Receive a message
        */
 
-      syslog(LOG_DEBUG, "%s: Receive message", PROXY_NAME);
+      syslog(LOG_DEBUG, "%s: Receive a message", PROXY_NAME);
 
       retval = xrecv_msg (sfd_client, &msg_buf, &msg_size);
       if (retval == 0)
 	{
 	  syslog (LOG_INFO, "%s: -i- xrecv_msg() server has performed "
 		  "an ordered shutdown.", PROXY_NAME);
-	  close (sfd_client);
-	  break;
+	  goto err4;
 	}
       else if (retval < 0)
 	{
 	  syslog(LOG_WARNING, "%s: -*- xrecv_msg() error", PROXY_NAME);
-	  free (msg_buf);
-	  close (sfd_client);
-	  break;
+	  goto err4;
 	}
 
       syslog (LOG_DEBUG, "%s: <-- msg = %s", PROXY_NAME, msg_buf);
-      
+
       /*
        * Parse IP address
-       * ----------------
        */
 
       retval = parse_ip_addr (ip_addr_str, &ip_addr, &ip_port);
       if (retval < 0)
 	{
 	  syslog(LOG_WARNING, "%s: -*- %s: %s",
-		 PROXY_NAME, ERROR_WRONG_IP_ADDRESS, ip_addr_str);
-	  
-	  xsend_msg (sfd_client, ERROR_WRONG_IP_ADDRESS,
-		     sizeof (ERROR_WRONG_IP_ADDRESS));
-	  
+		 PROXY_NAME, ERR_WRONG_IP_ADDRESS, ip_addr_str);
+
+	  xsend_msg (sfd_client, ERR_WRONG_IP_ADDRESS,
+		     sizeof (ERR_WRONG_IP_ADDRESS));
+
 	  free (ip_addr_str);
 	  free (msg_buf);
 	  close (sfd_client);
@@ -182,17 +171,17 @@ tcp_main_loop (void)
       free (ip_addr_str);
 
       /*
-       * Send message to the remote host
-       * -------------------------------
+       * Send the message to the remote host
        */
-      
+
       sfd_remote = connect_to_inet_socket (ip_addr, ip_port);
       if (sfd_remote < 0)
 	{
-	  syslog (LOG_WARNING, ERROR_UNABLE_TO_CONNECT);
-	  xsend_msg (sfd_client, ERROR_UNABLE_TO_CONNECT,
-		     sizeof (ERROR_UNABLE_TO_CONNECT));
-	  
+	  syslog (LOG_WARNING, ERR_UNABLE_TO_CONNECT);
+
+	  xsend_msg (sfd_client, ERR_UNABLE_TO_CONNECT,
+		     sizeof (ERR_UNABLE_TO_CONNECT));
+
 	  free (msg_buf);
 	  close (sfd_remote);
 	  continue;
@@ -207,12 +196,11 @@ tcp_main_loop (void)
       close (sfd_remote);
 
       /*
-       * Send response
-       * -------------
+       * Send a response
        */
 
-      syslog(LOG_DEBUG, "%s: Send response", PROXY_NAME);
-      
+      syslog(LOG_DEBUG, "%s: Send a response", PROXY_NAME);
+
       retval = xsend_msg (sfd_client, msg_buf, msg_size);
       if (retval < 0)
 	{
@@ -221,18 +209,25 @@ tcp_main_loop (void)
 	  close (sfd_client);
 	  continue;
 	}
-
-      free (msg_buf);
     }
 
-  close (sfd_client);
-  closelog ();
+ err4:
+  free (msg_buf);
 
-  exit (EXIT_SUCCESS);
+ err3:
+  free (ip_addr_str);
+
+ err2:
+  close (sfd_proxy);
+
+ err1:
+  close (sfd_client);
+
+  closelog ();
 }
 
 /*
- * This function is used for parsing IP addres from string.
+ * This function is used for parsing IP address from a string.
  */
 static int
 parse_ip_addr (const char* str, uint32_t* address, uint16_t* port)
@@ -252,15 +247,11 @@ parse_ip_addr (const char* str, uint32_t* address, uint16_t* port)
   int retval;
 
   if ((str == NULL) || (address == NULL) || (port == NULL))
-    {
-      return -1;
-    }
+    return -1;
 
   retval = sscanf (str, "%hhu.%hhu.%hhu.%hhu:%hu", &b3, &b2, &b1, &b0, port);
   if (retval <= 0)
-    {
-      return -1;
-    }
+    return -1;
 
   ip_addr.byte.b3 = b3;
   ip_addr.byte.b2 = b2;
@@ -268,6 +259,6 @@ parse_ip_addr (const char* str, uint32_t* address, uint16_t* port)
   ip_addr.byte.b0 = b0;
 
   *address = ip_addr.uint32;
-  
+
   return 0;
 }

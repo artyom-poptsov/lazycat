@@ -162,7 +162,6 @@ start_proxy (proxy_t proxy, char* name)
 /*
  * This function registers API for Guile and starts Guile process. 
  */
-
 static void
 scm_thread (void* closure, int argc, char* argv[])
 {

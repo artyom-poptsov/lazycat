@@ -1,3 +1,16 @@
+2012-08-26  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Improve code readability. Fix some comments. Clean code.
+	* tcp-proxy.c (tcp_main_loop): Move handling of errors to the end
+	of the function. Replace ERROR_ with ERR_ in names. Remove extra
+	spaces.
+	* db.c: Remove extern declarations from functions. Remove extra
+	spaces.
+	* scmapi.c: Fix style of comments.
+	(calcpy): Remove an extra semicolon.
+	* xsockets.c: Add comments. Remove extra spaces.
+	* server.c: Remove an extra empty line.
+
 2012-07-21  Artyom V. Poptsov  <poptsov.artyom@gmail.com>
 
 	* lctcpd.c (main): Replace the hard-coded port number with
