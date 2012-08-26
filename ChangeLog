@@ -1,5 +1,8 @@
 2012-08-26  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* tcp-proxy.c (tcp_main_loop): Add check for a result of the
+	open_socket().
+
 	Improve code readability. Fix some comments. Clean code.
 	* tcp-proxy.c (tcp_main_loop): Move handling of errors to the end
 	of the function. Replace ERROR_ with ERR_ in names. Remove extra

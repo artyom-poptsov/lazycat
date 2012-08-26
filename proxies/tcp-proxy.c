@@ -83,6 +83,11 @@ tcp_main_loop (void)
 
   /* Open a socket */
   sfd_proxy = open_socket (PROXY_NAME);
+  if (sfd_proxy < 0)
+    {
+      syslog (LOG_ERR, "%s: -*- Unable to open socket.");
+      goto err1;
+    }
 
   if (listen (sfd_proxy, BACKLOG) < 0)
     {
