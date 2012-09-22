@@ -68,10 +68,10 @@ tcp_main_loop (void)
   int sfd_remote;
 
   size_t msg_size;
-  char*  msg_buf;
+  char*  msg_buf = NULL;
 
   size_t ip_addr_len;
-  char*  ip_addr_str;
+  char*  ip_addr_str = NULL;
 
   uint32_t ip_addr;
   uint16_t ip_port;
@@ -217,10 +217,12 @@ tcp_main_loop (void)
     }
 
  err4:
-  free (msg_buf);
+  if (msg_buf)
+    free (msg_buf);
 
  err3:
-  free (ip_addr_str);
+  if (ip_addr_str)
+    free (ip_addr_str);
 
  err2:
   close (sfd_proxy);

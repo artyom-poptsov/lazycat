@@ -1,3 +1,9 @@
+2012-09-22  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* tcp-proxy.c (tcp_main_loop): Initialize values of the
+	ip_addr_str and msg_buf with NULL. Add checks for NULL pointers
+	before free() calls to prevent freeing unallocated memory.
+
 2012-08-26  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* tcp-proxy.c (tcp_main_loop): Add check for a result of the
