@@ -1,5 +1,8 @@
 2012-09-23  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* xsockets.c (xrecv_msg): Add the check for a NULL pointer after
+	calling the calloc().
+
 	* tcp-proxy.c (tcp_main_loop): Add exit() call.
 
 2012-09-22  Artyom Poptsov  <poptsov.artyom@gmail.com>

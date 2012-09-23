@@ -250,6 +250,8 @@ xrecv_msg (const int sfd, char** buf, size_t* buf_sz)
 
   *buf_sz = ntohl (data_sz);
   *buf = (char*) calloc (*buf_sz, sizeof (char));
+  if (*buf == NULL)
+    return -1;
 
   ret = xrecv (sfd, *buf, *buf_sz);
 
