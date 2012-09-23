@@ -231,6 +231,8 @@ tcp_main_loop (void)
   close (sfd_client);
 
   closelog ();
+
+  exit (EXIT_SUCCESS);
 }
 
 /*
