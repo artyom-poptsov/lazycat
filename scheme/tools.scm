@@ -17,6 +17,9 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
+(define-module (lazycat tools)
+  :export (touch diff sdiff))
+
 (define (touch . files)
   "Wrapper for touch tool."
   (let ((arg ""))
@@ -57,3 +60,5 @@
         (write output)))
     
     (diff tmp-file1 tmp-file2 diff-file)))
+
+;;;; EOF

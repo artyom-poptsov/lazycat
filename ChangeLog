@@ -1,5 +1,10 @@
 2012-09-23  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazy-gtk-cat.scm: Add support of storing the host list in a file
+	between sessions.
+	* config.scm: New file.
+	* tools.scm: Turn to a module.
+
 	* xsockets.c (xrecv_msg): Add the check for a NULL pointer after
 	calling the calloc().
 

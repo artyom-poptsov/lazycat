@@ -26,24 +26,28 @@
              (gnome gtk gdk-event)
              (ice-9 receive))
 
-(load "./tools.scm")
+;;
+;; Lazycat modules
+;;
 
-(define (load-config name)
-  "This function is used for loading config file."
-  (let* ((lazycat-home (string-append (getenv "HOME") "/.lazycat"))
-         (config (string-append lazycat-home "/" name)))
-    (if (not (file-exists? lazycat-home))
-        (system (string-append "mkdir " lazycat-home)))
-    (if (file-exists? config)
-        (load file))))
+(for-each (lambda (file) (load file))
+          '("config.scm"
+            "tools.scm"))
 
-;;; Global variables
+(use-modules (lazycat config)
+             (lazycat tools))
+
+;;
+;; Global variables
+;;
 
 (define tmp-dir   "/tmp/lazycat")
 
 (define mode-raw  "raw-mode")
 (define mode-diff "diff-mode")
 (define mode      mode-raw)
+
+(define hosts '())
 
 ;;;   Create LazyCat GUI
 ;;; =============================================================================
@@ -273,6 +277,24 @@
     (gtk-box-pack-start (get-vbox dialog) output-preview #t #t 0)
   dialog))
 
+(define (add-host-to-list proxy address name description)
+  "Add host to the host list and to DB"
+  (let ((host-id (lc-add-host proxy address name description))
+        (top-level (gtk-tree-store-append host-list #f)))
+
+    ;; Add host to the host list
+
+    (let ((new-host (list proxy address name description)))
+      (if (not (member new-host hosts))
+          (set! hosts (cons (list proxy address name description) hosts))))
+
+    ;; Show host in the GUI
+    
+    (gtk-tree-store-set-value host-list top-level 0 (number->string host-id))
+    (gtk-tree-store-set-value host-list top-level 1 name)
+    (gtk-tree-store-set-value host-list top-level 2 description)
+
+    host-id))
 
 (define (show-add-host-dialog . opt-dup)
   "'Add host' dialog"
@@ -302,20 +324,17 @@
       (define (add-widget widget) (pack-start box widget #t #t 0))
       (for-each add-widget widgets))
 
-    (define (add-host-to-list)
-      "Add host to the host list and to DB"
-      (let ((host-id (lc-add-host
-                      (gtk-combo-box-get-active-text cbox-proxy-name)
-                      (gtk-entry-get-text entry-address)
-                      (gtk-entry-get-text entry-host-name)
-                      (gtk-entry-get-text entry-host-description)))
-            (top-level (gtk-tree-store-append host-list #f)))
+    ;;
+    ;; Add host to the list
+    ;;
 
-        (gtk-tree-store-set-value host-list top-level 0 (number->string host-id))
-        (gtk-tree-store-set-value host-list top-level 1 (gtk-entry-get-text entry-host-name))
-        (gtk-tree-store-set-value host-list top-level 2 (gtk-entry-get-text entry-host-description))
-
-        (destroy dialog)))
+    (define (add-host . opt-dup)
+      (add-host-to-list (gtk-combo-box-get-active-text cbox-proxy-name)
+                        (gtk-entry-get-text entry-address)
+                        (gtk-entry-get-text entry-host-name)
+                        (gtk-entry-get-text entry-host-description))
+    
+      (destroy dialog))
 
 
     (gtk-combo-box-append-text cbox-proxy-name "tcp-proxy")
@@ -334,7 +353,7 @@
     ;;
     
     (connect button-add 'clicked
-             (lambda (w) (add-host-to-list)))
+             (lambda (w) (add-host)))
     
     (connect button-cancel 'clicked
              (lambda (w) (destroy dialog)))
@@ -531,15 +550,22 @@
     (receive (model iter) (gtk-tree-selection-get-selected selection)
       (gtk-tree-store-remove model iter))))
 
+(define (lazycat-quit . w)
+  "Cancel the application"
+  (begin
+    (save-config "hosts" "hosts" hosts)
+    (gtk-main-quit)
+    #f))
+
 ;;;   Connect handlers to signals
 ;;; =============================================================================
 
 (connect entry           'activate   send-message)
 (connect add-host-button 'clicked    show-add-host-dialog)
 (connect rem-host-button 'clicked    remove-host-from-list)
-(connect main-window     'delete-event (lambda (w e) (gtk-main-quit) #f))
+(connect main-window     'delete-event lazycat-quit)
 
-(connect menu-file-quit 'activate (lambda (w) (gtk-main-quit)))
+(connect menu-file-quit 'activate lazycat-quit)
 (connect menu-mode-raw  'activate (lambda (w) (set! mode mode-raw)))
 (connect menu-mode-diff 'activate (lambda (w) (set! mode mode-diff)))
 
@@ -557,6 +583,19 @@
 
 (connect popup-menu-item-create-group 'activate (lambda (w) (host-list-add-group)))
 (connect popup-menu-item-remove-group 'activate (lambda (w) (host-list-rem-group)))
+
+;;;   Load host list
+;;; =============================================================================
+
+(load-config "hosts")
+
+(if (not (null? hosts))
+    (for-each (lambda (host)
+                (add-host-to-list (list-ref host 0)   ; Proxy
+                                  (list-ref host 1)   ; Address
+                                  (list-ref host 2)   ; Name
+                                  (list-ref host 3))) ; Description
+              hosts))
 
 ;;;   Show main window
 ;;; =============================================================================
