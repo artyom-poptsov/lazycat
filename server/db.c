@@ -23,6 +23,7 @@
 #include <string.h>
 #include <syslog.h>
 
+#include "common.h"
 #include "db.h"
 
 const char DB_NAME[] = "db";
@@ -93,7 +94,7 @@ db_get_hosts_list (int* count, int* list[])
 
   if (*list == NULL)
     {
-      syslog (LOG_WARNING, "%s: Unable to allocate memory.", DB_NAME);
+      SYSLOG_WARNING ("%s: Unable to allocate memory.", DB_NAME);
       return -1;
     }
 
@@ -134,7 +135,7 @@ db_add_host (struct Rec_host* host)
       new_node = get_free_node_for_host (hosts_linked_list);
       if (new_node == NULL)
 	{
-	  syslog (LOG_WARNING, "%s: Unable to allocate memory "
+	  SYSLOG_WARNING ("%s: Unable to allocate memory "
 		  "for new node in DB", DB_NAME);
 	  return -1;
 	}
@@ -169,7 +170,7 @@ db_rem_host (int id)
 
   if (node == NULL)
     {
-      syslog (LOG_WARNING, "%s: Node with id=%d isn't found.", DB_NAME, id);
+      SYSLOG_WARNING ("%s: Node with id=%d isn't found.", DB_NAME, id);
       return -1;
     }
 
@@ -278,7 +279,7 @@ db_add_proxy (struct Rec_proxy* proxy)
       new_node = get_free_node_for_proxy(proxies_linked_list);
       if (new_node == NULL)
 	{
-	  syslog (LOG_WARNING, "%s: Unable to allocate memory "
+	  SYSLOG_WARNING ("%s: Unable to allocate memory "
 		  "for new node in DB", DB_NAME);
 
 	 return -1;
@@ -302,12 +303,12 @@ db_rem_proxy (const int fd)
 
   if (node == NULL)
     {
-      syslog (LOG_ERR, "%s: Proxy with fd=%d isn't found.", DB_NAME, fd);
+      SYSLOG_ERROR ("%s: Proxy with fd=%d isn't found.", DB_NAME, fd);
       return -1;
     }
 
-  syslog (LOG_DEBUG, "%s: proxy with fd = %d, name = %s",
-	  DB_NAME, fd, node->rec.name);
+  SYSLOG_DEBUG ("%s: proxy with fd = %d, name = %s",
+		DB_NAME, fd, node->rec.name);
 
   if (node->prev)
     node->prev->next = node->next;
@@ -328,8 +329,8 @@ db_get_proxy_by_fd (const int fd, struct Rec_proxy* rec_proxy)
 
   if (node == NULL)
     {
-      syslog (LOG_WARNING, "%s: There is no proxy with given FD = %d",
-	      DB_NAME, fd);
+      SYSLOG_WARNING ("%s: There is no proxy with given FD = %d",
+		      DB_NAME, fd);
       return -1;
     }
   memcpy (rec_proxy, &node->rec, sizeof (struct Rec_proxy));
@@ -364,7 +365,7 @@ db_get_proxies_list (int* count, int* list[])
   *list = (int*) calloc (proxies_count, sizeof (int));
   if (*list == NULL)
     {
-      syslog (LOG_WARNING, "%s: Unable to allocate memory.", DB_NAME);
+      SYSLOG_WARNING ("%s: Unable to allocate memory.", DB_NAME);
       return -1;
     }
 

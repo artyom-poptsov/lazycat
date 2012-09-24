@@ -44,7 +44,7 @@ extern int xrecv_msg (const int sfd, char** buf, size_t* buf_sz);
  * Global variables
  */
 
-static const char SYSLOG_MSG[] = "lazycat";
+static const char SYSLOG_MSG[] = "lazycat [tcp-proxy]";
 static const char PROXY_NAME[] = "tcp-proxy";
 
 static int sfd_proxy;
@@ -69,13 +69,13 @@ tcp_proxy_init (void)
   enum { BACKLOG = 1 };
 
   openlog (SYSLOG_MSG, LOG_CONS, LOG_DAEMON);
-  syslog (LOG_INFO, "%s: Log is opened.", PROXY_NAME);
+  syslog (LOG_INFO, "Log is opened.");
 
   /* Open a socket */
   sfd_proxy = open_socket (PROXY_NAME);
   if (sfd_proxy < 0)
     {
-      syslog (LOG_ERR, "%s: -*- Unable to open socket.", PROXY_NAME);
+      SYSLOG_ERROR ("Unable to open socket.");
       closelog ();
       exit (EXIT_FAILURE);
     }
@@ -83,8 +83,7 @@ tcp_proxy_init (void)
   /* Start listening to the socket */
   if (listen (sfd_proxy, BACKLOG) < 0)
     {
-      syslog (LOG_ERR, "%s: -*- An error occured during listen() call.",
-	      PROXY_NAME);
+      SYSLOG_ERROR ("An error occured during listen() call.");
       close (sfd_proxy);
       closelog ();
       exit (EXIT_FAILURE);
@@ -94,7 +93,7 @@ tcp_proxy_init (void)
   sfd_client = accept (sfd_proxy, NULL, 0);
   if (sfd_client < 0)
     {
-      syslog (LOG_ERR, "%s: -*- accept() error", PROXY_NAME);
+      SYSLOG_ERROR ("accept() error");
       close (sfd_proxy);
       closelog ();
       exit (EXIT_FAILURE);
@@ -145,43 +144,37 @@ tcp_proxy_main_loop (void)
        * Receive destination address
        */
 
-      syslog (LOG_DEBUG, "%s: -i- Receive a destination address", PROXY_NAME);
-
       retval = xrecv_msg (sfd_client, &ip_addr_str, &ip_addr_len);
       if (retval == 0)
 	{
-	  syslog (LOG_INFO, "%s: -i- xrecv_msg() server has performed "
-		  "an ordered shutdown.", PROXY_NAME);
+	  SYSLOG_INFO ("Server has performed an ordered shutdown.");
 	  goto end;
 	}
       else if (retval < 0)
 	{
-	  syslog (LOG_WARNING, "%s: -*- xrecv_msg() error", PROXY_NAME);
+	  SYSLOG_WARNING ("xrecv_msg() error");
 	  goto end;
 	}
 
-      syslog(LOG_DEBUG, "%s: <-- address = %s", PROXY_NAME, ip_addr_str);
+      SYSLOG_RECV ("Address: %s", ip_addr_str);
 
       /*
        * Receive a message
        */
 
-      syslog(LOG_DEBUG, "%s: Receive a message", PROXY_NAME);
-
       retval = xrecv_msg (sfd_client, &msg_buf, &msg_size);
       if (retval == 0)
 	{
-	  syslog (LOG_INFO, "%s: -i- xrecv_msg() server has performed "
-		  "an ordered shutdown.", PROXY_NAME);
+	  SYSLOG_INFO ("Server has performed an ordered shutdown.");
 	  goto end;
 	}
       else if (retval < 0)
 	{
-	  syslog(LOG_WARNING, "%s: -*- xrecv_msg() error", PROXY_NAME);
+	  SYSLOG_WARNING ("xrecv_msg() error");
 	  goto end;
 	}
 
-      syslog (LOG_DEBUG, "%s: <-- msg = %s", PROXY_NAME, msg_buf);
+      SYSLOG_RECV ("Message: %s", msg_buf);
 
       /*
        * Parse IP address
@@ -190,8 +183,7 @@ tcp_proxy_main_loop (void)
       retval = parse_ip_addr (ip_addr_str, &ip_addr, &ip_port);
       if (retval < 0)
 	{
-	  syslog(LOG_WARNING, "%s: -*- %s: %s",
-		 PROXY_NAME, ERR_WRONG_IP_ADDRESS, ip_addr_str);
+	  SYSLOG_WARNING ("%s: %s", ERR_WRONG_IP_ADDRESS, ip_addr_str);
 
 	  xsend_msg (sfd_client, ERR_WRONG_IP_ADDRESS,
 		     sizeof (ERR_WRONG_IP_ADDRESS));
@@ -202,8 +194,8 @@ tcp_proxy_main_loop (void)
 	  continue;
 	}
 
-      syslog (LOG_DEBUG, "%s: -i- IP Address = %d", PROXY_NAME, ip_addr);
-      syslog (LOG_DEBUG, "%s: -i- IP port = %d", PROXY_NAME, ip_port);
+      SYSLOG_DEBUG ("IP Address = %d", ip_addr);
+      SYSLOG_DEBUG ("IP port    = %d", ip_port);
 
       free (ip_addr_str);
 
@@ -236,12 +228,12 @@ tcp_proxy_main_loop (void)
        * Send a response
        */
 
-      syslog(LOG_DEBUG, "%s: Send a response", PROXY_NAME);
+      SYSLOG_SEND ("Response: %s", msg_buf);
 
       retval = xsend_msg (sfd_client, msg_buf, msg_size);
       if (retval < 0)
 	{
-	  syslog(LOG_WARNING, "%s: -*- xsend_msg() error", PROXY_NAME);
+	  SYSLOG_WARNING ("xsend_msg() error");
 	  free (msg_buf);
 	  close (sfd_client);
 	  continue;

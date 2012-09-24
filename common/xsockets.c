@@ -66,14 +66,12 @@ open_socket (const char* socket_name)
       switch (errno)
         {
         case EEXIST:
-	  syslog (LOG_NOTICE, "mkdir(): Directory %s already exists.",
-		  SOCK_DIR);
+	  SYSLOG_INFO ("mkdir(): Directory %s already exists.", SOCK_DIR);
           break;
 
         default:
-	  syslog (LOG_WARNING,
-		  "mkdir(): Error occured while creating directory %s.",
-		  SOCK_DIR);
+	  SYSLOG_WARNING ("mkdir(): Error occured while creating directory %s.",
+			  SOCK_DIR);
 	  return -1;
         }
     }
@@ -88,7 +86,7 @@ open_socket (const char* socket_name)
     {
       if (errno != ENOENT)
 	{
-	  syslog (LOG_WARNING, "unlink(): Unable to unlink socket.");
+	  SYSLOG_WARNING ("unlink(): Unable to unlink socket.");
 	  return -1;
 	}
     }
@@ -96,7 +94,7 @@ open_socket (const char* socket_name)
   sfd = socket (AF_LOCAL, SOCK_STREAM, 0);
   if (sfd < 0)
     {
-      syslog (LOG_WARNING, "socket(): Unable to open socket.");
+      SYSLOG_WARNING ("socket(): Unable to open socket.");
       return -1;
     }
 
@@ -108,7 +106,7 @@ open_socket (const char* socket_name)
   if (bind (sfd, (struct sockaddr*) &addr, addr_len) < 0)
     {
       close(sfd);
-      syslog (LOG_WARNING, "bind(): Unable to bind to the server socket.");
+      SYSLOG_WARNING ("bind(): Unable to bind to the server socket.");
       return -1;
     }
 
@@ -129,7 +127,7 @@ open_inet_socket (const uint16_t port)
   sfd_server = socket (PF_INET, SOCK_STREAM, 0);
   if (sfd_server < 0)
     {
-      syslog (LOG_ERR, "Unable to open socket.");
+      SYSLOG_ERROR ("Unable to open socket.");
       return -1;
     }
 
@@ -145,8 +143,8 @@ open_inet_socket (const uint16_t port)
   retval = bind (sfd_server, (struct sockaddr*) &sa, sa_size);
   if (retval < 0)
     {
-      syslog (LOG_ERR, "An error occured during binding to the port %d\n",
-	      port);
+      SYSLOG_ERROR ("An error occured during binding to the port %d\n",
+		    port);
       return -1;
     }
 
@@ -180,8 +178,9 @@ connect_to_socket (const char* socket_name)
 
   while (connect (sfd, (struct sockaddr *) &sa, sa_size) < 0)
     {
-      syslog(LOG_DEBUG, "Unable connect() to socket: %s", strerror(errno));
-      syslog(LOG_DEBUG, "\tSocket: %s", socket_full_path);
+      SYSLOG_DEBUG ("Unable to connect() to socket: %s", strerror(errno));
+      SYSLOG_DEBUG ("\tSocket: %s", socket_full_path);
+      SYSLOG_DEBUG ("Next try...");
       sleep(1);
     }
 

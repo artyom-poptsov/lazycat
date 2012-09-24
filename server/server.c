@@ -48,8 +48,7 @@ typedef void (*proxy_t)(void);
  * Global definitions
  */
 
-static const char SYSLOG_MSG[] = "lazycat";
-const char SERVER_NAME[]       = "server";
+static const char SYSLOG_MSG[] = "lazycat [server]";
 
 pid_t* proc_list  = NULL;
 int    proc_count = 0;
@@ -90,7 +89,7 @@ main (int argc, char* argv[])
     
   openlog (SYSLOG_MSG, LOG_CONS, LOG_USER);
   syslog (LOG_INFO, "-------------------------------------------------------");
-  syslog (LOG_INFO, "Log is opened.");
+  SYSLOG_INFO ("Log is opened.");
 
   /* Register signal handlers */
   reg_sighandlers ();
@@ -153,8 +152,7 @@ start_proxy (proxy_t proxy, char* name)
     }
   else
     {
-      syslog (LOG_ERR, "%s: An error occured during forking the process.",
-	      SERVER_NAME);
+      SYSLOG_ERROR ("An error occured during forking the process.");
       return -1;
     }
 }

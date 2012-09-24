@@ -83,7 +83,7 @@ main (int argc, char* argv[])
   
   openlog (SYSLOG_MSG, LOG_CONS, LOG_DAEMON);
   syslog (LOG_INFO, "-------------------------------------------------------");
-  syslog (LOG_INFO, "Log is opened.");
+  SYSLOG_INFO ("Log is opened.");
 
   /*
    * Parse command line arguments
@@ -114,7 +114,7 @@ main (int argc, char* argv[])
     }
   else if (pid < 0)
     {
-      syslog (LOG_ERR, "Unable to fork() process.");
+      SYSLOG_ERROR ("Unable to fork() process.");
       closelog ();
       return EXIT_FAILURE;
     }
@@ -134,7 +134,7 @@ main (int argc, char* argv[])
   retval = setsid ();
   if (retval < 0)
     {
-      syslog (LOG_ERR, "Unable to become session leader.");
+      SYSLOG_ERROR ("Unable to become session leader.");
       closelog ();
       return EXIT_FAILURE;
     }
@@ -155,7 +155,7 @@ main (int argc, char* argv[])
   sfd_server = open_inet_socket (port);
   if (sfd_server < 0)
     {
-      syslog (LOG_ERR, "Unable to open socket.");
+      SYSLOG_ERROR ("Unable to open socket.");
       closelog ();
       return EXIT_FAILURE;
     }
@@ -189,16 +189,16 @@ main_loop (int sfd_server)
       sfd_client = accept (sfd_server, NULL, NULL);
       if (sfd_client < 0)
         {
-	  syslog (LOG_WARNING, "Error occured during accept() call.");
+	  SYSLOG_WARNING ("Error occured during accept() call.");
 	  sleep (5);
 	  continue;
         }
       
-      syslog (LOG_DEBUG, "-i- New connection accepted.");
+      SYSLOG_INFO ("New connection accepted.");
 
       retval = xrecv_msg (sfd_client, &msg_buf, &msg_size);
 
-      syslog (LOG_DEBUG, "<-- msg = %s", msg_buf);
+      SYSLOG_RECV ("Message: %s", msg_buf);
 
       /*
        * Execute received string as bash command
@@ -206,7 +206,6 @@ main_loop (int sfd_server)
 
       fseek (f_stdout, 0, SEEK_END);
       output_begin = ftell (f_stdout);
-      syslog (LOG_DEBUG, "-i- output_begin = %ld", output_begin);
       
       /* Set timestamp */
       (void) system ("date \"+[%Y-%m-%d %H:%M]\"");
@@ -219,7 +218,7 @@ main_loop (int sfd_server)
 	}
      else if (pid < 0)
 	{
-	  syslog (LOG_WARNING, "-*- Error occured during forking the process.");
+	  SYSLOG_WARNING ("Error occured during forking the process.");
 	  close (sfd_client);
 	  free (msg_buf);
 	  continue;
@@ -229,10 +228,8 @@ main_loop (int sfd_server)
      
      fseek (f_stdout, 0, SEEK_END);
      output_end = ftell (f_stdout);
-     syslog(LOG_DEBUG, "-i- output_end = %ld", output_end);
      
      msg_size = (size_t) (output_end - output_begin);
-     syslog(LOG_DEBUG, "-i- msg_size = %d", msg_size);
      
      free (msg_buf);
      
@@ -243,7 +240,7 @@ main_loop (int sfd_server)
      retval = fread (msg_buf, sizeof (char), msg_size, f_stdout);
      if (retval < (int) msg_size)
        {
-	 syslog(LOG_WARNING, "-*- Error occured during reading output.");
+	 SYSLOG_WARNING ("Error occured during reading output.");
 	 close (sfd_client);
 	 free (msg_buf);
 	 continue;
@@ -252,7 +249,7 @@ main_loop (int sfd_server)
      retval = xsend_msg (sfd_client, msg_buf, msg_size);
      if (retval < 0)
        {
-	 syslog(LOG_WARNING, "-*- Error occured during sending the message.");
+	 SYSLOG_WARNING ("Error occured during sending the message.");
 	 close (sfd_client);
 	 free (msg_buf);
 	 continue;

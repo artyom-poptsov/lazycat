@@ -21,14 +21,13 @@
 #include <libguile.h>
 #include <syslog.h>
 
+#include "common.h"
 #include "scmapi.h"
 #include "db.h"
 
 /*
  * External variables and functions
  */
-
-extern char SERVER_NAME[];
 
 extern int db_add_host (struct Rec_host* host);
 extern int db_rem_host (int id);
@@ -67,10 +66,7 @@ scm_send_msg (SCM dest, SCM msg)
 
   retval = send_msg_to_host (host_id, msg_buf, &response);
   if (retval < 0)
-    {
-      syslog(LOG_WARNING, "%s: -*- %s (host ID=%d)",
-	     SERVER_NAME, response, host_id);
-    }
+    SYSLOG_WARNING ("%s (host ID=%d)", response, host_id);
 
   return scm_from_locale_string (response);
 }
@@ -97,7 +93,7 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
       return -1;
     }
 
-  syslog (LOG_DEBUG, "%s: Send message", SERVER_NAME);
+  SYSLOG_DEBUG ("Send a message");
 
   retval = db_get_proxy_by_name (host.proxy_name, &proxy);
   if (retval < 0)
@@ -113,11 +109,6 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
   calcpy (&msg_buf, host.address);
   msg_size = strlen (msg_buf);
   
-  syslog(LOG_DEBUG, "%s: msg_size = %d, msg_buf = %s",
-	 SERVER_NAME, msg_size, msg_buf);
-  
-  syslog(LOG_INFO, "%s: Send the destination ID", SERVER_NAME);
-
   retval = xsend_msg (proxy.fd, msg_buf, msg_size);
   if (retval < 0)
     {
@@ -125,13 +116,13 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
       return -1;
     }
 
+  SYSLOG_SEND ("Destination ID: %s", msg_buf);
+
   free (msg_buf);
 
   /*
    * Send message
    */
-
-  syslog(LOG_INFO, "%s: Send the message", SERVER_NAME);
 
   msg_size = strlen (msg);
 
@@ -142,13 +133,13 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
       return -1;
     }
 
-  syslog (LOG_INFO, "%s: --> msg = %s", SERVER_NAME, msg);
+  SYSLOG_SEND ("Messsage: %s", msg);
 
   /*
    * Receive response
    */
 
-  syslog(LOG_INFO, "%s: Receive message", SERVER_NAME);
+  SYSLOG_DEBUG ("Receive a response");
 
   retval = xrecv_msg (proxy.fd, response, &msg_size);
   if (retval < 0)
@@ -156,7 +147,9 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
       calcpy (response, ERROR_RECV_FAILED);
       return -1;
     }
-  
+
+  SYSLOG_RECV ("Response: %s", *response);
+
   return 0;
 }
 

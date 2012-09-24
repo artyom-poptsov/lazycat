@@ -1,5 +1,11 @@
 2012-09-24  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	Improve traces. Remove extra traces.
+	* common.h: Add new macros for printing traces to the syslog.
+	Replace old syslog() calls with new macros.
+	* lctcpd.c: Remove extra traces.
+	* scmapi.c: Likewise.
+
 	Improve the tcp-proxy.
 	* tcp-proxy.c (tcp_main_loop): Move basic initialization to the
 	new function called tcp_proxy_init(). Rename tcp_main_loop() to
