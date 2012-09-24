@@ -58,9 +58,9 @@ int    proc_count = 0;
  * Prototypes of static functions
  */
 
-extern void register_sighandlers (void);
+extern void tcp_proxy_init (void);
 
-extern void tcp_main_loop (void);
+extern void register_sighandlers (void);
 
 extern int db_add_proxy(struct Rec_proxy* proxy);
 
@@ -84,7 +84,7 @@ static void scm_thread (void *closure, int argc, char **argv);
 int
 main (int argc, char* argv[])
 {
-  proxy_t tcp_proxy = tcp_main_loop;
+  proxy_t tcp_proxy = tcp_proxy_init;
 
   struct Rec_proxy proxy;
     

@@ -41,42 +41,32 @@ extern int xsend_msg (const int sfd, const char* data, size_t data_sz);
 extern int xrecv_msg (const int sfd, char** buf, size_t* buf_sz);
 
 /*
+ * Global variables
+ */
+
+static const char SYSLOG_MSG[] = "lazycat";
+static const char PROXY_NAME[] = "tcp-proxy";
+
+static int sfd_proxy;
+static int sfd_client;
+
+/*
  * Static functions
  */
 
-static int parse_ip_addr (const char* str,
-			  uint32_t* address,
-			  uint16_t* port);
+static void
+tcp_proxy_main_loop (void);
+
+static int 
+parse_ip_addr (const char* str, uint32_t* address, uint16_t* port);
 
 /*
  * The entry point of this proxy
  */
 void
-tcp_main_loop (void)
+tcp_proxy_init (void)
 {
-  static const char SYSLOG_MSG[] = "lazycat";
-
-  static const char ERR_UNABLE_TO_CONNECT[] = "ERROR: Unable to connect to the remote host";
-  static const char ERR_WRONG_IP_ADDRESS[]  = "ERROR: Wrong IP address";
-
-  const char PROXY_NAME[] = "tcp-proxy";
-
   enum { BACKLOG = 1 };
-
-  int sfd_proxy;
-  int sfd_client;
-  int sfd_remote;
-
-  size_t msg_size;
-  char*  msg_buf = NULL;
-
-  size_t ip_addr_len;
-  char*  ip_addr_str = NULL;
-
-  uint32_t ip_addr;
-  uint16_t ip_port;
-
-  int retval;
 
   openlog (SYSLOG_MSG, LOG_CONS, LOG_DAEMON);
   syslog (LOG_INFO, "%s: Log is opened.", PROXY_NAME);
@@ -85,30 +75,72 @@ tcp_main_loop (void)
   sfd_proxy = open_socket (PROXY_NAME);
   if (sfd_proxy < 0)
     {
-      syslog (LOG_ERR, "%s: -*- Unable to open socket.");
-      goto err1;
+      syslog (LOG_ERR, "%s: -*- Unable to open socket.", PROXY_NAME);
+      closelog ();
+      exit (EXIT_FAILURE);
     }
-
+  
+  /* Start listening to the socket */
   if (listen (sfd_proxy, BACKLOG) < 0)
     {
       syslog (LOG_ERR, "%s: -*- An error occured during listen() call.",
 	      PROXY_NAME);
-      goto err1;
+      close (sfd_proxy);
+      closelog ();
+      exit (EXIT_FAILURE);
     }
 
+  /* Accept the lazycat server */
   sfd_client = accept (sfd_proxy, NULL, 0);
   if (sfd_client < 0)
     {
       syslog (LOG_ERR, "%s: -*- accept() error", PROXY_NAME);
-      goto err2;
+      close (sfd_proxy);
+      closelog ();
+      exit (EXIT_FAILURE);
     }
 
-  /*
-   * The main loop of the proxy
-   */
+  /* Start the main loop */
+  tcp_proxy_main_loop ();
 
+  /* Teardown of the proxy */
+  
+  close (sfd_client);
+  close (sfd_proxy);
+  
+  closelog ();
+  
+  exit (EXIT_SUCCESS);
+}
+
+/*
+ * The main loop of the proxy
+ */
+
+static void
+tcp_proxy_main_loop (void)
+{
+  static const char ERR_UNABLE_TO_CONNECT[] = "ERROR: Unable to connect to the remote host";
+  static const char ERR_WRONG_IP_ADDRESS[]  = "ERROR: Wrong IP address";
+  
+  size_t msg_size;
+  char*  msg_buf;
+
+  size_t ip_addr_len;
+  char*  ip_addr_str;
+
+  uint32_t ip_addr;
+  uint16_t ip_port;
+
+  int sfd_remote;
+
+  int32_t retval;
+  
   while (TRUE)
     {
+      msg_buf     = NULL;
+      ip_addr_str = NULL;
+      
       /*
        * Receive destination address
        */
@@ -120,12 +152,12 @@ tcp_main_loop (void)
 	{
 	  syslog (LOG_INFO, "%s: -i- xrecv_msg() server has performed "
 		  "an ordered shutdown.", PROXY_NAME);
-	  goto err3;
+	  goto end;
 	}
       else if (retval < 0)
 	{
 	  syslog (LOG_WARNING, "%s: -*- xrecv_msg() error", PROXY_NAME);
-	  goto err3;
+	  goto end;
 	}
 
       syslog(LOG_DEBUG, "%s: <-- address = %s", PROXY_NAME, ip_addr_str);
@@ -141,12 +173,12 @@ tcp_main_loop (void)
 	{
 	  syslog (LOG_INFO, "%s: -i- xrecv_msg() server has performed "
 		  "an ordered shutdown.", PROXY_NAME);
-	  goto err4;
+	  goto end;
 	}
       else if (retval < 0)
 	{
 	  syslog(LOG_WARNING, "%s: -*- xrecv_msg() error", PROXY_NAME);
-	  goto err4;
+	  goto end;
 	}
 
       syslog (LOG_DEBUG, "%s: <-- msg = %s", PROXY_NAME, msg_buf);
@@ -216,23 +248,12 @@ tcp_main_loop (void)
 	}
     }
 
- err4:
+ end:
   if (msg_buf)
     free (msg_buf);
 
- err3:
   if (ip_addr_str)
     free (ip_addr_str);
-
- err2:
-  close (sfd_proxy);
-
- err1:
-  close (sfd_client);
-
-  closelog ();
-
-  exit (EXIT_SUCCESS);
 }
 
 /*

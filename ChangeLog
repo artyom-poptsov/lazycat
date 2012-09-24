@@ -1,3 +1,13 @@
+2012-09-24  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Improve the tcp-proxy.
+	* tcp-proxy.c (tcp_main_loop): Move basic initialization to the
+	new function called tcp_proxy_init(). Rename tcp_main_loop() to
+	tcp_proxy_main_loop(). Move initialization of strings with NULL to
+	the begin of a while() loop.
+	(tcp_proxy_init): New function.
+	* server.c: Replace tcp_main_loop() with tcp_proxy_init().
+
 2012-09-23  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* lazy-gtk-cat.scm: Add support of storing the host list in a file
