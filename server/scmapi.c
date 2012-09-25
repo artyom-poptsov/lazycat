@@ -43,8 +43,6 @@ static int send_msg_to_host (const int host_id,
 			     char* msg,
 			     char* response[]);
 
-static char* calcpy (char** dest, const char* src);
-
 /*
  * This function sends message to the remote host and returns response.
  */
@@ -151,17 +149,6 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
   SYSLOG_RECV ("Response: %s", *response);
 
   return 0;
-}
-
-/*
- * This function allocates memory and makes a copy of string src
- */
-static char*
-calcpy (char** dest, const char* src)
-{
-  size_t str_len = strlen (src);
-  *dest = (char*) calloc (str_len, sizeof (char));
-  return strncpy (*dest, src, str_len);
 }
 
 /*

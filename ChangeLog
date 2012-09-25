@@ -1,5 +1,14 @@
 2012-09-25  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* Makefile.am: Add common.c and common.h files.
+	Update all correspond scripts.
+
+	* tcp-proxy.c (parse_ip_addr): Move to xsockets.c
+	* xsockets.c, xsockets.h: Update.
+
+	* scmapi.c (calcpy): Move to common.c
+	* common.c: New file.
+
 	* tcp-proxy.h: Replace tcp_main_loop() with tcp_proxy_init().
 
 2012-09-24  Artyom Poptsov  <poptsov.artyom@gmail.com>

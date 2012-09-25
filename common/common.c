@@ -1,4 +1,6 @@
-/* Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+/* Various useful functions which are used in the LazyCat.
+ *
+ * Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
  *
  * This file is part of LazyCat.
  * 
@@ -16,16 +18,21 @@
  * along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __XSOCKETS_H__
-#define __XSOCKETS_H__
+#include <string.h>
 
-int open_socket (const char* socket_name);
-int open_inet_socket (const uint16_t port);
-int connect_to_socket (const char* socket_name);
-int connect_to_inet_socket (const uint32_t address, const uint16_t port);
-int parse_ip_addr (const char* str, uint32_t* address, uint16_t* port);
-
-int xsend_msg (const int sfd, const char* data, size_t data_sz);
-int xrecv_msg (const int sfd, char** buf, size_t* buf_sz);
-
-#endif
+/*
+ * This function allocates memory and makes a copy of the string src.
+ */
+char*
+calcpy (char** dest, const char* src)
+{
+  size_t src_len = strlen (src);
+  *dest = (char*) calloc (src_len, sizeof (char));
+  if (*dest == NULL)
+    return NULL;
+  return strncpy (*dest, src, src_len);
+  if (*dest == NULL)
+    return NULL;
+  
+  return strncpy (*dest, src, src_len);
+}

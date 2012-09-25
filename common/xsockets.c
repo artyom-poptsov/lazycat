@@ -217,6 +217,45 @@ connect_to_inet_socket (const uint32_t address, const uint16_t port)
 }
 
 /*
+ * This function is used for parsing IP address and port from a string in the
+ * folowing format:
+ *   127.0.0.1:50001
+ */
+int
+parse_ip_addr (const char* str, uint32_t* address, uint16_t* port)
+{
+  union IP_ADDR
+  {
+    uint32_t uint32;
+    struct {
+      uint8_t b0 : 8;
+      uint8_t b1 : 8;
+      uint8_t b2 : 8;
+      uint8_t b3 : 8;
+    } byte;
+  } ip_addr;
+
+  uint8_t b0, b1, b2, b3;
+  int retval;
+
+  if ((str == NULL) || (address == NULL) || (port == NULL))
+    return -1;
+
+  retval = sscanf (str, "%hhu.%hhu.%hhu.%hhu:%hu", &b3, &b2, &b1, &b0, port);
+  if (retval <= 0)
+    return -1;
+
+  ip_addr.byte.b3 = b3;
+  ip_addr.byte.b2 = b2;
+  ip_addr.byte.b1 = b1;
+  ip_addr.byte.b0 = b0;
+
+  *address = ip_addr.uint32;
+
+  return 0;
+}
+
+/*
  * This function sends data through a socket with given file descriptor
  */
 int

@@ -1,5 +1,5 @@
-#ifndef __MACRO_H__
-#define __MACRO_H__
+#ifndef __COMMON_H__
+#define __COMMON_H__
 
 /*
  * Nice macros for printing traces
@@ -14,4 +14,5 @@
 
 enum { FALSE, TRUE };
 
+char* calcpy (char** dest, const char* src);
 #endif

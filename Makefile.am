@@ -33,7 +33,8 @@ lazycat_SOURCES =
 # Common
 
 lazycat_SOURCES += \
-	common/common.h \
+	common/common.h	\
+	common/common.c	\
 	common/xsockets.c \
 	common/xsockets.h
 
