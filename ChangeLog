@@ -1,3 +1,7 @@
+2012-09-25  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* tcp-proxy.h: Replace tcp_main_loop() with tcp_proxy_init().
+
 2012-09-24  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	Improve traces. Remove extra traces.
