@@ -68,14 +68,16 @@ get_hostname_from_address (const char *str, char **host_name)
 
   pos_begin = strchr (str, '@');
   if (pos_begin == NULL)
-    pos_begin = (char *) str;
-
+    pos_begin = str;
+  else
+    ++pos_begin;
+  
   pos_end = strchr (str, ':');
   if (pos_end == NULL)
     pos_end = strchr (str, '\0');
 
   host_name_len = pos_end - pos_begin;
-  if (calncpy (host_name, host_name_len, str) == NULL)
+  if (calncpy (host_name, host_name_len, pos_begin) == NULL)
     return -1;
 
   return host_name_len;

@@ -1,5 +1,7 @@
 2012-09-26  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* parsers.c (get_hostname_from_address): Fix bug.
+
 	Improve tcp-proxy.
 	* tcp-proxy.c: Use functions from common/parsers.c instead of
 	parse_ip_addr(). Improve traces.
