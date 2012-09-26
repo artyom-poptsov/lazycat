@@ -18,7 +18,7 @@
 ## along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
 AM_CPPFLAGS=`pkg-config --cflags guile-1.8`
-AM_LDFLAGS=`pkg-config --libs guile-1.8`
+AM_LDFLAGS=`pkg-config --libs guile-1.8` -lssh
 
 INCLUDES = -I$(top_srcdir)/server -I$(top_srcdir)/common -I$(top_srcdir)/proxies
 
@@ -36,13 +36,21 @@ lazycat_SOURCES += \
 	common/common.h	\
 	common/common.c	\
 	common/xsockets.c \
-	common/xsockets.h
+	common/xsockets.h \
+	common/parsers.c \
+	common/parsers.h
 
 # Proxies
 
 lazycat_SOURCES += \
 	proxies/tcp-proxy.c \
 	proxies/tcp-proxy.h
+
+lazycat_SOURCES += \
+	proxies/ssh-proxy/ssh-proxy.c \
+	proxies/ssh-proxy/ssh-proxy.h \
+	proxies/ssh-proxy/xssh.c \
+	proxies/ssh-proxy/xssh.h
 
 # Server
 

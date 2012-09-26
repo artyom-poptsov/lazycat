@@ -54,9 +54,11 @@ static int sfd_client;
  * Static functions
  */
 
-static void
-tcp_proxy_main_loop (void);
+static void tcp_proxy_main_loop (void);
 
+static int32_t ip4_address_to_uint32 (const char *ip_addr_str,
+                                      uint32_t *ip_addr_uint32);
+
 /*
  * The entry point of this proxy
  */
@@ -108,7 +110,7 @@ tcp_proxy_init (void)
   
   exit (EXIT_SUCCESS);
 }
-
+
 /*
  * The main loop of the proxy
  */
@@ -119,11 +121,14 @@ tcp_proxy_main_loop (void)
   static const char ERR_UNABLE_TO_CONNECT[] = "ERROR: Unable to connect to the remote host";
   static const char ERR_WRONG_IP_ADDRESS[]  = "ERROR: Wrong IP address";
   
-  size_t msg_size;
-  char*  msg_buf;
+  size_t message_size;
+  char*  message;
+  size_t response_size;
+  char*  response;
+  size_t address_len;
+  char*  address;
 
-  size_t ip_addr_len;
-  char*  ip_addr_str;
+  char*  host;
 
   uint32_t ip_addr;
   uint16_t ip_port;
@@ -134,14 +139,16 @@ tcp_proxy_main_loop (void)
   
   while (TRUE)
     {
-      msg_buf     = NULL;
-      ip_addr_str = NULL;
+      message  = NULL;
+      response = NULL;
+      address  = NULL;
+      host     = NULL;
       
       /*
        * Receive destination address
        */
 
-      retval = xrecv_msg (sfd_client, &ip_addr_str, &ip_addr_len);
+      retval = xrecv_msg (sfd_client, &address, &address_len);
       if (retval == 0)
 	{
 	  SYSLOG_INFO ("Server has performed an ordered shutdown.");
@@ -149,17 +156,17 @@ tcp_proxy_main_loop (void)
 	}
       else if (retval < 0)
 	{
-	  SYSLOG_WARNING ("xrecv_msg() error");
+	  SYSLOG_WARNING ("xrecv_msg(): Unable to receive the address.");
 	  goto end;
 	}
 
-      SYSLOG_RECV ("Address: %s", ip_addr_str);
+      SYSLOG_RECV ("[server] Address: %s", address);
 
       /*
        * Receive a message
        */
 
-      retval = xrecv_msg (sfd_client, &msg_buf, &msg_size);
+      retval = xrecv_msg (sfd_client, &message, &message_size);
       if (retval == 0)
 	{
 	  SYSLOG_INFO ("Server has performed an ordered shutdown.");
@@ -167,34 +174,32 @@ tcp_proxy_main_loop (void)
 	}
       else if (retval < 0)
 	{
-	  SYSLOG_WARNING ("xrecv_msg() error");
+	  SYSLOG_WARNING ("xrecv_msg(): Unable to receive the message");
 	  goto end;
 	}
 
-      SYSLOG_RECV ("Message: %s", msg_buf);
+      SYSLOG_RECV ("[server] Message: %s", message);
 
       /*
        * Parse IP address
        */
 
-      retval = parse_ip_addr (ip_addr_str, &ip_addr, &ip_port);
-      if (retval < 0)
-	{
-	  SYSLOG_WARNING ("%s: %s", ERR_WRONG_IP_ADDRESS, ip_addr_str);
+      if ((get_hostname_from_address (address, &host) < 0)
+          || (get_port_from_address (address, &ip_port)  < 0))
+        {
+          SYSLOG_WARNING ("%s: %s", ERR_WRONG_IP_ADDRESS, address);
 
-	  xsend_msg (sfd_client, ERR_WRONG_IP_ADDRESS,
+          xsend_msg (sfd_client, ERR_WRONG_IP_ADDRESS,
 		     sizeof (ERR_WRONG_IP_ADDRESS));
 
-	  free (ip_addr_str);
-	  free (msg_buf);
-	  close (sfd_client);
-	  continue;
-	}
+          goto next;
+        }
 
-      SYSLOG_DEBUG ("IP Address = %d", ip_addr);
-      SYSLOG_DEBUG ("IP port    = %d", ip_port);
+      ip4_address_to_uint32 (host, &ip_addr);
 
-      free (ip_addr_str);
+      SYSLOG_DEBUG ("Host:       %s", host);
+      SYSLOG_DEBUG ("IP Address: %d", ip_addr);
+      SYSLOG_DEBUG ("IP port:    %d", ip_port);
 
       /*
        * Send the message to the remote host
@@ -208,39 +213,87 @@ tcp_proxy_main_loop (void)
 	  xsend_msg (sfd_client, ERR_UNABLE_TO_CONNECT,
 		     sizeof (ERR_UNABLE_TO_CONNECT));
 
-	  free (msg_buf);
 	  close (sfd_remote);
-	  continue;
+          goto next;
 	}
 
-      retval = xsend_msg (sfd_remote, msg_buf, msg_size);
-
-      free (msg_buf);
-
-      retval = xrecv_msg (sfd_remote, &msg_buf, &msg_size);
-
+      retval = xsend_msg (sfd_remote, message, message_size);
+      SYSLOG_SEND ("[host] Message: %s", message);
+      
+      retval = xrecv_msg (sfd_remote, &response, &response_size);
+      SYSLOG_RECV ("[host] Response: %s", message);
+      
       close (sfd_remote);
 
       /*
-       * Send a response
+       * Send a response back to the server
        */
 
-      SYSLOG_SEND ("Response: %s", msg_buf);
+      SYSLOG_SEND ("[server] Response: %s", response);
 
-      retval = xsend_msg (sfd_client, msg_buf, msg_size);
+      retval = xsend_msg (sfd_client, response, response_size);
       if (retval < 0)
 	{
 	  SYSLOG_WARNING ("xsend_msg() error");
-	  free (msg_buf);
-	  close (sfd_client);
-	  continue;
+          goto next;
 	}
+
+      free (response);
+
+    next:
+      free (address);
+      free (message);
+      free (host);
     }
 
  end:
-  if (msg_buf)
-    free (msg_buf);
+  if (message != NULL)
+    free (message);
 
-  if (ip_addr_str)
-    free (ip_addr_str);
+  if (response != NULL)
+    free (response);
+  
+  if (address != NULL)
+    free (address);
+
+  close (sfd_proxy);
+  close (sfd_client);
+  exit (EXIT_SUCCESS);
+}
+
+/*
+ * This function is used for parsing IP address and port from a string in the
+ * folowing format:
+ *   127.0.0.1:50001
+ */
+static int32_t
+ip4_address_to_uint32 (const char *ip_addr_str, uint32_t *ip_addr_uint32)
+{
+  union IP_ADDR
+  {
+    uint32_t uint32;
+    struct {
+      uint8_t b0 : 8;
+      uint8_t b1 : 8;
+      uint8_t b2 : 8;
+      uint8_t b3 : 8;
+    } byte;
+  } ip_addr;
+
+  uint8_t b0, b1, b2, b3;
+
+  if (ip_addr_str == NULL)
+    return -1;
+
+  if (sscanf (ip_addr_str, "%hhu.%hhu.%hhu.%hhu", &b3, &b2, &b1, &b0) <= 0)
+    return -1;
+
+  ip_addr.byte.b3 = b3;
+  ip_addr.byte.b2 = b2;
+  ip_addr.byte.b1 = b1;
+  ip_addr.byte.b0 = b0;
+
+  *ip_addr_uint32 = ip_addr.uint32;
+
+  return 0;
 }

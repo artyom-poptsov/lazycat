@@ -15,4 +15,6 @@
 enum { FALSE, TRUE };
 
 char* calcpy (char** dest, const char* src);
+char* calncpy (char** dest, const size_t strlen, const char* src);
+
 #endif

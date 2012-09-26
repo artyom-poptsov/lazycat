@@ -31,6 +31,19 @@ calcpy (char** dest, const char* src)
   if (*dest == NULL)
     return NULL;
   return strncpy (*dest, src, src_len);
+}
+
+/*
+ * This function allocates memory and makes a copy of the first N symbols
+ * of the string src.
+ */
+char*
+calncpy (char** dest, const size_t src_len, const char* src)
+{
+  if ((src_len <= 0) || (src_len > strlen (src)))
+    return NULL;
+  
+  *dest = (char*) calloc (src_len, sizeof (char));
   if (*dest == NULL)
     return NULL;
   

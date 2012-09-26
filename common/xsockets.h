@@ -23,7 +23,6 @@ int open_socket (const char* socket_name);
 int open_inet_socket (const uint16_t port);
 int connect_to_socket (const char* socket_name);
 int connect_to_inet_socket (const uint32_t address, const uint16_t port);
-int parse_ip_addr (const char* str, uint32_t* address, uint16_t* port);
 
 int xsend_msg (const int sfd, const char* data, size_t data_sz);
 int xrecv_msg (const int sfd, char** buf, size_t* buf_sz);

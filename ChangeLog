@@ -1,3 +1,19 @@
+2012-09-26  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Improve tcp-proxy.
+	* tcp-proxy.c: Use functions from common/parsers.c instead of
+	parse_ip_addr(). Improve traces.
+	(ip4_address_to_uint32): New function.
+	* parsers.c, parsers.h: New file.
+	* Makefile.am: Add common/parsers.c and common/parsers.h.
+	Update auto-generated scripts.
+	* common.c (calncpy): New function.
+	* common.h (calncpy): Likewise.
+
+	Remove a unused function.
+	* xsockets.c (parse_ip_addr): Remove.
+	* xsockets.h (parse_ip_addr): Likewise.
+
 2012-09-25  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* Makefile.am: Add common.c and common.h files.
