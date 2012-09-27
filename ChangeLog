@@ -1,3 +1,15 @@
+2012-09-27  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Add ssh-proxy.
+	* ssh-proxy.c, ssh-proxy.h: New file.
+	* lazy-ssh.c, lazy-ssh.h: Likewise.
+	* lazy-gtk-cat.scm: Add ssh-proxy.
+
+	Move tcp-proxy to its own directory.
+	* tcp-proxy.c, tcp-proxy.h: Move to proxies/tcp-proxy
+
+	* Makefile.am, Makefile.in: Update.
+
 2012-09-26  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* parsers.c (get_hostname_from_address): Fix bug.

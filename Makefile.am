@@ -20,7 +20,12 @@
 AM_CPPFLAGS=`pkg-config --cflags guile-1.8`
 AM_LDFLAGS=`pkg-config --libs guile-1.8` -lssh
 
-INCLUDES = -I$(top_srcdir)/server -I$(top_srcdir)/common -I$(top_srcdir)/proxies
+INCLUDES = \
+	-I$(top_srcdir)/server \
+	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/proxies \
+	-I$(top_srcdir)/proxies/tcp-proxy \
+	-I$(top_srcdir)/proxies/ssh-proxy
 
 bin_PROGRAMS = lazycat lctcpd
 
@@ -43,14 +48,14 @@ lazycat_SOURCES += \
 # Proxies
 
 lazycat_SOURCES += \
-	proxies/tcp-proxy.c \
-	proxies/tcp-proxy.h
+	proxies/tcp-proxy/tcp-proxy.c \
+	proxies/tcp-proxy/tcp-proxy.h
 
 lazycat_SOURCES += \
 	proxies/ssh-proxy/ssh-proxy.c \
 	proxies/ssh-proxy/ssh-proxy.h \
-	proxies/ssh-proxy/xssh.c \
-	proxies/ssh-proxy/xssh.h
+	proxies/ssh-proxy/lazy-ssh.c \
+	proxies/ssh-proxy/lazy-ssh.h
 
 # Server
 

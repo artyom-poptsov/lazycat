@@ -338,6 +338,7 @@
 
 
     (gtk-combo-box-append-text cbox-proxy-name "tcp-proxy")
+    (gtk-combo-box-append-text cbox-proxy-name "ssh-proxy")
     (gtk-combo-box-set-active  cbox-proxy-name 0)
 
     ;;

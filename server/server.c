@@ -38,6 +38,9 @@
 #include "sighandlers.h"
 #include "scmapi.h"
 
+#include "tcp-proxy.h"
+#include "ssh-proxy.h"
+
 /*
  * Types
  */
@@ -54,10 +57,12 @@ pid_t* proc_list  = NULL;
 int    proc_count = 0;
 
 /*
- * Prototypes of static functions
+ * External functions
  */
 
+/* Proxies */
 extern void tcp_proxy_init (void);
+extern void ssh_proxy_init (void);
 
 extern void register_sighandlers (void);
 
@@ -73,6 +78,10 @@ extern SCM scm_update_host (SCM host_id,
 			    SCM field,
 			    SCM value);
 
+/*
+ * Prototypes of static functions
+ */
+
 static int start_proxy (proxy_t proxy, char* name);
 static void scm_thread (void *closure, int argc, char **argv);
 
@@ -84,6 +93,7 @@ int
 main (int argc, char* argv[])
 {
   proxy_t tcp_proxy = tcp_proxy_init;
+  proxy_t ssh_proxy = ssh_proxy_init;
 
   struct Rec_proxy proxy;
     
@@ -98,7 +108,10 @@ main (int argc, char* argv[])
   
   strcpy(proxy.name, "tcp-proxy");
   proxy.fd = start_proxy (tcp_proxy, proxy.name);
+  db_add_proxy (&proxy);
 
+  strcpy(proxy.name, "ssh-proxy");
+  proxy.fd = start_proxy (ssh_proxy, proxy.name);
   db_add_proxy (&proxy);
 
   /* Start Guile */

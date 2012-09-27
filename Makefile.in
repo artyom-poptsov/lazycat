@@ -67,7 +67,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_lazycat_OBJECTS = common.$(OBJEXT) xsockets.$(OBJEXT) \
 	parsers.$(OBJEXT) tcp-proxy.$(OBJEXT) ssh-proxy.$(OBJEXT) \
-	xssh.$(OBJEXT) db.$(OBJEXT) sighandlers.$(OBJEXT) \
+	lazy-ssh.$(OBJEXT) db.$(OBJEXT) sighandlers.$(OBJEXT) \
 	scmapi.$(OBJEXT) server.$(OBJEXT)
 lazycat_OBJECTS = $(am_lazycat_OBJECTS)
 lazycat_LDADD = $(LDADD)
@@ -199,7 +199,13 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = `pkg-config --cflags guile-1.8`
 AM_LDFLAGS = `pkg-config --libs guile-1.8` -lssh
-INCLUDES = -I$(top_srcdir)/server -I$(top_srcdir)/common -I$(top_srcdir)/proxies
+INCLUDES = \
+	-I$(top_srcdir)/server \
+	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/proxies \
+	-I$(top_srcdir)/proxies/tcp-proxy \
+	-I$(top_srcdir)/proxies/ssh-proxy
+
 
 ################################################################################
 # Lazycat sources
@@ -212,11 +218,12 @@ INCLUDES = -I$(top_srcdir)/server -I$(top_srcdir)/common -I$(top_srcdir)/proxies
 # Server
 lazycat_SOURCES = common/common.h common/common.c common/xsockets.c \
 	common/xsockets.h common/parsers.c common/parsers.h \
-	proxies/tcp-proxy.c proxies/tcp-proxy.h \
+	proxies/tcp-proxy/tcp-proxy.c proxies/tcp-proxy/tcp-proxy.h \
 	proxies/ssh-proxy/ssh-proxy.c proxies/ssh-proxy/ssh-proxy.h \
-	proxies/ssh-proxy/xssh.c proxies/ssh-proxy/xssh.h server/db.c \
-	server/db.h server/sighandlers.c server/sighandlers.h \
-	server/scmapi.c server/scmapi.h server/server.c
+	proxies/ssh-proxy/lazy-ssh.c proxies/ssh-proxy/lazy-ssh.h \
+	server/db.c server/db.h server/sighandlers.c \
+	server/sighandlers.h server/scmapi.c server/scmapi.h \
+	server/server.c
 
 ################################################################################
 # Host processes
@@ -318,6 +325,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/db.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lazy-ssh.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lctcpd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parsers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scmapi.Po@am__quote@
@@ -326,7 +334,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssh-proxy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcp-proxy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xsockets.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xssh.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -384,19 +391,19 @@ parsers.obj: common/parsers.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o parsers.obj `if test -f 'common/parsers.c'; then $(CYGPATH_W) 'common/parsers.c'; else $(CYGPATH_W) '$(srcdir)/common/parsers.c'; fi`
 
-tcp-proxy.o: proxies/tcp-proxy.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcp-proxy.o -MD -MP -MF $(DEPDIR)/tcp-proxy.Tpo -c -o tcp-proxy.o `test -f 'proxies/tcp-proxy.c' || echo '$(srcdir)/'`proxies/tcp-proxy.c
+tcp-proxy.o: proxies/tcp-proxy/tcp-proxy.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcp-proxy.o -MD -MP -MF $(DEPDIR)/tcp-proxy.Tpo -c -o tcp-proxy.o `test -f 'proxies/tcp-proxy/tcp-proxy.c' || echo '$(srcdir)/'`proxies/tcp-proxy/tcp-proxy.c
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tcp-proxy.Tpo $(DEPDIR)/tcp-proxy.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='proxies/tcp-proxy.c' object='tcp-proxy.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='proxies/tcp-proxy/tcp-proxy.c' object='tcp-proxy.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcp-proxy.o `test -f 'proxies/tcp-proxy.c' || echo '$(srcdir)/'`proxies/tcp-proxy.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcp-proxy.o `test -f 'proxies/tcp-proxy/tcp-proxy.c' || echo '$(srcdir)/'`proxies/tcp-proxy/tcp-proxy.c
 
-tcp-proxy.obj: proxies/tcp-proxy.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcp-proxy.obj -MD -MP -MF $(DEPDIR)/tcp-proxy.Tpo -c -o tcp-proxy.obj `if test -f 'proxies/tcp-proxy.c'; then $(CYGPATH_W) 'proxies/tcp-proxy.c'; else $(CYGPATH_W) '$(srcdir)/proxies/tcp-proxy.c'; fi`
+tcp-proxy.obj: proxies/tcp-proxy/tcp-proxy.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tcp-proxy.obj -MD -MP -MF $(DEPDIR)/tcp-proxy.Tpo -c -o tcp-proxy.obj `if test -f 'proxies/tcp-proxy/tcp-proxy.c'; then $(CYGPATH_W) 'proxies/tcp-proxy/tcp-proxy.c'; else $(CYGPATH_W) '$(srcdir)/proxies/tcp-proxy/tcp-proxy.c'; fi`
 @am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tcp-proxy.Tpo $(DEPDIR)/tcp-proxy.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='proxies/tcp-proxy.c' object='tcp-proxy.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='proxies/tcp-proxy/tcp-proxy.c' object='tcp-proxy.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcp-proxy.obj `if test -f 'proxies/tcp-proxy.c'; then $(CYGPATH_W) 'proxies/tcp-proxy.c'; else $(CYGPATH_W) '$(srcdir)/proxies/tcp-proxy.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tcp-proxy.obj `if test -f 'proxies/tcp-proxy/tcp-proxy.c'; then $(CYGPATH_W) 'proxies/tcp-proxy/tcp-proxy.c'; else $(CYGPATH_W) '$(srcdir)/proxies/tcp-proxy/tcp-proxy.c'; fi`
 
 ssh-proxy.o: proxies/ssh-proxy/ssh-proxy.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT ssh-proxy.o -MD -MP -MF $(DEPDIR)/ssh-proxy.Tpo -c -o ssh-proxy.o `test -f 'proxies/ssh-proxy/ssh-proxy.c' || echo '$(srcdir)/'`proxies/ssh-proxy/ssh-proxy.c
@@ -412,19 +419,19 @@ ssh-proxy.obj: proxies/ssh-proxy/ssh-proxy.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o ssh-proxy.obj `if test -f 'proxies/ssh-proxy/ssh-proxy.c'; then $(CYGPATH_W) 'proxies/ssh-proxy/ssh-proxy.c'; else $(CYGPATH_W) '$(srcdir)/proxies/ssh-proxy/ssh-proxy.c'; fi`
 
-xssh.o: proxies/ssh-proxy/xssh.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT xssh.o -MD -MP -MF $(DEPDIR)/xssh.Tpo -c -o xssh.o `test -f 'proxies/ssh-proxy/xssh.c' || echo '$(srcdir)/'`proxies/ssh-proxy/xssh.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/xssh.Tpo $(DEPDIR)/xssh.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='proxies/ssh-proxy/xssh.c' object='xssh.o' libtool=no @AMDEPBACKSLASH@
+lazy-ssh.o: proxies/ssh-proxy/lazy-ssh.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT lazy-ssh.o -MD -MP -MF $(DEPDIR)/lazy-ssh.Tpo -c -o lazy-ssh.o `test -f 'proxies/ssh-proxy/lazy-ssh.c' || echo '$(srcdir)/'`proxies/ssh-proxy/lazy-ssh.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/lazy-ssh.Tpo $(DEPDIR)/lazy-ssh.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='proxies/ssh-proxy/lazy-ssh.c' object='lazy-ssh.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o xssh.o `test -f 'proxies/ssh-proxy/xssh.c' || echo '$(srcdir)/'`proxies/ssh-proxy/xssh.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o lazy-ssh.o `test -f 'proxies/ssh-proxy/lazy-ssh.c' || echo '$(srcdir)/'`proxies/ssh-proxy/lazy-ssh.c
 
-xssh.obj: proxies/ssh-proxy/xssh.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT xssh.obj -MD -MP -MF $(DEPDIR)/xssh.Tpo -c -o xssh.obj `if test -f 'proxies/ssh-proxy/xssh.c'; then $(CYGPATH_W) 'proxies/ssh-proxy/xssh.c'; else $(CYGPATH_W) '$(srcdir)/proxies/ssh-proxy/xssh.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/xssh.Tpo $(DEPDIR)/xssh.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='proxies/ssh-proxy/xssh.c' object='xssh.obj' libtool=no @AMDEPBACKSLASH@
+lazy-ssh.obj: proxies/ssh-proxy/lazy-ssh.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT lazy-ssh.obj -MD -MP -MF $(DEPDIR)/lazy-ssh.Tpo -c -o lazy-ssh.obj `if test -f 'proxies/ssh-proxy/lazy-ssh.c'; then $(CYGPATH_W) 'proxies/ssh-proxy/lazy-ssh.c'; else $(CYGPATH_W) '$(srcdir)/proxies/ssh-proxy/lazy-ssh.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/lazy-ssh.Tpo $(DEPDIR)/lazy-ssh.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='proxies/ssh-proxy/lazy-ssh.c' object='lazy-ssh.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o xssh.obj `if test -f 'proxies/ssh-proxy/xssh.c'; then $(CYGPATH_W) 'proxies/ssh-proxy/xssh.c'; else $(CYGPATH_W) '$(srcdir)/proxies/ssh-proxy/xssh.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o lazy-ssh.obj `if test -f 'proxies/ssh-proxy/lazy-ssh.c'; then $(CYGPATH_W) 'proxies/ssh-proxy/lazy-ssh.c'; else $(CYGPATH_W) '$(srcdir)/proxies/ssh-proxy/lazy-ssh.c'; fi`
 
 db.o: server/db.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT db.o -MD -MP -MF $(DEPDIR)/db.Tpo -c -o db.o `test -f 'server/db.c' || echo '$(srcdir)/'`server/db.c
