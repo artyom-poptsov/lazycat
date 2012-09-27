@@ -1,6 +1,6 @@
 -*- text -*-
 
-    	 		LazyCat 
+			LazyCat
 
 LazyCat is a tool which allows you serve cluster of Linux hosts in
 comfortable way. The main idea is that you can install, upgrade or
@@ -15,85 +15,98 @@ language.
 LazyCat is distributed under the terms of GNU GPLv3 license or (at
 your option) any later version. See COPYING for details.
 
-     ARCHITECTURE
+	ARCHITECTURE
+
+LazyCat consists of the four main parts: a GUI, the server, proxies
+and optional clients that running on hosts (see figure 1.1 below).
 
 The top part of the LazyCat server is written in Scheme, which is a
 dialect of the Lisp language. Why Scheme? Because it is good for
 hacking and making new features upon the core of a program. LazyCat
 was written to be extensible, to fit to user's needs.
-     
+
 The bottom part of the server is written in C, and offers API
-functions which can be called from Scheme code. This part contains DB
-which stores basic information about hosts. Other job that the server
-does on this level is sending messages through proxies.
+functions which can be called from a Scheme code. This part contains
+DB which stores basic information about hosts. Other job that the
+server does on this level is sending messages through proxies.
 
 Proxies are processes which are used by the server to sending messages
 through computer network. A proxy is just a function which is executed
 in different process.
 
-A host process is a deamon. You have to have one on every host which
-you want to control by LazyCat.
+	+--------------------------------------------+
+	| GUI (Scheme)                               |
+	+---------------------API--------------------+
+	| Server (C)                                 |
+	+--------------------------------------------+
+	          ^                        ^
+	          |      Unix sockets      |
+	          v                        v
+	+-------------------+    +-------------------+
+	| Proxy (C)         |    | Proxy (C)         |
+	+-------------------+    +-------------------+
+	          ^                        ^
+	..........|.........Network........|..........
+	          v                        v
+	+-------------------+    +-------------------+
+	| Host              |    | Host              |
+	+-------------------+    +-------------------+
+	
+	figure 1.1: LazyCat architecture
 
-Here is the nice ASCII-art which shows you LazyCat architecture:
 
-+--------------------------------------------+
-| GUI (Scheme)                               |
-+---------------------API--------------------+
-| Server (C)                                 |
-+--------------------------------------------+
-          ^                        ^
-          |      Unix sockets      |
-          v                        v
-+-------------------+    +-------------------+
-| Proxy (C)         |    | Proxy (C)         |
-+-------------------+    +-------------------+
-          ^                        ^
-..........|.........Network........|..........          
-          v                        v
-+-------------------+    +-------------------+
-| Host              |    | Host              |
-+-------------------+    +-------------------+
+Right now LazyCat contains TCP and SSH proxy. I don't recommend you to
+use TCP proxy in the real tasks because it hasn't got any
+authentification mechanism yet, and sends data as unencrypted text
+streams.
 
-     USAGE
+SSH proxy uses authorisation based on public keys. To use this proxy
+you must have SSH daemon running on the every host.
+
+	USAGE
 
 After building LazyCat from lazy sources (see INSTALL for details
 about this process), you can run it from command line - just type
 follows:
 
-     $ ./lazycat
+  $ ./lazycat
 
 and you'll get the Guile shell. That's it. You can do something useful
 right now, by using LazyCat API directly. For example, you can add new
 hosts to the cluster from the Guile shell:
 
-     guile> (lc-add-host "tcp-proxy" "127.0.0.1:50001" "localhost" "My Lazy Server")
-     1
-     
-you can get list of hosts:
+  guile> (lc-add-host "tcp-proxy" "127.0.0.1:50001" "localhost" "My first Lazy Server")
+  1
+  guile> (lc-add-host "tcp-proxy" "127.0.0.2:50001" "localhost" "My second Lazy Server")
+  2
 
-     guile> (lc-get-host-list)
-     '(1 2 3)
-     
+  ...
+
+Now you can get list of hosts:
+
+  guile> (lc-get-host-list)
+  '(1 2 3)
+
 and, of course, you can do something useful with this:
 
-     guile> (lc-send-msg 1 "uname")
-     [2012-06-19 21:06]
-     Linux
+  guile> (lc-send-msg 1 "uname")
+  [2012-06-19 21:06]
+  Linux
 
 But wait, where is the promised perfect GUI with beautiful buttons,
 menus etc? OK, take a look in scheme/ directory in the root dir of
 LazyCat repository. Here is your Lazy-GTK-Cat which you can run this
 way:
 
-     ./lazycat -s scheme/lazy-gtk-cat.scm
+  ./lazycat -s scheme/lazy-gtk-cat.scm
 
 And from this point things going more interesting.
 
-     HACKING
+	HACKING
 
 Here I'm going to figure out a few ways as you can have fun with
 LazyCat (except using it for your tasks).
-    
+
 Because LazyCat use Guile and Scheme to do all top-level logic and
 to draw GUI, you can easy replace these components with your own
 components builded upon the basic API of the LazyCat server.
@@ -101,6 +114,6 @@ components builded upon the basic API of the LazyCat server.
 Probably the most exciting news are that you can test your own GUI
 by just typing
 
-     ./lazycat -s your-own-lazy-gui.scm
+	./lazycat -s your-own-lazy-gui.scm
 
 Happy hacking!

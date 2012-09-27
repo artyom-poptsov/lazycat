@@ -1,5 +1,7 @@
 2012-09-27  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* README: Update.
+
 	Add ssh-proxy.
 	* ssh-proxy.c, ssh-proxy.h: New file.
 	* lazy-ssh.c, lazy-ssh.h: Likewise.
