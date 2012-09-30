@@ -207,16 +207,13 @@ main_loop (int sfd_server)
       fseek (f_stdout, 0, SEEK_END);
       output_begin = ftell (f_stdout);
       
-      /* Set timestamp */
-      (void) system ("date \"+[%Y-%m-%d %H:%M]\"");
-
       pid = fork ();
       
-     if (pid == 0)
+      if (pid == 0)
 	{
 	  execl (getenv("SHELL"), "bash", "-c", msg_buf, (char*) NULL);
 	}
-     else if (pid < 0)
+      else if (pid < 0)
 	{
 	  SYSLOG_WARNING ("Error occured during forking the process.");
 	  close (sfd_client);
@@ -224,40 +221,42 @@ main_loop (int sfd_server)
 	  continue;
 	}
 
-     waitpid (pid, NULL, 0);
+      waitpid (pid, NULL, 0);
      
-     fseek (f_stdout, 0, SEEK_END);
-     output_end = ftell (f_stdout);
+      fseek (f_stdout, 0, SEEK_END);
+      output_end = ftell (f_stdout);
      
-     msg_size = (size_t) (output_end - output_begin);
+      msg_size = (size_t) (output_end - output_begin);
      
-     free (msg_buf);
+      free (msg_buf);
      
-     msg_buf = (char*) calloc (msg_size, sizeof (char));
+      msg_buf = (char*) calloc (msg_size, sizeof (char));
 
-     fseek (f_stdout, output_begin, SEEK_SET);
+      fseek (f_stdout, output_begin, SEEK_SET);
 
-     retval = fread (msg_buf, sizeof (char), msg_size, f_stdout);
-     if (retval < (int) msg_size)
-       {
-	 SYSLOG_WARNING ("Error occured during reading output.");
-	 close (sfd_client);
-	 free (msg_buf);
-	 continue;
-       }
+      retval = fread (msg_buf, sizeof (char), msg_size, f_stdout);
+      if (retval < (int) msg_size)
+	{
+	  SYSLOG_WARNING ("Error occured during reading output.");
+	  close (sfd_client);
+	  free (msg_buf);
+	  continue;
+	}
 
-     retval = xsend_msg (sfd_client, msg_buf, msg_size);
-     if (retval < 0)
-       {
-	 SYSLOG_WARNING ("Error occured during sending the message.");
-	 close (sfd_client);
-	 free (msg_buf);
-	 continue;
-       }
+      retval = xsend_msg (sfd_client, msg_buf, msg_size);
+      if (retval < 0)
+	{
+	  SYSLOG_WARNING ("Error occured during sending the message.");
+	  close (sfd_client);
+	  free (msg_buf);
+	  continue;
+	}
 
-     free (msg_buf);
+      SYSLOG_SEND ("Response: %s", msg_buf);
+
+      free (msg_buf);
      
-     close (sfd_client);
+      close (sfd_client);
     }
 }
 

@@ -1,3 +1,9 @@
+2012-09-29  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Fix wrong diff results for the SSH proxy.
+	* lctcpd.c (main_loop): Remove timestamp.
+	* lazy-gtk-cat.scm (cut-timestamp): Remove.
+
 2012-09-27  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* README: Update.

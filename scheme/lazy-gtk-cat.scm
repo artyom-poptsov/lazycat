@@ -407,19 +407,8 @@
     
     (define (fetch-and-analyse host-list pattern)
       
-      (define (cut-timestamp output)
-        "Skip the first line of output. Dirty hack."
-        (let ((list (string->list output)))
-          (list->string
-           (let f ((list2 list))
-             (if (char=? (car list2) #\newline)
-                 list2
-                 (f (cdr list2)))))))
-
       (define (compare host-id)
-        (let ((diff (sdiff tmp-dir
-                           (cut-timestamp pattern)
-                           (cut-timestamp (lc-send-msg host-id message))))
+        (let ((diff (sdiff tmp-dir pattern (lc-send-msg host-id message)))
               (mark (gtk-text-buffer-create-mark text-buffer #f text-iter #t)))
 
           ;; Insert label
