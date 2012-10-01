@@ -20,6 +20,8 @@
 (define-module (lazycat tools)
   :export (touch diff sdiff))
 
+(use-modules (ice-9 rdelim))
+
 (define (touch . files)
   "Wrapper for touch tool."
   (let ((arg ""))
@@ -29,18 +31,26 @@
 (define (diff file1 file2 diff-file)
   "Wrapper for diff tool."
   (let ((diff-in   #f)
-        (ret       ""))
+        (result    ""))
 
     ;; Execute diff on files
     (system (string-append "diff " file1 " " file2 " > " diff-file))
 
     (set! diff-in (open-input-file diff-file))
 
-    ;; Read diff result from file
-    (let f ((ret (read-char diff-in)))
-      (if (eof-object? ret)
-          ""
-          (string-append (string ret) (f (read-char diff-in)))))))
+    ;; Read diff result from the diff-file, line by line, and store it as
+    ;; a string.
+    ;;
+    ;; Probably this is not the better way to load a whole text file into the
+    ;; scheme string, but at least it works better that recursive reading
+    ;; (it caused stack overflow on the big files).
+    (let f ((str (read-line diff-in 'concat)))
+      (if (not (eof-object? str))
+          (begin
+            (set! result (string-append result str))
+            (f (read-line diff-in 'concat)))
+          ;; There is nothing to read anymore. Return the result.
+          result))))
 
 (define (sdiff tmp-dir pattern output)
   "Function returns diff between strings PATTERN and OUTPUT"

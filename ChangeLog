@@ -1,3 +1,8 @@
+2012-10-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* tools.scm (diff): Replace recursive file reading with iterative
+	reading.
+
 2012-09-29  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	Fix wrong diff results for the SSH proxy.
