@@ -132,13 +132,32 @@ lazy_ssh_exec (ssh_session session, const char *cmd, char **output)
   SYSLOG_DEBUG ("Polling the SSH channel for data...");
   while (TRUE)
     {
+      /* Polling stdout */
+
       result = ssh_channel_poll (channel, 0);
       if (result > 0)
 	{
 	  /* Read data from the SSH channel */
-          SYSLOG_DEBUG ("Data to read: %d byte(s)", result);
+          SYSLOG_DEBUG ("Data to read (stdout): %d byte(s)", result);
 	  *output = (char*) calloc (result, sizeof (char));
 	  result = ssh_channel_read (channel, *output, result, 0);
+	  goto out;
+	}
+      else if (result == SSH_ERROR)
+	{
+	  SYSLOG_WARNING ("ssh_channel_poll() failed.");
+	  goto out;
+	}
+
+      /* Polling stderr */
+
+      result = ssh_channel_poll (channel, 1);
+      if (result > 0)
+	{
+	  /* Read data from the SSH channel */
+          SYSLOG_DEBUG ("Data to read (stderr): %d byte(s)", result);
+	  *output = (char*) calloc (result, sizeof (char));
+	  result = ssh_channel_read (channel, *output, result, 1);
 	  goto out;
 	}
       else if (result == SSH_ERROR)

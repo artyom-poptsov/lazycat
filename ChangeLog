@@ -1,5 +1,7 @@
 2012-10-03  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazy-ssh.c (lazy_ssh_exec): Add retrieving data from the stderr.
+
 	* lazy-ssh.c (lssh_auth): Use existing public key from a file.
 
 2012-10-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
