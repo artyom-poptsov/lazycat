@@ -1,3 +1,7 @@
+2012-10-03  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazy-ssh.c (lssh_auth): Use existing public key from a file.
+
 2012-10-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* tools.scm (diff): Replace recursive file reading with iterative

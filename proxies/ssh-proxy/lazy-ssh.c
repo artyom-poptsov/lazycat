@@ -163,10 +163,10 @@ static int32_t
 lssh_auth (ssh_session session)
 {
   static const char PRIVATE_KEY_FILE[] = "/.ssh/lazycat";
-  /* static const char PUBLIC_KEY_FILE[]  = "/.ssh/lazycat.pub"; */
+  static const char PUBLIC_KEY_FILE[]  = "/.ssh/lazycat.pub";
 
   char *private_key_file;
-  /* char *public_key_file; */
+  char *public_key_file;
   char *user_home_dir;
 
   ssh_string public_key;
@@ -200,7 +200,24 @@ lssh_auth (ssh_session session)
       return -1;
     }
 
-  public_key = publickey_to_string (publickey_from_privatekey (private_key));
+  public_key_file = (char*) calloc (strlen (user_home_dir)
+				    + strlen (PUBLIC_KEY_FILE) + 1,
+				    sizeof (char));
+
+  strcpy (public_key_file, user_home_dir);
+  strcat (public_key_file, PUBLIC_KEY_FILE);
+
+  public_key = publickey_from_file (session, public_key_file, NULL);
+
+  free (public_key_file);
+
+  if (public_key == NULL)
+    {
+      SYSLOG_WARNING ("Unable to get the public key.");
+      return -1;
+    }
+
+  /* Auth */
 
   result = ssh_userauth_pubkey (session, NULL, public_key, private_key);
   switch (result)
