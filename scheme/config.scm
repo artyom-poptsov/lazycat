@@ -1,4 +1,4 @@
-;;;; Functions for working with configuration files for LazyCat.
+;;;; A configuration file for LazyCat.
 ;;;;
 ;;;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;;;
@@ -17,66 +17,76 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
+(load "tools.scm")
+
 (define-module (lazycat config)
-  :export (lazycat-home load-config save-config))
+  #:use-module (oop goops)
+  #:use-module (lazycat tools)
+  #:export     (<config> config-load-list config-save-list))
 
-(define lazycat-home (string-append (getenv "HOME") "/.lazycat"))
+(define-class <config> ()
+  (file #:accessor file #:init-value #f #:init-keyword #:file))
 
-(define (load-config file-name)
-  "This function is used for loading a config file."
-  (let ((config (string-append lazycat-home "/" file-name)))
-    (if (not (file-exists? lazycat-home))
-        (system (string-append "mkdir " lazycat-home)))
-    (if (file-exists? config)
-        (load config))))
+;; Class initialization
+(define-method (initialize (obj <config>) args)
+  (next-method)
+  (if (not (file-exists? (file obj))) (touch (file obj))))
 
-(define (save-config file-name list-name list)
-  "This function is used for saving a config file."
-  (let ((config (string-append lazycat-home "/" file-name)))
+;; Load the list LIST-NAME from the config file.
+(define-method (config-load-list (obj <config>) (list-name <string>))
+  (begin
+    (load (file obj))
+    (let ((list (eval-string list-name)))
+      (if (list? list) list #f))))
 
-    (if (and (string? list-name) (list? list))
+;; Save the list LIST-NAME to the config file.
+(define-method (config-save-list (obj <config>) (list-name <string>) (list <list>))
+
+  (define *basic-indent* 4)
+
+  (define (make-indent value)
+    "Make indentation"
+    (if (> value 0)
         (begin
-          (if (not (file-exists? lazycat-home))
-              (system (string-append "mkdir " lazycat-home)))
+          (display " ")
+          (make-indent (- value 1)))))
 
-          ;; Create file if it doesn't exist
-          (if (not (file-exists? config))
-                (system (string-append "touch " config)))
+  (define (save-list-with-indent indent list)
+    (for-each (lambda (l)
+                (begin
+                  ;; Check for an inherited list
+                  (if (and (not (null? (cdr l))) ; Check for an empty list
+                           (list? (cadr l)))
+                      (begin
+                        (display "(")
+                        (write (car l))
+                        (newline)
 
-          ;; Store a given list in the file
-          (let ((p (open-output-file config))
-                (l (cons 'define
-                         (cons (string->symbol list-name)
-                               (cons list '())))))
+                        (make-indent (+ indent 1))
 
-            ;; Tell to Emacs that this file contains scheme code
-            (display ";; -*- mode: scheme -*-" p)
-            (newline p)
-            (newline p)
+                        (save-list-with-indent (+ indent 1) (cdr l))
+                        (display ")"))
 
-            ;; Write the list to the config file
-            (display (string-append "(set! " list-name) p)
-            (newline p)
+                      (write l))
 
-            (display "  '(" p)
+                  ;; Print the new line if this element is not the last
+                  ;; element in the list.
+                  (if (not (eq? l (car (reverse list))))
+                      (begin
+                        (newline)
+                        (make-indent indent)))))
+              list))
 
-            (for-each (lambda (l)
-                        (begin
-                          (if (not (eq? l (car (reverse list))))
+  (with-output-to-file (file obj)
+    (lambda ()
+      ;; Tell to Emacs that this file contains scheme code
+      (display ";; -*- mode: scheme -*-\n\n")
+      ;; Write the list to the config file
+      (display (string-append "(define " list-name "\n"))
+      (display "  '(")
 
-                              ;; l is not the last element of the list
-                              (begin
-                                (write l p)
-                                (newline p)
-                                (display "    " p))
-                              
-                              ;; l is the last element of the list
-                              (begin
-                                (write l p)
-                                (display "))" p)))))
-                      list)
+      (save-list-with-indent *basic-indent* list)
 
-            (close-output-port p))))))
-
+      (display "))\n"))))
 
 ;;;; EOF

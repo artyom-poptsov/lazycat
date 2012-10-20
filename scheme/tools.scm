@@ -18,18 +18,21 @@
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (lazycat tools)
-  :export (touch diff sdiff))
+  #:use-module (ice-9 rdelim)
+  #:export (touch diff sdiff))
 
-(use-modules (ice-9 rdelim))
+(define (mkdir dir)
+  "Wrapper for the mkdir tool."
+  (system (string-append "mkdir " dir)))
 
 (define (touch . files)
-  "Wrapper for touch tool."
+  "Wrapper for the touch tool."
   (let ((arg ""))
     (for-each (lambda (f) (set! arg (string-append arg " " f))) files)
     (system (string-append "touch " arg))))
 
 (define (diff file1 file2 diff-file)
-  "Wrapper for diff tool."
+  "Wrapper for the diff tool."
   (let ((diff-in   #f)
         (result    ""))
 
@@ -42,7 +45,7 @@
     ;; a string.
     ;;
     ;; Probably this is not the better way to load a whole text file into the
-    ;; scheme string, but at least it works better that recursive reading
+    ;; scheme string, but at least it works better than recursive reading
     ;; (it caused stack overflow on the big files).
     (let f ((str (read-line diff-in 'concat)))
       (if (not (eof-object? str))

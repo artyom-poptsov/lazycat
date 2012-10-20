@@ -84,6 +84,7 @@ extern SCM scm_update_host (SCM host_id,
 
 static int start_proxy (proxy_t proxy, char* name);
 static void scm_thread (void *closure, int argc, char **argv);
+static void init_builtins_module (void* arg);
 
 /*
  * Main function
@@ -176,11 +177,27 @@ start_proxy (proxy_t proxy, char* name)
 static void
 scm_thread (void* closure, int argc, char* argv[])
 {
-  scm_c_define_gsubr ("lc-send-msg",      2, 0, 0, scm_send_msg);
-  scm_c_define_gsubr ("lc-add-host",      4, 0, 0, scm_add_host);
-  scm_c_define_gsubr ("lc-rem-host",      1, 0, 0, scm_rem_host);
-  scm_c_define_gsubr ("lc-update-host",   3, 0, 0, scm_update_host);
-  scm_c_define_gsubr ("lc-get-host-list", 0, 0, 0, scm_get_host_list);
-
+  scm_c_define_module ("lazycat builtins", init_builtins_module, NULL);
   scm_shell (argc, argv);
+}
+
+/*
+ * Declare the module which provides LazyCat API
+ */
+static void
+init_builtins_module (void* arg)
+{
+#define DEFINE_PUBLIC(func_name, param_count, c_func_name)              \
+    do {                                                                \
+      scm_c_define_gsubr (func_name, param_count, 0, 0, c_func_name);   \
+      scm_c_export (func_name, NULL);                                   \
+    } while (0)
+
+  DEFINE_PUBLIC ("lc-send-msg",      2, scm_send_msg);
+  DEFINE_PUBLIC ("lc-add-host",      4, scm_add_host);
+  DEFINE_PUBLIC ("lc-rem-host",      1, scm_rem_host);
+  DEFINE_PUBLIC ("lc-update-host",   3, scm_update_host);
+  DEFINE_PUBLIC ("lc-get-host-list", 0, scm_get_host_list);  
+
+#undef DEFINE_PUBLIC
 }

@@ -1,3 +1,20 @@
+2012-10-28  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Use Guile Object Oriented Programming System (GOOPS) to rewrite Lazy
+	GTK Cat as set of well-defined objects (head, body, tail etc). This
+	should dramatically improve maintainability of the Cat and simplify
+	adding new features to the Cat.
+
+	* lazycat-gtk.sh: Add to the repository. This script can be used to
+	run the Lazy GTK Cat.
+	* server.c: Move SCM API to an its own module "lazycat builtins".
+	* lc-gtk-add-host-dialog.scm: New file.
+	* lc-gtk-host-tree.scm: New file.
+	* lc-gtk-output-preview-dialog.scm: New file.
+	* lc-gtk-output-view.scm: New file.
+	* host.scm: New file.
+	* host-list.scm: New file.
+
 2012-10-03  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* lazy-ssh.c (lazy_ssh_exec): Add retrieving data from the stderr.
