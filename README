@@ -7,11 +7,6 @@ comfortable way. The main idea is that you can install, upgrade or
 remove software on all hosts at the same time, and get general view of
 what is going on with your cluster.
 
-Its server uses GNU Guile extension language upon C code, which allows
-to call C functions from Scheme code and vice versa. It means that you
-can write your own GUI for server or extension without knowledge of C
-language.
-
 LazyCat is distributed under the terms of GNU GPLv3 license or (at
 your option) any later version. See COPYING for details.
 
@@ -20,10 +15,10 @@ your option) any later version. See COPYING for details.
 LazyCat consists of the four main parts: a GUI, the server, proxies
 and optional clients that running on hosts (see figure 1.1 below).
 
-The top part of the LazyCat server is written in Scheme, which is a
-dialect of the Lisp language. Why Scheme? Because it is good for
-hacking and making new features upon the core of a program. LazyCat
-was written to be extensible, to fit to user's needs.
+The top part of the server is written in Scheme, which is a dialect of
+the Lisp language. Why Scheme? Because it is good for hacking and
+making new features upon the core of a program. LazyCat was written to
+be extensible, to fit to user's needs.
 
 The bottom part of the server is written in C, and offers API
 functions which can be called from a Scheme code. This part contains
@@ -71,9 +66,14 @@ follows:
 
   $ ./lazycat
 
-and you'll get the Guile shell. That's it. You can do something useful
-right now, by using LazyCat API directly. For example, you can add new
-hosts to the cluster from the Guile shell:
+and you'll get the Guile shell extended with LazyCat API. That's
+it. You can use LazyCat right now, by using LazyCat API directly. At
+first you have to load (lazycat builtins) module to be able to use
+API:
+
+  guile> (use-modules (lazycat builtins))
+
+Then you can add new hosts to the cluster:
 
   guile> (lc-add-host "tcp-proxy" "127.0.0.1:50001" "localhost" "My first Lazy Server")
   1
@@ -90,30 +90,25 @@ Now you can get list of hosts:
 and, of course, you can do something useful with this:
 
   guile> (lc-send-msg 1 "uname")
-  [2012-06-19 21:06]
   Linux
 
 But wait, where is the promised perfect GUI with beautiful buttons,
-menus etc? OK, take a look in scheme/ directory in the root dir of
-LazyCat repository. Here is your Lazy-GTK-Cat which you can run this
-way:
+menus etc? OK, try run this script that you can find in the root dir
+of the repository:
 
-  ./lazycat -s scheme/lazy-gtk-cat.scm
+  ./lazycat-gtk.sh
 
-And from this point things going more interesting.
+This script makes instance of the <lazy-gtk-cat> application and
+then runs it.
 
 	HACKING
 
-Here I'm going to figure out a few ways as you can have fun with
-LazyCat (except using it for your tasks).
+The server uses GNU Guile extension language upon C code, which allows
+to call C functions from Scheme code and vice versa. It means that you
+can extend and improve the server without knowledge of C language.
 
-Because LazyCat use Guile and Scheme to do all top-level logic and
-to draw GUI, you can easy replace these components with your own
-components builded upon the basic API of the LazyCat server.
-
-Probably the most exciting news are that you can test your own GUI
-by just typing
-
-	./lazycat -s your-own-lazy-gui.scm
+In fact, the server is a Scheme interpreter extended with LazyCat
+API. So you can easy build your own GUI or even use LazyCat in the
+batch mode.
 
 Happy hacking!
