@@ -348,13 +348,18 @@
              (lambda (w rsp)
                (if (= rsp 1)
                    ;; Get attributes for a new host from dialog
-                   (let* ((name       (get-host-name        dialog))
+                   (let* ((group      (get-group            dialog))
+                          (name       (get-host-name        dialog))
                           (proxy      (get-proxy-name       dialog))
                           (address    (get-address          dialog))
                           (descripion (get-host-description dialog))
                           (host-attributes (list name proxy address descripion)))
                      ;; Add the host
-                     (lc-add-host obj #f host-attributes)))))
+                     ;;
+                     ;; TODO: Should we do the check for an empty string passed
+                     ;;       as a group name here -- or somewhere else?
+                     (lc-add-host obj (if (eq? (string-length group) 0) #f group)
+                                  host-attributes)))))
     (show-all dialog)))
 
 ;; Handler for message sending.

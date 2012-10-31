@@ -1,5 +1,12 @@
 2012-10-31  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	Add support for setting a group for a new host in the "Add Host"
+	dialog.
+	* lc-gtk-add-host-dialog.scm: Add "Group" field to the dialog.
+	(get-group): New method.
+	* lazy-gtk-cat.scm (handle-add-host): Use a specified group name
+	from the dialog.
+
 	* lc-gtk-add-host-dialog.scm (initialize): Fix a bug in button
 	click handlers: hide the dialog instead of destroying it.
 

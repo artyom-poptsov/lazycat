@@ -29,6 +29,7 @@
 ;; Main class
 (define-class <lc-gtk-add-host-dialog> (<gtk-dialog>)
   (cbox-proxy-name        #:accessor cbox-proxy-name)
+  (entry-group            #:accessor entry-group)
   (entry-address          #:accessor entry-address)
   (entry-host-name        #:accessor entry-host-name)
   (entry-host-description #:accessor entry-host-description)
@@ -48,11 +49,13 @@
 
   (slot-set! obj 'title                  "Add host")
   (slot-set! obj 'cbox-proxy-name        (gtk-combo-box-new-text))
+  (slot-set! obj 'entry-group            (make <gtk-entry>))
   (slot-set! obj 'entry-address          (make <gtk-entry>))
   (slot-set! obj 'entry-host-name        (make <gtk-entry>))
   (slot-set! obj 'entry-host-description (make <gtk-entry>))
 
   (let ((label-proxy-name       (make <gtk-label> #:label "Proxy"))
+        (label-group-name       (make <gtk-label> #:label "Group"))
         (label-address          (make <gtk-label> #:label "Address"))
         (label-host-name        (make <gtk-label> #:label "Host name"))
         (label-host-description (make <gtk-label> #:label "Host descripion"))
@@ -62,6 +65,8 @@
     (add-widgets-to-box (get-vbox obj)
                         label-proxy-name
                         (cbox-proxy-name obj)
+                        label-group-name
+                        (entry-group obj)
                         label-address
                         (entry-address obj)
                         label-host-name
@@ -82,6 +87,9 @@
     (connect button-cancel 'clicked (lambda (w) (hide-all obj)))))
 
 ;; Getters
+
+(define-method (get-group (obj <lc-gtk-add-host-dialog>))
+  (gtk-entry-get-text (entry-group obj)))
 
 (define-method (get-host-name (obj <lc-gtk-add-host-dialog>))
   (gtk-entry-get-text (entry-host-name obj)))
