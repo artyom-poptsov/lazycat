@@ -1,3 +1,8 @@
+2012-10-31  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lc-gtk-add-host-dialog.scm (initialize): Fix a bug in button
+	click handlers: hide the dialog instead of destroying it.
+
 2012-10-29  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* README: Update.

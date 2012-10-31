@@ -78,8 +78,8 @@
     (gtk-entry-set-text (entry-host-description obj) "Lazy server")
 
     ;; Connect handlers to signals
-    (connect button-add    'clicked (lambda (w) (destroy obj)))
-    (connect button-cancel 'clicked (lambda (w) (destroy obj)))))
+    (connect button-add    'clicked (lambda (w) (hide-all obj)))
+    (connect button-cancel 'clicked (lambda (w) (hide-all obj)))))
 
 ;; Getters
 
