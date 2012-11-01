@@ -107,11 +107,11 @@ main (int argc, char* argv[])
 
   /* Load proxies */
   
-  strcpy(proxy.name, "tcp-proxy");
+  strcpy(proxy.name, TCP_PROXY_NAME);
   proxy.fd = start_proxy (tcp_proxy, proxy.name);
   db_add_proxy (&proxy);
 
-  strcpy(proxy.name, "ssh-proxy");
+  strcpy(proxy.name, SSH_PROXY_NAME);
   proxy.fd = start_proxy (ssh_proxy, proxy.name);
   db_add_proxy (&proxy);
 

@@ -1,3 +1,9 @@
+2012-11-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* proxies/ssh-proxy/ssh-proxy.h: Add macro for the proxy name.
+	* proxies/tcp-proxy/tcp-proxy.h: Likewise.
+	* server/server.c (main) : Use macros for proxy names.
+
 2012-10-31  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	Add support for setting a group for a new host in the "Add Host"

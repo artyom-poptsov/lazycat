@@ -19,6 +19,8 @@
 #ifndef __SSH_PROXY_H__
 #define __SSH_PROXY_H__
 
+#define SSH_PROXY_NAME "ssh-proxy"
+
 void ssh_proxy_init (void);
 
 #endif	/* ifndef __SSH_PROXY_H__ */

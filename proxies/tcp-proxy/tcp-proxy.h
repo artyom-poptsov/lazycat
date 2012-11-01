@@ -19,6 +19,8 @@
 #ifndef __TCP_PROXY_H__
 #define __TCP_PROXY_H__
 
+#define TCP_PROXY_NAME "tcp-proxy"
+
 void tcp_proxy_init (void);
 
 #endif
