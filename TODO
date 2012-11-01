@@ -1,7 +1,10 @@
 -*- Mode: Outline -*-
 
-* Make use wchar for messages
-* Add authentification mechanisms for TCP proxy and host process
-* Think about the SSH as a way to run commands on a host.
-
-
+* Proxy configuration.
+  There is a potential issue with configuration of proxies.  It seems
+  that the better way is that we should be able to pass parameters for
+  proxy by using LazyCat API.
+* Make use wchar for messages.
+* Add authentification mechanisms for TCP proxy and host process.
+  This is a low-priority task, because ssh-proxy seems more suitable
+  for real tasks than tcp-proxy.
