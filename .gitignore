@@ -1,7 +1,17 @@
 # -*- shell-script -*-
 
-*\~    # backup files
-*.o    # object files and static libraries
+# Backup files
+*\~
+
+# Object files and static libraries
+*.o
+
+# Binary files
+lazycat
+lctcpd
+
+# Auto-generated Makefile
+Makefile
 
 config.log
 config.status
