@@ -66,13 +66,14 @@
                                               <gchararray>
                                               <gchararray>)))
         (column-id   (make <gtk-tree-view-column>
-                       #:title "ID"))
+                       #:title "ID"
+                       #:resizable #t))
         (column-name (make <gtk-tree-view-column>
-                       #:resizable #f
-                       #:title "Name"))
+                       #:title "Name"
+                       #:resizable #t))
         (column-desc (make <gtk-tree-view-column>
-                       #:resizable #f
-                       #:title "Description"))
+                       #:title "Description"
+                       #:resizable #t))
         (text-renderer (gtk-cell-renderer-text-new)))
 
     (set-model obj tree-store)

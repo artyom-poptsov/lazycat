@@ -1,3 +1,7 @@
+2012-11-11  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* scheme/lc-gtk-host-tree.scm: Make columns resizable.
+
 2012-11-10  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* scheme/lc-gtk-output-preview-dialog.scm (show-output): Fix bug:
