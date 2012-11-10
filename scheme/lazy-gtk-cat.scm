@@ -52,6 +52,7 @@
   (lazycat-home #:accessor lazycat-home)
 
   (mode #:accessor mode #:init-value *mode-raw*)
+  (master-host-id #:accessor master-host-id #:init-value 1)
 
   ;; Objects
   (host-list #:accessor host-list)
@@ -64,7 +65,7 @@
 
   (gtk-main-window #:accessor gtk-main-window)
   (gtk-main-vbox   #:accessor gtk-main-vbox)
-  
+
   (gtk-menu-bar       #:accessor gtk-menu-bar)
   (gtk-menu-item-file #:accessor gtk-menu-item-file)
   (gtk-menu-file      #:accessor gtk-menu-file)
@@ -90,6 +91,7 @@
   (lc-gtk-output-view #:accessor lc-gtk-output-view)
 
   (gtk-host-tree-menu              #:accessor gtk-host-tree-menu)
+  (gtk-host-tree-menu-set-master   #:accessor gtk-host-tree-menu-set-master)
   (gtk-host-tree-menu-create-group #:accessor gtk-host-tree-menu-create-group)
   (gtk-host-tree-menu-remove-group #:accessor gtk-host-tree-menu-remove-group))
 
@@ -253,6 +255,8 @@
   ;; Popup menu:
   ;;
   ;;   ---------------------
+  ;;  | Set as a master host
+  ;;  |=====================
   ;;  | Create group
   ;;  |---------------------
   ;;  | Remove group
@@ -260,6 +264,9 @@
   ;;
   (slot-set! obj 'gtk-host-tree-menu
              (make <gtk-menu>))
+  (slot-set! obj 'gtk-host-tree-menu-set-master
+             (make <gtk-menu-item>
+               #:label "Set as a master host"))
   (slot-set! obj 'gtk-host-tree-menu-create-group
              (make <gtk-menu-item>
                #:label "Create group"))
@@ -267,8 +274,11 @@
              (make <gtk-menu-item>
                #:label "Remove group"))
 
-  (append (gtk-host-tree-menu obj) (gtk-host-tree-menu-create-group obj))
-  (append (gtk-host-tree-menu obj) (gtk-host-tree-menu-remove-group obj))
+  (let ((menu (gtk-host-tree-menu obj)))
+    (append menu (gtk-host-tree-menu-set-master obj))
+    (append menu (make <gtk-separator-menu-item>))
+    (append menu (gtk-host-tree-menu-create-group obj))
+    (append menu (gtk-host-tree-menu-remove-group obj)))
 
   (show-all (gtk-host-tree-menu obj))
 
@@ -287,6 +297,9 @@
 
   (gtype-instance-signal-connect-after (gtk-entry obj) 'activate
                                        (lambda (e) (handle-send-message obj)))
+
+  (gtype-instance-signal-connect-after (gtk-host-tree-menu-set-master obj) 'activate
+                                       (lambda (e) (handle-set-master obj)))
   (gtype-instance-signal-connect-after (gtk-add-host-button obj) 'clicked
                                        (lambda (e) (handle-add-host obj)))
   (gtype-instance-signal-connect-after (gtk-rem-host-button obj) 'clicked
@@ -296,6 +309,8 @@
            (lambda (w e)
              (handle-host-tree-button-press-event obj (gdk-event-button:button e))))
 
+  (connect (gtk-host-tree-menu-set-master obj)   'activate
+           (lambda (w) (handle-set-master obj)))
   (connect (gtk-host-tree-menu-create-group obj) 'activate
            (lambda (w) (handle-add-group obj)))
   (connect (gtk-host-tree-menu-remove-group obj) 'activate
@@ -309,6 +324,14 @@
 ;; of <lazy-gtk-cat>. Most of usefull work is done by other methods that
 ;; handlers are calling.
 ;;
+
+;; Handler for "Set as a master" popup menu item.
+(define-method (handle-set-master (obj <lazy-gtk-cat>))
+  (let* ((host-tree (lc-gtk-host-tree obj))
+         (host-id   (lc-gtk-host-tree-get-selected host-tree)))
+    ;; Check that the selected row is a host.
+    (if (not (eq? host-id #f))
+        (set-master-host obj host-id))))
 
 ;; This method makes a dialog window to ask the user a group name and
 ;; add a new group to host-list and host-tree.
@@ -433,7 +456,16 @@
                   (display "DEBUG: load-hosts\n")
                   (display "DEBUG: load-hosts: group-name: ") (display group-name) (newline)
                   (lc-gtk-host-tree-add-host host-tree group-name host-attributes)))
-              (host-list-get-plain-list host-list))))
+              (host-list-get-plain-list host-list))
+
+    ;; Set default master host (the 1st host from the list)
+    ;; TODO: It'll be good idea to store info about master host between sessions.
+    (set-master-host obj 1)))
+
+;; Set host with HOST-ID as a master host.
+(define-method (set-master-host (obj <lazy-gtk-cat>) (host-id <number>))
+  (slot-set! obj 'master-host-id host-id)
+  (lc-gtk-host-tree-set-master-host (lc-gtk-host-tree obj) host-id))
 
 ;; Send message
 (define-method (send-message (obj <lazy-gtk-cat>) (message <string>))
@@ -455,10 +487,6 @@
           (let ((header (string-append host-id " NOK")))
             (lc-gtk-output-view-append-error output-view header diff)))))
 
-  ;; TODO: Remove this hardcoded value. A user should be able to set a host that
-  ;;       will be used as pattern.
-  (define *pattern-host-id* 1)
-
   (let* ((host-list       (host-list obj))
          (plain-host-list (host-list-get-plain-list host-list)))
     (if (string=? (mode obj) *mode-raw*)
@@ -468,10 +496,10 @@
         ;; Diff mode. Output from the first host from list will be taken
         ;; as pattern. Then we will compare output from every host with
         ;; the pattern.
-        (let ((pattern (host-send-message (host-list-get-host-by-id host-list
-                                                                    *pattern-host-id*)
-                                          message))
-              (output-preview-dialog (lc-gtk-output-preview-dialog obj)))
+        (let* ((master-host-id        (master-host-id obj))
+               (host                  (host-list-get-host-by-id host-list master-host-id))
+               (pattern               (host-send-message host message))
+               (output-preview-dialog (lc-gtk-output-preview-dialog obj)))
 
           (connect output-preview-dialog 'response
                    (lambda (w rsp)

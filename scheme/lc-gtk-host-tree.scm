@@ -27,7 +27,8 @@
   #:export (<lc-gtk-host-tree> lc-gtk-host-tree-add-host
                                lc-gtk-host-tree-rem-host
                                lc-gtk-host-tree-get-selected
-                               lc-gtk-host-tree-get-selected-group))
+                               lc-gtk-host-tree-get-selected-group
+                               lc-gtk-host-tree-set-master-host))
 
 ;; Column numbers.
 ;;
@@ -36,15 +37,25 @@
 (define *column-id-number*          0)
 (define *column-name-number*        1)
 (define *column-description-number* 2)
+(define *column-color-number*       3)
+
+;; Colors
+(define *color-master-host* "orange")
+(define *color-default*     "black")
 
 ;; Main class
-(define-class <lc-gtk-host-tree> (<gtk-tree-view>))
+(define-class <lc-gtk-host-tree> (<gtk-tree-view>)
+  (master-host-id #:accessor master-host-id #:init-value #f))
 
 ;; Class initialization
 (define-method (initialize (obj <lc-gtk-host-tree>) args)
   (next-method)
 
+  ;; FIXME: Host IDs (the 1st column) have to be stored as numbers,
+  ;;        not strings. This will allow us to avoid extra
+  ;;        conversations string->number and vice versa.
   (let ((tree-store (gtk-tree-store-new (list <gchararray>
+                                              <gchararray>
                                               <gchararray>
                                               <gchararray>)))
         (column-id   (make <gtk-tree-view-column>
@@ -65,8 +76,12 @@
 
     (gtk-tree-view-column-add-attribute column-id text-renderer "text"
                                         *column-id-number*)
+
     (gtk-tree-view-column-add-attribute column-name text-renderer "text"
                                         *column-name-number*)
+    (gtk-tree-view-column-add-attribute column-name text-renderer "foreground"
+                                        *column-color-number*)
+
     (gtk-tree-view-column-add-attribute column-desc text-renderer "text"
                                         *column-description-number*)
 
@@ -150,18 +165,74 @@
 (define-method (lc-gtk-host-tree-get-selected (obj <lc-gtk-host-tree>))
   (let* ((selection (gtk-tree-view-get-selection obj)))
     (receive (model iter) (gtk-tree-selection-get-selected selection)
-      (string->number (gtk-tree-model-get-value model iter *column-id-number*)))))
+      (let ((host-id (gtk-tree-model-get-value model iter *column-id-number*)))
+        ;; Check that the selected row is a host.
+        (if (not (eq? host-id #f))
+            (string->number host-id)
+            #f)))))
 
 ;; Get the selected group.
 ;;
-;; TODO: This is quite silly function, so it should merged with -get-selected.
+;; TODO: This is a quite stupid function, so it should be merged with
+;;       -get-selected.
 (define-method (lc-gtk-host-tree-get-selected-group (obj <lc-gtk-host-tree>))
   (let* ((selection (gtk-tree-view-get-selection obj)))
     (receive (model iter) (gtk-tree-selection-get-selected selection)
       (gtk-tree-model-get-value model iter *column-name-number*))))
+
+;; Mark the host with given ID as a master host.
+(define-method (lc-gtk-host-tree-set-master-host (obj <lc-gtk-host-tree>) (host-id <number>))
+  (let ((new-iter (get-row-by-host-id obj host-id)))
+    (set-master-host obj new-iter)))
+
 ;;
 ;; Private methods.
 ;;
+
+(define-method (set-master-host (obj <lc-gtk-host-tree>) (iter <gtk-tree-iter>))
+  ;; Set the default color for old master host.
+  (let ((current-master-id (master-host-id obj))
+        (model             (gtk-tree-view-get-model obj)))
+    (if (not (eq? current-master-id #f))
+        (let ((old-iter (get-row-by-host-id obj current-master-id)))
+          (gtk-tree-store-set-value model old-iter 
+                                    *column-color-number* 
+                                    *color-default*)))
+    ;; Save ID of the current master host.
+    (slot-set! obj 'master-host-id 
+               (string->number (gtk-tree-model-get-value model iter *column-id-number*)))
+    ;; Change a background color of the current row.
+    (gtk-tree-store-set-value model iter 
+                              *column-color-number* 
+                              *color-master-host*)))
+
+;; Get a row by a host ID.
+;;
+;; Function returns an iterator pointed to the row, or #f if a host
+;; with given ID is not found.
+(define-method (get-row-by-host-id (obj <lc-gtk-host-tree>) (host-id <number>))
+  (let* ((column (gtk-tree-view-get-column obj *column-id-number*))
+         (model  (gtk-tree-view-get-model obj))
+         (iter   (gtk-tree-model-get-iter-first model)))
+    (let search-in ((it iter))
+      (if (not (eq? it #f))
+          (let ((current-id (gtk-tree-model-get-value model it *column-id-number*)))
+            (if (and (not (eq? current-id #f)) (eq? (string->number current-id) host-id))
+                ;; Needed row is found. Return the current iterator.
+                it
+                ;; Get the next one.
+                (if (gtk-tree-model-iter-has-child model it)
+                    ;; Search in group
+                    (let ((row-iter (search-in (car (gtk-tree-model-iter-children model it)))))
+                      (if (not (eq? row-iter #f))
+                          ;; Row has been found.
+                          row-iter
+                          ;; Get the next row.
+                          (search-in (gtk-tree-model-iter-next model it))))
+                    ;; Get the next row
+                    (search-in (gtk-tree-model-iter-next model it)))))
+          ;; There are no more rows to search in.
+          #f))))
 
 ;; Get a group by name
 (define-method (get-group (obj <lc-gtk-host-tree>) (group-name <string>))

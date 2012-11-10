@@ -1,3 +1,13 @@
+2012-11-10  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Add support for selecting a master host for the diff mode.
+	* scheme/lazy-gtk-cat.scm (handle-set-master): New method.
+	(set-master-host): New method.
+	* scheme/lc-gtk-host-tree.scm (lc-gtk-host-tree-set-master-host):
+	New public method.
+	(set-master-host): New private method.
+	(get-row-by-host-id): New private method.
+
 2012-11-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* .gitignore: Fix wrong rules. Update.
