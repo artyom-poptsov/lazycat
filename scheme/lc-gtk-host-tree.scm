@@ -17,6 +17,9 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
+
+;;; Module definition
+
 (define-module (lazycat lc-gtk-host-tree)
   #:use-module (oop goops)
   #:use-module (gnome-2)
@@ -29,6 +32,8 @@
                                lc-gtk-host-tree-get-selected
                                lc-gtk-host-tree-get-selected-group
                                lc-gtk-host-tree-set-master-host))
+
+;;; Constants
 
 ;; Column numbers.
 ;;
@@ -43,7 +48,9 @@
 (define *color-master-host* "orange")
 (define *color-default*     "black")
 
-;; Main class
+
+;;; Main class
+
 (define-class <lc-gtk-host-tree> (<gtk-tree-view>)
   (master-host-id #:accessor master-host-id #:init-value #f))
 
@@ -92,9 +99,10 @@
     (gtk-tree-view-append-column obj column-desc
                                  *column-description-number*)))
 
-;;
-;; Public methods
-;;
+
+;;;
+;;; Public methods
+;;;
 
 ;; Add a new host to the host tree.
 ;;
@@ -185,9 +193,10 @@
   (let ((new-iter (get-row-by-host-id obj host-id)))
     (set-master-host obj new-iter)))
 
-;;
-;; Private methods.
-;;
+
+;;;
+;;; Private methods.
+;;;
 
 (define-method (set-master-host (obj <lc-gtk-host-tree>) (iter <gtk-tree-iter>))
   ;; Set the default color for old master host.

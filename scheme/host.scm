@@ -17,6 +17,9 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
+
+;;; Module definition
+
 (define-module (lazycat host)
   #:use-module (oop goops)
   #:use-module (lazycat builtins)
@@ -24,6 +27,8 @@
             host-get-id host-get-name host-get-proxy host-get-address
             host-get-description host-send-message host-remove))
 
+
+;;; Main class
 (define-class <host> ()
   (id          #:accessor id          #:init-value #f)
   (name        #:accessor name        #:init-value #f #:init-keyword #:name)
@@ -39,6 +44,11 @@
                                   (name        obj)
                                   (description obj))))
 
+
+;;;
+;;; Public methods
+;;;
+
 ;; Send the MESSAGE to the host
 (define-method (host-send-message (obj <host>) (message <string>))
   (lc-send-msg (id obj) message))
@@ -47,9 +57,8 @@
 (define-method (host-remove (obj <host>))
   (lc-rem-host (id obj)))
 
-;;
-;; Setters
-;;
+
+;;; Setters
 
 ;; Rename the host
 (define-method (host-set-name (this <host>) (new-name <string>))
@@ -67,9 +76,8 @@
 (define-method (host-set-description (this <host>) (new-description <string>))
   (slot-set! this 'description new-description))
 
-;;
-;; Getters
-;;
+
+;;; Getters
 
 (define-method (host-get-id          (obj <host>)) (id          obj))
 (define-method (host-get-name        (obj <host>)) (name        obj))

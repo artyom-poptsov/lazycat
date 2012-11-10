@@ -17,6 +17,9 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
+
+;;; Module definition
+
 (define-module (lazycat lc-gtk-add-host-dialog)
   #:use-module (oop goops)
   #:use-module (gnome-2)
@@ -26,7 +29,9 @@
   #:export (<lc-gtk-add-host-dialog> get-host-name get-proxy-name get-address
                                      get-host-description))
 
-;; Main class
+
+;;; Main class
+
 (define-class <lc-gtk-add-host-dialog> (<gtk-dialog>)
   (cbox-proxy-name        #:accessor cbox-proxy-name)
   (entry-group            #:accessor entry-group)
@@ -36,7 +41,9 @@
   
   (proxy-list #:accessor proxy-list #:init-value '() #:init-keyword #:proxy-list))
 
-;; Class initialization
+
+;;; Class initialization
+
 (define-method (initialize (obj <lc-gtk-add-host-dialog>) args)
 
   (define (add-widgets-to-box box . widgets)
@@ -86,7 +93,12 @@
     (connect button-add    'clicked (lambda (w) (hide-all obj)))
     (connect button-cancel 'clicked (lambda (w) (hide-all obj)))))
 
-;; Getters
+
+;;;
+;;; Public methods
+;;;
+
+;;; Getters
 
 (define-method (get-group (obj <lc-gtk-add-host-dialog>))
   (gtk-entry-get-text (entry-group obj)))

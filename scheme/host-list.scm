@@ -17,6 +17,9 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
+
+;;; Module definition
+
 (load "config.scm")
 (load "host.scm")
 
@@ -37,14 +40,18 @@
                         host-list-get-host-by-id
                         host-list-get-group-name-by-host-id))
 
-;; Constants
+
+;;; Constants
+
 (define *default-lazycat-home* "~/.lazycat")
 (define *default-file-name*    "hosts")
 (define *default-list-name*    "hosts")
 
 (define *no-group*  #f)
 
-;; Main class
+
+;;; Main class
+
 (define-class <host-list> ()
   (lazycat-home     #:accessor     lazycat-home
                     #:init-value   *default-lazycat-home*
@@ -65,6 +72,11 @@
   (next-method)
   (let ((file (string-append (lazycat-home obj) "/" (config-file-name obj))))
     (slot-set! obj 'config (make <config> #:file file))))
+
+
+;;;
+;;; Public methods
+;;;
 
 ;; Load the host list
 (define-method (host-list-load (obj <host-list>))

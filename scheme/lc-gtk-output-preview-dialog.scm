@@ -17,6 +17,9 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
+
+;;; Module definition
+
 (define-module (lazycat lc-gtk-output-preview-dialog)
   #:use-module (oop goops)
   #:use-module (gnome-2)
@@ -25,9 +28,13 @@
   #:use-module (gnome gtk gdk-event)
   #:export (<lc-gtk-output-preview-dialog> show-output))
 
+
+;;; Main class
+
 (define-class <lc-gtk-output-preview-dialog> (<gtk-dialog>)
   (output-preview-buffer #:accessor output-preview-buffer))
 
+;; Class inititalization
 (define-method (initialize (obj <lc-gtk-output-preview-dialog>) args)
   (next-method)
 

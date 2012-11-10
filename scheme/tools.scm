@@ -17,9 +17,15 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
+
+;;; Module definition
+
 (define-module (lazycat tools)
   #:use-module (ice-9 rdelim)
   #:export (touch diff sdiff))
+
+
+;;; Functions
 
 (define (mkdir dir)
   "Wrapper for the mkdir tool."

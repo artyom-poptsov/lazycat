@@ -17,6 +17,9 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
+
+;;; Module definition
+
 (for-each (lambda (file) (load file))
           '("host.scm"
             "host-list.scm"
@@ -41,11 +44,16 @@
   #:use-module (lazycat tools)
   #:export (<lazy-gtk-cat> run))
 
-(define *mode-raw*  "raw-mode")
-(define *mode-diff* "diff-mode")
+
+;;; Constants
+
+(define *mode-raw*         "raw-mode")
+(define *mode-diff*        "diff-mode")
 (define *application-name* "LazyCat")
 
-;; Main class
+
+;;; Main class
+
 (define-class <lazy-gtk-cat> ()
   ;; Directories
   (tmp-dir      #:accessor tmp-dir)
@@ -95,8 +103,9 @@
   (gtk-host-tree-menu-create-group #:accessor gtk-host-tree-menu-create-group)
   (gtk-host-tree-menu-remove-group #:accessor gtk-host-tree-menu-remove-group))
 
+
+;;; Class initialization
 
-;; Class initialization
 (define-method (initialize (obj <lazy-gtk-cat>) args)
   (next-method)
 
@@ -114,6 +123,7 @@
              (make <lc-gtk-add-host-dialog>
                #:proxy-list '("tcp-proxy" "ssh-proxy")))
 
+
   ;; Create LazyCat GUI
 
   ;;
@@ -166,6 +176,7 @@
   (slot-set! obj 'gtk-main-paned (make <gtk-hpaned> #:position 300))
   (pack-end (gtk-main-vbox obj) (gtk-main-paned obj) #t #t 0)
 
+
   ;;
   ;;   -----------------------------------------
   ;;  | Main paned                              |
@@ -180,6 +191,7 @@
   (slot-set! obj 'gtk-right-vbox (make <gtk-vbox> #:homogeneous #f #:spacing 0))
   (gtk-paned-add2 (gtk-main-paned obj) (gtk-right-vbox obj))
 
+
   ;;
   ;;   ---------------------
   ;;  | Left vbox
@@ -219,6 +231,7 @@
   ;; Pack the Button hbox
   (pack-end (gtk-left-vbox obj) (gtk-button-hbox obj) #f #f 0)
 
+
   ;;
   ;;   ---------------------  
   ;;  | Right vbox
@@ -241,6 +254,7 @@
   (pack-start (gtk-right-vbox obj) (gtk-scrolled-window obj) #t #t 0)
   (pack-end   (gtk-right-vbox obj) (gtk-entry obj) #f #f 0)
 
+
   ;;
   ;;   ---------------------
   ;;  | Scrolled window
@@ -251,6 +265,7 @@
   (slot-set! obj 'lc-gtk-output-view (make <lc-gtk-output-view>))
   (gtk-container-add (gtk-scrolled-window obj) (lc-gtk-output-view obj))
 
+
   ;;
   ;; Popup menu:
   ;;
@@ -282,6 +297,7 @@
 
   (show-all (gtk-host-tree-menu obj))
 
+
   ;;
   ;; Set up handlers for signals
   ;;
@@ -316,14 +332,14 @@
   (connect (gtk-host-tree-menu-remove-group obj) 'activate
            (lambda (w) (handle-rem-group obj))))
 
-
-;;
-;; Handlers for various events.
-;;
-;; These methods take just one parameter and this parameter is an instance
-;; of <lazy-gtk-cat>. Most of usefull work is done by other methods that
-;; handlers are calling.
-;;
+
+;;;
+;;; Handlers for various events.
+;;;
+;;; These methods take just one parameter and this parameter is an instance
+;;; of <lazy-gtk-cat>. Most of usefull work is done by other methods that
+;;; handlers are calling.
+;;;
 
 ;; Handler for "Set as a master" popup menu item.
 (define-method (handle-set-master (obj <lazy-gtk-cat>))
@@ -411,9 +427,10 @@
     (gtk-main-quit)
     #f))
 
-;;
-;; Methods that do most of the hard work.
-;;
+
+;;;
+;;; Methods that do most of the hard work.
+;;;
 
 ;; Run the application.
 (define-method (run (obj <lazy-gtk-cat>) args)

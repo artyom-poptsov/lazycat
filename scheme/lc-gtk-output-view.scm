@@ -17,6 +17,9 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
+
+;;; Module definition
+
 (define-module (lazycat lc-gtk-output-view)
   #:use-module (oop goops)
   #:use-module (gnome-2)
@@ -26,10 +29,12 @@
   #:export (<lc-gtk-output-view>
             lc-gtk-output-view-append lc-gtk-output-view-append-error))
 
-;; Main class
+
+;;; Main class
+
 (define-class <lc-gtk-output-view> (<gtk-text-view>))
 
-;; Initialization of the class
+;; Class initialization
 (define-method (initialize (obj <lc-gtk-output-view>) args)
   (next-method)
 
@@ -55,6 +60,28 @@
                               #:background "grey"
                               #:foreground "red"))))
 
+
+;;;
+;;; Public methods
+;;;
+
+;; Append a message to the output view.
+(define-method (lc-gtk-output-view-append (obj     <lc-gtk-output-view>)
+                                          (header  <string>)
+                                          (message <string>))
+  (insert obj "normal" header message))
+
+;; Append an error message to the output view.
+(define-method (lc-gtk-output-view-append-error (obj     <lc-gtk-output-view>)
+                                                (header  <string>)
+                                                (message <string>))
+  (insert obj "error" header message))
+
+
+;;;
+;;; Private methods
+;;;
+
 ;; Insert generic message to the output view.
 (define-method (insert (obj      <lc-gtk-output-view>)
                        (tag-name <string>)
@@ -71,17 +98,5 @@
       (gtk-text-buffer-apply-tag-by-name buffer tag-name iter-at-mark text-iter))
     (gtk-text-buffer-insert            buffer text-iter message -1)
     (gtk-text-buffer-insert            buffer text-iter "\n" -1)))
-
-;; Append a message to the output view.
-(define-method (lc-gtk-output-view-append (obj     <lc-gtk-output-view>)
-                                          (header  <string>)
-                                          (message <string>))
-  (insert obj "normal" header message))
-
-;; Append an error message to the output view.
-(define-method (lc-gtk-output-view-append-error (obj     <lc-gtk-output-view>)
-                                                (header  <string>)
-                                                (message <string>))
-  (insert obj "error" header message))
 
 ;;;; EOF

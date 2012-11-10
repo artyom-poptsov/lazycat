@@ -17,12 +17,18 @@
 ;;;; You should have received a copy of the GNU General Public License
 ;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
+
+;;; Module definition
+
 (load "tools.scm")
 
 (define-module (lazycat config)
   #:use-module (oop goops)
   #:use-module (lazycat tools)
   #:export     (<config> config-load-list config-save-list))
+
+
+;;; Main class
 
 (define-class <config> ()
   (file #:accessor file #:init-value #f #:init-keyword #:file))
@@ -31,6 +37,11 @@
 (define-method (initialize (obj <config>) args)
   (next-method)
   (if (not (file-exists? (file obj))) (touch (file obj))))
+
+
+;;;
+;;; Public methods
+;;;
 
 ;; Load the list LIST-NAME from the config file.
 (define-method (config-load-list (obj <config>) (list-name <string>))
