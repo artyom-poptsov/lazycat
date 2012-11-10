@@ -1,5 +1,9 @@
 2012-11-10  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* scheme/lc-gtk-output-preview-dialog.scm (show-output): Fix bug:
+	use gtk-text-buffer-set-text instead of gtk-text-buffer-insert to
+	clean up previous content of the buffer.
+
 	Improve the coding style.
 	* scheme/lazy-gtk-cat.scm: Split the code into logical parts by
 	using a line feed symbol. Improve some comments.

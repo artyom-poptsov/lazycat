@@ -59,8 +59,7 @@
     (gtk-box-pack-start (get-vbox obj) output-preview #t #t 0)))
 
 (define-method (show-output (obj <lc-gtk-output-preview-dialog>) (output <string>))
-  (let ((text-iter (gtk-text-buffer-get-end-iter (output-preview-buffer obj))))
-    (gtk-text-buffer-insert (output-preview-buffer obj) text-iter output -1)
-    (show-all obj)))
+  (gtk-text-buffer-set-text (output-preview-buffer obj) output)
+  (show-all obj))
 
 ;;;; EOF
