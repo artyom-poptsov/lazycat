@@ -524,7 +524,7 @@
                          (for-each (lambda (host) (fetch-and-analyse host pattern))
                                    plain-host-list)
                          (let ((output-view (lc-gtk-output-view obj)))
-                           (lc-gtk-output-view-append "Canceled by user." "")))))
+                           (lc-gtk-output-view-append output-view "Canceled by user." "")))))
 
           (show-output output-preview-dialog pattern)))
 
