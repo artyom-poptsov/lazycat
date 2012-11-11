@@ -43,20 +43,27 @@
   
   (set-default-size obj 800 500)
 
-  (let* ((label          (make <gtk-label> #:label "Is this output correct?"))
-         (output-preview (make <gtk-text-view>
+  (let* ((label           (make <gtk-label> #:label "Is this output correct?"))
+         (output-preview  (make <gtk-text-view>
                            #:buffer (output-preview-buffer obj)
                            #:editable #f))
-         (yes-button     (gtk-dialog-add-button obj "No"  0))
-         (no-button      (gtk-dialog-add-button obj "Yes" 1)))
+         (scrolled-window (make <gtk-scrolled-window>
+                            #:hscrollbar-policy 'automatic
+                            #:vscrollbar-policy 'automatic))
+         (yes-button      (gtk-dialog-add-button obj "No"  0))
+         (no-button       (gtk-dialog-add-button obj "Yes" 1)))
     
     ;; Connect handlers to signals
     (connect yes-button 'clicked (lambda (w) (hide-all obj)))
     (connect no-button  'clicked (lambda (w) (hide-all obj)))
 
     ;; Pack GUI
-    (gtk-box-pack-start (get-vbox obj) label #f #f 0)
-    (gtk-box-pack-start (get-vbox obj) output-preview #t #t 0)))
+
+    (gtk-container-add scrolled-window output-preview)
+
+    (let ((vbox (get-vbox obj)))
+      (gtk-box-pack-start vbox label #f #f 0)
+      (gtk-box-pack-start vbox scrolled-window #t #t 0))))
 
 (define-method (show-output (obj <lc-gtk-output-preview-dialog>) (output <string>))
   (gtk-text-buffer-set-text (output-preview-buffer obj) output)

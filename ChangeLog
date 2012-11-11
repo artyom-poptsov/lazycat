@@ -1,5 +1,9 @@
 2012-11-11  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* scheme/lc-gtk-output-preview-dialog.scm (initialize): Place the
+	text buffer in a scrolled window. This will help us to keep the
+	dialog window in the reasonable size borders on bulky outputs.
+
 	* scheme/lc-gtk-add-host-dialog.scm (initialize): Fix typo.
 
 	* scheme/lc-gtk-output-view.scm (insert): Add auto-scrolling to
