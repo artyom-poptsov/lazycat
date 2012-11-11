@@ -10,6 +10,9 @@ what is going on with your cluster.
 LazyCat is distributed under the terms of GNU GPLv3 license or (at
 your option) any later version. See COPYING for details.
 
+For information about open issues and ideas about development of the
+project see TODO file.
+
 	ARCHITECTURE
 
 LazyCat consists of the four main parts: a GUI, the server, proxies
