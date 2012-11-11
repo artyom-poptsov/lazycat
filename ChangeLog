@@ -1,5 +1,7 @@
 2012-11-11  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* scheme/lc-gtk-add-host-dialog.scm (initialize): Fix typo.
+
 	* scheme/lc-gtk-output-view.scm (insert): Add auto-scrolling to
 	the last line of the text buffer.
 

@@ -65,7 +65,7 @@
         (label-group-name       (make <gtk-label> #:label "Group"))
         (label-address          (make <gtk-label> #:label "Address"))
         (label-host-name        (make <gtk-label> #:label "Host name"))
-        (label-host-description (make <gtk-label> #:label "Host descripion"))
+        (label-host-description (make <gtk-label> #:label "Host description"))
         (button-add             (gtk-dialog-add-button obj "Add"    1))
         (button-cancel          (gtk-dialog-add-button obj "Cancel" 0)))
 
