@@ -1,5 +1,8 @@
 2012-11-11  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* scheme/lc-gtk-output-view.scm (insert): Add auto-scrolling to
+	the last line of the text buffer.
+
 	* scheme/lazy-gtk-cat.scm (send-message): Fix bug with calling
 	lc-gtk-output-view-append incorrectly.
 
