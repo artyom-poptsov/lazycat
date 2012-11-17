@@ -484,7 +484,7 @@
   (slot-set! obj 'master-host-id host-id)
   (lc-gtk-host-tree-set-master-host (lc-gtk-host-tree obj) host-id))
 
-;; Send message
+;; Send a message
 (define-method (send-message (obj <lazy-gtk-cat>) (message <string>))
 
   (define (just-send-and-print host)
@@ -505,29 +505,42 @@
             (lc-gtk-output-view-append-error output-view header diff)))))
 
   (let* ((host-list       (host-list obj))
-         (plain-host-list (host-list-get-plain-list host-list)))
+         (plain-host-list (host-list-get-plain-list host-list))
+         (handler-id      #f))
+
     (if (string=? (mode obj) *mode-raw*)
-        ;; Raw mode. Just send message to all hosts and print responses.
+
+        ;; Raw mode. Just send the message to all hosts and print responses.
         (for-each just-send-and-print plain-host-list)
 
-        ;; Diff mode. Output from the first host from list will be taken
-        ;; as pattern. Then we will compare output from every host with
-        ;; the pattern.
+        ;; Diff mode. An output from a master host will be taken as a
+        ;; pattern. Then we will compare the output from every host
+        ;; with the pattern.
         (let* ((master-host-id        (master-host-id obj))
-               (host                  (host-list-get-host-by-id host-list master-host-id))
-               (pattern               (host-send-message host message))
+               (master-host           (host-list-get-host-by-id host-list master-host-id))
+               (pattern               (host-send-message master-host message))
                (output-preview-dialog (lc-gtk-output-preview-dialog obj)))
 
-          (connect output-preview-dialog 'response
-                   (lambda (w rsp)
-                     (if (= rsp 1)
-                         (for-each (lambda (host) (fetch-and-analyse host pattern))
-                                   plain-host-list)
-                         (let ((output-view (lc-gtk-output-view obj)))
-                           (lc-gtk-output-view-append output-view "Canceled by user." "")))))
+          ;; Handler for a dialog response
+          (define (handle-dialog-response rsp)
+            (if (= rsp 1)
+                (for-each (lambda (host) (fetch-and-analyse host pattern))
+                          plain-host-list)
+                (let ((output-view (lc-gtk-output-view obj)))
+                  (lc-gtk-output-view-append output-view "Canceled by user." "")))
+            ;; Disconnect the connected handler
+            (gsignal-handler-disconnect output-preview-dialog handler-id))
 
+          ;; Connect the handler to a signal
+          (set! handler-id
+                (gtype-instance-signal-connect output-preview-dialog
+                                               'response
+                                               (lambda (w rsp)
+                                                 (handle-dialog-response rsp))))
+          ;; Show an output preview
           (show-output output-preview-dialog pattern)))
 
+    ;; Clean up a previous content of the command line
     (gtk-entry-set-text (gtk-entry obj) "")))
 
 ;;;; EOF

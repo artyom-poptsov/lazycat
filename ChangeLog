@@ -1,3 +1,8 @@
+2012-11-17  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* scheme/lazy-gtk-cat.scm (send-message): Fix bug with registering
+	a new handler for a signal on the every function call.
+
 2012-11-11  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* scheme/lc-gtk-output-preview-dialog.scm (initialize): Place the
