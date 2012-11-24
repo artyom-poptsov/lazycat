@@ -127,6 +127,8 @@
 (define-method (initialize (obj <lazy-gtk-cat>) args)
   (next-method)
 
+  (gdk-threads-init)
+
   (slot-set! obj 'logger (make <logger>
                            #:ident    *syslog-tag*
                            #:facility 'user))
@@ -462,7 +464,9 @@
   (logger-message (logger obj) 'info "Starting the application")
   (show-all (gtk-main-window obj))
   (load-hosts obj)
-  (gtk-main))
+  (gdk-threads-enter)
+  (gtk-main)
+  (gdk-threads-leave))
 
 ;; Add host to the GTK host three and to the host list
 ;;
@@ -520,9 +524,12 @@
 (define-method (send-message (obj <lazy-gtk-cat>) (message <string>))
 
   (define (just-send-and-print host)
-    (lc-gtk-output-view-append (lc-gtk-output-view obj)
-                               (number->string (host-get-id host))
-                               (host-send-message host message)))
+    (let ((response    (host-send-message host message))
+          (host-id     (number->string (host-get-id host)))
+          (output-view (lc-gtk-output-view obj)))
+      (gdk-threads-enter)
+      (lc-gtk-output-view-append output-view host-id response)
+      (gdk-threads-leave)))
 
   (define (fetch-and-analyse host pattern)
     (let* ((output      (host-send-message host message))
@@ -532,9 +539,13 @@
 
       (if (diff-empty? diff)
           (let ((header (string-append host-id " OK")))
-            (lc-gtk-output-view-append output-view header (diff-get diff)))
+            (gdk-threads-enter)
+            (lc-gtk-output-view-append output-view header (diff-get diff))
+            (gdk-threads-leave))
           (let ((header (string-append host-id " NOK")))
-            (lc-gtk-output-view-append-error output-view header (diff-get diff))))))
+            (gdk-threads-enter)
+            (lc-gtk-output-view-append-error output-view header (diff-get diff))
+            (gdk-threads-leave)))))
 
   (let* ((host-list       (host-list obj))
          (plain-host-list (host-list-get-plain-list host-list))
@@ -543,7 +554,18 @@
     (if (string=? (mode obj) *mode-raw*)
 
         ;; Raw mode. Just send the message to all hosts and print responses.
-        (for-each just-send-and-print plain-host-list)
+        (call-with-new-thread
+         (lambda () (begin
+                      (gdk-threads-enter)
+                      (gtk-widget-set-sensitive (gtk-entry obj) #f)
+                      (gdk-threads-leave)
+
+                      (for-each just-send-and-print plain-host-list)
+
+                      (gdk-threads-enter)
+                      (gtk-widget-set-sensitive (gtk-entry obj) #t)
+                      (gtk-widget-grab-focus (gtk-entry obj))
+                      (gdk-threads-leave))))
 
         ;; Diff mode. An output from a master host will be taken as a
         ;; pattern. Then we will compare the output from every host
@@ -556,8 +578,21 @@
           ;; Handler for a dialog response
           (define (handle-dialog-response rsp)
             (if (= rsp 1)
-                (for-each (lambda (host) (fetch-and-analyse host pattern))
-                          plain-host-list)
+                ;; Execute
+                (call-with-new-thread
+                 (lambda () (begin
+                              (gdk-threads-enter)
+                              (gtk-widget-set-sensitive (gtk-entry obj) #f)
+                              (gdk-threads-leave)
+
+                              (for-each (lambda (host) (fetch-and-analyse host pattern))
+                                        plain-host-list)
+
+                              (gdk-threads-enter)
+                              (gtk-widget-set-sensitive (gtk-entry obj) #t)
+                              (gtk-widget-grab-focus (gtk-entry obj))
+                              (gdk-threads-leave))))
+                ;; Cancel
                 (let ((output-view (lc-gtk-output-view obj)))
                   (lc-gtk-output-view-append output-view "Canceled by user." "")))
             ;; Disconnect the connected handler

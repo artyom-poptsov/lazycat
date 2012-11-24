@@ -52,7 +52,7 @@
   (next-method)
 
   (slot-set! obj 'editable #f)
-  
+
   (let* ((tag-table   (make <gtk-text-tag-table>))
          (text-buffer (make <gtk-text-buffer>
                         #:tag-table tag-table)))
@@ -105,8 +105,8 @@
                             (string-append "<<< " header "\n") -1)
     (let ((iter-at-mark (gtk-text-buffer-get-iter-at-mark buffer mark)))
       (gtk-text-buffer-apply-tag-by-name buffer tag-name iter-at-mark text-iter))
-    (gtk-text-buffer-insert            buffer text-iter message -1)
-    (gtk-text-buffer-insert            buffer text-iter "\n" -1)
+    (gtk-text-buffer-insert buffer text-iter message -1)
+    (gtk-text-buffer-insert buffer text-iter "\n" -1)
     ;; Scroll the window to the last line.
     (let ((mark (gtk-text-buffer-create-mark buffer #f text-iter #t)))
       (gtk-text-view-scroll-mark-onscreen obj mark))))
