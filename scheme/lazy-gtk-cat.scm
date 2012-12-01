@@ -461,23 +461,28 @@
   (let* ((host-list  (host-list obj))
          (host-tree  (lc-gtk-host-tree obj)))
 
+    (define (add-host-to-host-tree host)
+      (let ((group-name (host-list-get-group-name-by-host-id host-list
+                                                             (host-get-id host)))
+            (host-attributes (list (host-get-id          host)
+                                   (host-get-name        host)
+                                   (host-get-proxy       host)
+                                   (host-get-address     host)
+                                   (host-get-description host))))
+        (display "DEBUG: load-hosts\n")
+        (display "DEBUG: load-hosts: group-name: ") (display group-name) (newline)
+        (lc-gtk-host-tree-add-host host-tree group-name host-attributes)))
+      
     (host-list-load host-list)
 
-    (for-each (lambda (host)
-                (let ((group-name (host-list-get-group-name-by-host-id host-list (host-get-id host)))
-                      (host-attributes (list (host-get-id          host)
-                                             (host-get-name        host)
-                                             (host-get-proxy       host)
-                                             (host-get-address     host)
-                                             (host-get-description host))))
-                  (display "DEBUG: load-hosts\n")
-                  (display "DEBUG: load-hosts: group-name: ") (display group-name) (newline)
-                  (lc-gtk-host-tree-add-host host-tree group-name host-attributes)))
-              (host-list-get-plain-list host-list))
-
-    ;; Set default master host (the 1st host from the list)
-    ;; TODO: It'll be good idea to store info about master host between sessions.
-    (set-master-host obj 1)))
+    (if (not (host-list-empty? host-list))
+        (begin
+          (for-each (lambda (host) (add-host-to-host-tree host))
+                    (host-list-get-plain-list host-list))
+          ;; Set default master host (the 1st host from the list)
+          ;; TODO: It'll be good idea to store info about master host between
+          ;;       sessions.
+          (set-master-host obj 1)))))
 
 ;; Set host with HOST-ID as a master host.
 (define-method (set-master-host (obj <lazy-gtk-cat>) (host-id <number>))

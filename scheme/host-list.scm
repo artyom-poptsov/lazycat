@@ -31,6 +31,7 @@
   #:use-module (lazycat host)
   #:export (<host-list> host-list-load
                         host-list-save
+                        host-list-empty?
                         host-list-add-host
                         host-list-add-group
                         host-list-rem-host
@@ -76,6 +77,9 @@
 ;;;
 ;;; Public methods
 ;;;
+
+(define-method (host-list-empty? (obj <host-list>))
+  (null? (host-list obj)))
 
 ;; Load the host list
 (define-method (host-list-load (obj <host-list>))

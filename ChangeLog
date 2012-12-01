@@ -1,5 +1,12 @@
 2012-12-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	Add handling for a case with the missing config file.
+	* scheme/config.scm (config-load-list): Return empty list if a
+	config file doesn't exist.
+	* scheme/host-list.scm (host-list-empty?): New method.
+	* scheme/lazy-gtk-cat.scm (load-hosts): Correct handling of a
+	situation with an empty host list.
+
 	Improve way of working with diffs. Use standard scheme/guile
 	functions for file system operations (creating files, directories
 	etc).

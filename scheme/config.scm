@@ -41,10 +41,14 @@
 
 ;; Load the list LIST-NAME from the config file.
 (define-method (config-load-list (obj <config>) (list-name <string>))
-  (begin
-    (load (file obj))
-    (let ((list (eval-string list-name)))
-      (if (list? list) list #f))))
+  (if (file-exists? (file obj))
+      ;; Load a list from the file
+      (begin
+        (load (file obj))
+        (let ((list (eval-string list-name)))
+          (if (list? list) list #f)))
+      ;; Return an empty list if the file doesn't exist.
+      '()))
 
 ;; Save the list LIST-NAME to the config file.
 (define-method (config-save-list (obj <config>) (list-name <string>) (list <list>))
