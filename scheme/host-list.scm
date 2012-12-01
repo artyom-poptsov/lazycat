@@ -29,7 +29,6 @@
   ;; LazyCat modules:
   #:use-module (lazycat config)
   #:use-module (lazycat host)
-  #:use-module (lazycat tools)
   #:export (<host-list> host-list-load
                         host-list-save
                         host-list-add-host

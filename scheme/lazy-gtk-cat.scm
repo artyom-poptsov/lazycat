@@ -23,7 +23,7 @@
 (for-each (lambda (file) (load file))
           '("host.scm"
             "host-list.scm"
-            "tools.scm"
+            "diff.scm"
             "lc-gtk-output-preview-dialog.scm"
             "lc-gtk-add-host-dialog.scm"
             "lc-gtk-output-view.scm"
@@ -41,7 +41,7 @@
   #:use-module (lazycat lc-gtk-host-tree)
   #:use-module (lazycat host)
   #:use-module (lazycat host-list)
-  #:use-module (lazycat tools)
+  #:use-module (lazycat diff)
   #:export (<lazy-gtk-cat> run))
 
 
@@ -493,16 +493,16 @@
                                (host-send-message host message)))
 
   (define (fetch-and-analyse host pattern)
-    (let* ((output                (host-send-message host message))
-           (output-view           (lc-gtk-output-view obj))
-           (diff                  (sdiff (tmp-dir obj) pattern output))
-           (host-id               (number->string (host-get-id host))))
+    (let* ((output      (host-send-message host message))
+           (output-view (lc-gtk-output-view obj))
+           (diff        (make-string-diff (tmp-dir obj) pattern output))
+           (host-id     (number->string (host-get-id host))))
 
-      (if (string=? diff "")
+      (if (diff-empty? diff)
           (let ((header (string-append host-id " OK")))
-            (lc-gtk-output-view-append output-view header diff))
+            (lc-gtk-output-view-append output-view header (diff-get diff)))
           (let ((header (string-append host-id " NOK")))
-            (lc-gtk-output-view-append-error output-view header diff)))))
+            (lc-gtk-output-view-append-error output-view header (diff-get diff))))))
 
   (let* ((host-list       (host-list obj))
          (plain-host-list (host-list-get-plain-list host-list))

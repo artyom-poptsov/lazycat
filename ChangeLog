@@ -1,3 +1,15 @@
+2012-12-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Improve way of working with diffs. Use standard scheme/guile
+	functions for file system operations (creating files, directories
+	etc).
+	* scheme/diff.scm: New file.
+	* scheme/lazy-gtk-cat.scm (send-message): Use <diff> for comparing
+	strings.
+	* scheme/tools.scm: Remove.
+	* scheme/config.scm: Remove (lazycat tools) module.
+	* scheme/host-list.scm: Likewise.
+
 2012-11-17  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* scheme/lazy-gtk-cat.scm (send-message): Fix bug with registering

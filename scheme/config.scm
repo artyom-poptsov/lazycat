@@ -20,11 +20,8 @@
 
 ;;; Module definition
 
-(load "tools.scm")
-
 (define-module (lazycat config)
   #:use-module (oop goops)
-  #:use-module (lazycat tools)
   #:export     (<config> config-load-list config-save-list))
 
 
@@ -35,8 +32,7 @@
 
 ;; Class initialization
 (define-method (initialize (obj <config>) args)
-  (next-method)
-  (if (not (file-exists? (file obj))) (touch (file obj))))
+  (next-method))
 
 
 ;;;
