@@ -1,5 +1,8 @@
 2012-12-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* scheme/lazy-gtk-cat.scm (handle-add-host): Fix a bug with wrong
+	handling of a "Add host" dialog response.
+
 	Add handling for a case with the missing config file.
 	* scheme/config.scm (config-load-list): Return empty list if a
 	config file doesn't exist.

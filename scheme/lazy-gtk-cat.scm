@@ -382,23 +382,30 @@
     (lc-rem-host obj host-id)))
 
 (define-method (handle-add-host (obj <lazy-gtk-cat>))
-  (let ((dialog (lc-gtk-add-host-dialog obj)))
-    (connect dialog 'response
-             (lambda (w rsp)
-               (if (= rsp 1)
-                   ;; Get attributes for a new host from dialog
-                   (let* ((group      (get-group            dialog))
-                          (name       (get-host-name        dialog))
-                          (proxy      (get-proxy-name       dialog))
-                          (address    (get-address          dialog))
-                          (descripion (get-host-description dialog))
-                          (host-attributes (list name proxy address descripion)))
-                     ;; Add the host
-                     ;;
-                     ;; TODO: Should we do the check for an empty string passed
-                     ;;       as a group name here -- or somewhere else?
-                     (lc-add-host obj (if (eq? (string-length group) 0) #f group)
-                                  host-attributes)))))
+  (let ((dialog     (lc-gtk-add-host-dialog obj))
+        (handler-id #f))
+
+    (define (handle-dialog-response rsp)
+      (if (= rsp 1)
+          ;; Get attributes for a new host from dialog
+          (let* ((group      (get-group            dialog))
+                 (name       (get-host-name        dialog))
+                 (proxy      (get-proxy-name       dialog))
+                 (address    (get-address          dialog))
+                 (descripion (get-host-description dialog))
+                 (host-attributes (list name proxy address descripion)))
+            ;; Add the host
+            ;;
+            ;; TODO: Should we do the check for an empty string passed
+            ;;       as a group name here -- or somewhere else?
+            (lc-add-host obj (if (eq? (string-length group) 0) #f group)
+                         host-attributes)))
+      (gsignal-handler-disconnect dialog handler-id))
+
+    (set! handler-id
+          (gtype-instance-signal-connect dialog 'response
+                                         (lambda (w rsp)
+                                           (handle-dialog-response rsp))))
     (show-all dialog)))
 
 ;; Handler for message sending.
