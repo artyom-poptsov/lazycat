@@ -1,4 +1,4 @@
-## Config file for GNU Autoconf.
+## Process this file with autoconf to produce a configure script.
 ##
 ## Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
 ##
@@ -24,11 +24,24 @@ AM_INIT_AUTOMAKE
 # Find a C compiler.
 AC_PROG_CC
 
-# Check for Guile
+# Checks related to GNU Guile
+GUILE_PROGS
 GUILE_FLAGS
+
+# Check for required Guile modules
+GUILE_MODULE_REQUIRED(ice-9 popen)
+GUILE_MODULE_REQUIRED(ice-9 rdelim)
+GUILE_MODULE_REQUIRED(ice-9 common-list)
+GUILE_MODULE_REQUIRED(gnome gtk)
+GUILE_MODULE_REQUIRED(gnome gobject)
+GUILE_MODULE_REQUIRED(gnome-2)
+GUILE_MODULE_REQUIRED(oop goops)
 
 AC_CHECK_FUNCS([mkdir socket])
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/socket.h syslog.h unistd.h])
+
+# Check for libssh
+AC_SEARCH_LIBS([ssh_new], [ssh], [], AC_MSG_ERROR([libssh is not found.], [1]))
 
 AC_FUNC_FORK
 AC_FUNC_MALLOC

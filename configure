@@ -3656,7 +3656,10 @@ fi
 
 
 
-# Check for Guile
+##
+## Checks related to GNU Guile
+##
+
 # Extract the first word of "guile", so it can be a program name with args.
 set dummy guile; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -3799,6 +3802,113 @@ $as_echo_n "checking libguile link flags... " >&6; }
 $as_echo "$GUILE_LDFLAGS" >&6; }
 
 
+
+
+# Check for required Guile modules
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if (ice-9 popen) is available" >&5
+$as_echo_n "checking if (ice-9 popen) is available... " >&6; }
+
+  $GUILE -c "(use-modules (ice-9 popen)) (exit ((lambda () 0)))" > /dev/null 2>&1
+  ac_guile_module_required=$?
+
+	  if test "$ac_guile_module_required" = "0" ; then ac_guile_module_required=yes ; else ac_guile_module_required=no ; fi
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_guile_module_required" >&5
+$as_echo "$ac_guile_module_required" >&6; }
+
+
+          if test "$ac_guile_module_required" = "no" ; then
+              as_fn_error $? "required guile module not found: (ice-9 popen)" "$LINENO" 5
+          fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if (ice-9 rdelim) is available" >&5
+$as_echo_n "checking if (ice-9 rdelim) is available... " >&6; }
+
+  $GUILE -c "(use-modules (ice-9 rdelim)) (exit ((lambda () 0)))" > /dev/null 2>&1
+  ac_guile_module_required=$?
+
+	  if test "$ac_guile_module_required" = "0" ; then ac_guile_module_required=yes ; else ac_guile_module_required=no ; fi
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_guile_module_required" >&5
+$as_echo "$ac_guile_module_required" >&6; }
+
+
+          if test "$ac_guile_module_required" = "no" ; then
+              as_fn_error $? "required guile module not found: (ice-9 rdelim)" "$LINENO" 5
+          fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if (ice-9 common-list) is available" >&5
+$as_echo_n "checking if (ice-9 common-list) is available... " >&6; }
+
+  $GUILE -c "(use-modules (ice-9 common-list)) (exit ((lambda () 0)))" > /dev/null 2>&1
+  ac_guile_module_required=$?
+
+	  if test "$ac_guile_module_required" = "0" ; then ac_guile_module_required=yes ; else ac_guile_module_required=no ; fi
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_guile_module_required" >&5
+$as_echo "$ac_guile_module_required" >&6; }
+
+
+          if test "$ac_guile_module_required" = "no" ; then
+              as_fn_error $? "required guile module not found: (ice-9 common-list)" "$LINENO" 5
+          fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if (gnome gtk) is available" >&5
+$as_echo_n "checking if (gnome gtk) is available... " >&6; }
+
+  $GUILE -c "(use-modules (gnome gtk)) (exit ((lambda () 0)))" > /dev/null 2>&1
+  ac_guile_module_required=$?
+
+	  if test "$ac_guile_module_required" = "0" ; then ac_guile_module_required=yes ; else ac_guile_module_required=no ; fi
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_guile_module_required" >&5
+$as_echo "$ac_guile_module_required" >&6; }
+
+
+          if test "$ac_guile_module_required" = "no" ; then
+              as_fn_error $? "required guile module not found: (gnome gtk)" "$LINENO" 5
+          fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if (gnome gobject) is available" >&5
+$as_echo_n "checking if (gnome gobject) is available... " >&6; }
+
+  $GUILE -c "(use-modules (gnome gobject)) (exit ((lambda () 0)))" > /dev/null 2>&1
+  ac_guile_module_required=$?
+
+	  if test "$ac_guile_module_required" = "0" ; then ac_guile_module_required=yes ; else ac_guile_module_required=no ; fi
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_guile_module_required" >&5
+$as_echo "$ac_guile_module_required" >&6; }
+
+
+          if test "$ac_guile_module_required" = "no" ; then
+              as_fn_error $? "required guile module not found: (gnome gobject)" "$LINENO" 5
+          fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if (gnome-2) is available" >&5
+$as_echo_n "checking if (gnome-2) is available... " >&6; }
+
+  $GUILE -c "(use-modules (gnome-2)) (exit ((lambda () 0)))" > /dev/null 2>&1
+  ac_guile_module_required=$?
+
+	  if test "$ac_guile_module_required" = "0" ; then ac_guile_module_required=yes ; else ac_guile_module_required=no ; fi
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_guile_module_required" >&5
+$as_echo "$ac_guile_module_required" >&6; }
+
+
+          if test "$ac_guile_module_required" = "no" ; then
+              as_fn_error $? "required guile module not found: (gnome-2)" "$LINENO" 5
+          fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if (oop goops) is available" >&5
+$as_echo_n "checking if (oop goops) is available... " >&6; }
+
+  $GUILE -c "(use-modules (oop goops)) (exit ((lambda () 0)))" > /dev/null 2>&1
+  ac_guile_module_required=$?
+
+	  if test "$ac_guile_module_required" = "0" ; then ac_guile_module_required=yes ; else ac_guile_module_required=no ; fi
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_guile_module_required" >&5
+$as_echo "$ac_guile_module_required" >&6; }
+
+
+          if test "$ac_guile_module_required" = "no" ; then
+              as_fn_error $? "required guile module not found: (oop goops)" "$LINENO" 5
+          fi
 
 
 
@@ -4223,6 +4333,66 @@ _ACEOF
 fi
 
 done
+
+
+# Check for libssh
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing ssh_new" >&5
+$as_echo_n "checking for library containing ssh_new... " >&6; }
+if ${ac_cv_search_ssh_new+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ssh_new ();
+int
+main ()
+{
+return ssh_new ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' ssh; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_ssh_new=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_ssh_new+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_ssh_new+:} false; then :
+
+else
+  ac_cv_search_ssh_new=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_ssh_new" >&5
+$as_echo "$ac_cv_search_ssh_new" >&6; }
+ac_res=$ac_cv_search_ssh_new
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else
+  as_fn_error 1 "libssh is not found." "$LINENO" 5
+fi
 
 
 ac_fn_c_check_type "$LINENO" "pid_t" "ac_cv_type_pid_t" "$ac_includes_default"

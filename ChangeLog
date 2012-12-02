@@ -1,3 +1,9 @@
+2012-12-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* configure.ac: Add checks for GNU Guile programs and modules. Add
+	a check for libssh.
+	* configure: Update.
+
 2012-12-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* scheme/lazy-gtk-cat.scm (handle-add-host): Fix a bug with wrong
