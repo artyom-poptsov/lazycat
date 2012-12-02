@@ -1,5 +1,13 @@
 2012-12-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	Add an interface which allows to use syslog capabilities in Scheme
+	code. Remove extra traces.
+	* scheme/logger.scm: New file.
+	* scheme/host-list.scm: Remove extra traces.
+	* scheme/lc-gtk-host-tree.scm: Likewise.
+	* scheme/lazy-gtk-cat.scm: Likewise. Use <logger> for logging
+	messages.
+
 	* configure.ac: Add checks for GNU Guile programs and modules. Add
 	a check for libssh.
 	* configure: Update.

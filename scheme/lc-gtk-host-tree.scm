@@ -114,9 +114,6 @@
 (define-method (lc-gtk-host-tree-add-host (obj <lc-gtk-host-tree>)
                                           group-name
                                           (host-attributes <list>))
-
-  (display "DEGUG: lc-gtk-host-tree-add-host: group-name: ") (display group-name) (newline)
-
   (let* ((id          (list-ref host-attributes 0))
          (name        (list-ref host-attributes 1))
          (proxy       (list-ref host-attributes 2))

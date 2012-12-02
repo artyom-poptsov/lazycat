@@ -27,7 +27,8 @@
             "lc-gtk-output-preview-dialog.scm"
             "lc-gtk-add-host-dialog.scm"
             "lc-gtk-output-view.scm"
-            "lc-gtk-host-tree.scm"))
+            "lc-gtk-host-tree.scm"
+            "logger.scm"))
 
 (define-module (lazycat lazy-gtk-cat)
   #:use-module (oop goops)
@@ -39,6 +40,7 @@
   #:use-module (lazycat lc-gtk-add-host-dialog)
   #:use-module (lazycat lc-gtk-output-view)
   #:use-module (lazycat lc-gtk-host-tree)
+  #:use-module (lazycat logger)
   #:use-module (lazycat host)
   #:use-module (lazycat host-list)
   #:use-module (lazycat diff)
@@ -50,6 +52,7 @@
 (define *mode-raw*         "raw-mode")
 (define *mode-diff*        "diff-mode")
 (define *application-name* "LazyCat")
+(define *syslog-tag*       "lazycat-gui")
 
 
 ;;; Main class
@@ -58,6 +61,8 @@
   ;; Directories
   (tmp-dir      #:accessor tmp-dir)
   (lazycat-home #:accessor lazycat-home)
+
+  (logger #:accessor logger)
 
   (mode #:accessor mode #:init-value *mode-raw*)
   (master-host-id #:accessor master-host-id #:init-value 1)
@@ -108,6 +113,10 @@
 
 (define-method (initialize (obj <lazy-gtk-cat>) args)
   (next-method)
+
+  (slot-set! obj 'logger (make <logger>
+                           #:ident    *syslog-tag*
+                           #:facility 'user))
 
   ;; Initialize pathes
   (slot-set! obj 'tmp-dir      "/tmp/lazycat")
@@ -441,6 +450,7 @@
 
 ;; Run the application.
 (define-method (run (obj <lazy-gtk-cat>) args)
+  (logger-message (logger obj) 'info "Starting the application")
   (show-all (gtk-main-window obj))
   (load-hosts obj)
   (gtk-main))
@@ -476,10 +486,10 @@
                                    (host-get-proxy       host)
                                    (host-get-address     host)
                                    (host-get-description host))))
-        (display "DEBUG: load-hosts\n")
-        (display "DEBUG: load-hosts: group-name: ") (display group-name) (newline)
         (lc-gtk-host-tree-add-host host-tree group-name host-attributes)))
-      
+
+    (logger-message (logger obj) 'info "Loading host list")
+
     (host-list-load host-list)
 
     (if (not (host-list-empty? host-list))
@@ -489,7 +499,8 @@
           ;; Set default master host (the 1st host from the list)
           ;; TODO: It'll be good idea to store info about master host between
           ;;       sessions.
-          (set-master-host obj 1)))))
+          (set-master-host obj 1))
+        (logger-message (logger obj) 'info "Host list is empty"))))
 
 ;; Set host with HOST-ID as a master host.
 (define-method (set-master-host (obj <lazy-gtk-cat>) (host-id <number>))

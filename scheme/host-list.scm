@@ -118,11 +118,6 @@
     (append (list (car group)) (map unroll-host (cdr group))))
 
   (let ((unrolled-list (map unroll-group (host-list obj))))
-
-    (display "DEBUG: List:") (write host-list) (newline)
-
-    (display "DEBUG: Unrolled list: ") (write unrolled-list) (newline)
-
     (config-save-list (config obj) *default-list-name* unrolled-list)))
 
 ;; This method is used for creating a new empty group in the list.
@@ -213,7 +208,6 @@
   (let ((host (host-list-get-host-by-id obj host-id)))
     (let f ((group-list (host-list obj)))
       (let ((group (car group-list)))
-        (display "DEBUG: get-group-by-host-id: ") (display group) (newline)
         (if (eq? (contains-host? host group) #t)
             group
             (if (null? (cdr group-list))
