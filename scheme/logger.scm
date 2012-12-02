@@ -67,10 +67,10 @@
 
 ;; Write a new MESSAGE with LEVEL to the log. LEVEL is expected to be
 ;; a symbol, and it must be one of the correct levels that syslog
-;; understands -- for example, 'user, 'warning, 'error etc.
+;; understands -- for example, 'info, 'warning, 'error etc.
 ;;
 ;; Example of usage:
-;;   (logger-message logger-instance 'user "Hello Scheme World!")
+;;   (logger-message logger-instance 'notice "Hello Scheme World!")
 ;;
 (define-method (logger-message (obj <logger>) (level <symbol>) (message <string>))
   (let ((current-level (member level *level-names*)))
@@ -92,4 +92,4 @@
     " -p " (string-append (symbol->string (facility obj)) "." level)
     " -- " message)))
 
-;;; logger.scm ends here
+;;;; logger.scm ends here

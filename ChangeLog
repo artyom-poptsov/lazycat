@@ -1,5 +1,7 @@
 2012-12-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* scheme/logger.scm: Fix a mistake in a comment.
+
 	Add an interface which allows to use syslog capabilities in Scheme
 	code. Remove extra traces.
 	* scheme/logger.scm: New file.
