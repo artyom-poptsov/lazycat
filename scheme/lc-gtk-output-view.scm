@@ -1,25 +1,38 @@
-;;;; LazyCat GTK output view.
-;;;;
-;;;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
-;;;;
-;;;; This file is part of LazyCat.
-;;;;
-;;;; LazyCat is free software: you can redistribute it and/or modify
-;;;; it under the terms of the GNU General Public License as published by
-;;;; the Free Software Foundation, either version 3 of the License, or
-;;;; (at your option) any later version.
-;;;;
-;;;; LazyCat is distributed in the hope that it will be useful,
-;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;;; GNU General Public License for more details.
-;;;;
-;;;; You should have received a copy of the GNU General Public License
-;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
+;;; LazyCat GTK output view.
+
+;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;;
+;; This file is part of LazyCat.
+;;
+;; LazyCat is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; LazyCat is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
 
-;;; Module definition
+;;; Commentary:
 
+;; This module describes a <lc-gtk-output-view> class -- a simply text
+;; view that is capable of showing messages with their headers.
+;; 
+;; These methods are exported:
+;; 
+;;   (lc-gtk-output-view-append obj header message)
+;;   (lc-gtk-output-view-append-error obj header message)
+;;
+
+
+;;; Code:
+
+;; Module definition
 (define-module (lazycat lc-gtk-output-view)
   #:use-module (oop goops)
   #:use-module (gnome-2)
@@ -61,9 +74,7 @@
                               #:foreground "red"))))
 
 
-;;;
 ;;; Public methods
-;;;
 
 ;; Append a message to the output view.
 (define-method (lc-gtk-output-view-append (obj     <lc-gtk-output-view>)
@@ -78,9 +89,7 @@
   (insert obj "error" header message))
 
 
-;;;
 ;;; Private methods
-;;;
 
 ;; Insert generic message to the output view.
 (define-method (insert (obj      <lc-gtk-output-view>)
@@ -102,4 +111,4 @@
     (let ((mark (gtk-text-buffer-create-mark buffer #f text-iter #t)))
       (gtk-text-view-scroll-mark-onscreen obj mark))))
 
-;;;; EOF
+;;; lc-gtk-output-view.scm ends here

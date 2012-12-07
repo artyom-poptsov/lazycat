@@ -1,4 +1,4 @@
-;;;; logger.scm -- syslog interface.
+;;; logger.scm -- syslog interface.
 
 ;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
@@ -17,6 +17,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
+
 ;;; Commentary:
 
 ;; Interface for the syslog which uses the logger(1) program. Should
@@ -32,6 +33,7 @@
 ;;     ...
 ;;     (logger-message logger 'notice "Hello Scheme World!")
 
+
 ;;; Code:
 
 ;;; Module definition
@@ -92,4 +94,4 @@
     " -p " (string-append (symbol->string (facility obj)) "." level)
     " -- " message)))
 
-;;;; logger.scm ends here
+;;; logger.scm ends here

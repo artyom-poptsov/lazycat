@@ -1,24 +1,37 @@
-;;;; GTK interface for LazyCat.
-;;;;
-;;;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
-;;;;
-;;;; This file is part of LazyCat.
-;;;;
-;;;; LazyCat is free software: you can redistribute it and/or modify
-;;;; it under the terms of the GNU General Public License as published by
-;;;; the Free Software Foundation, either version 3 of the License, or
-;;;; (at your option) any later version.
-;;;;
-;;;; LazyCat is distributed in the hope that it will be useful,
-;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;;; GNU General Public License for more details.
-;;;;
-;;;; You should have received a copy of the GNU General Public License
-;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
+;;; lazy-gtk-cat.scm -- A GTK interface for LazyCat.
+
+;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;;
+;; This file is part of LazyCat.
+;;
+;; LazyCat is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; LazyCat is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
 
-;;; Module definition
+;;; Commentary:
+
+;; This module describes a <lazy-gtk-cat> class -- a GUI based on GTK
+;; for the LazyCat.
+;;
+;; The application can be run by calling the run method on
+;; <lazy-gtk-cat> instance.
+;;
+;; These methods are exported:
+;;
+;;   (run lazy-gtk-cat)
+
+
+;;; Code:
 
 (for-each (lambda (file) (load file))
           '("host.scm"
@@ -342,13 +355,11 @@
            (lambda (w) (handle-rem-group obj))))
 
 
-;;;
 ;;; Handlers for various events.
-;;;
-;;; These methods take just one parameter and this parameter is an instance
-;;; of <lazy-gtk-cat>. Most of usefull work is done by other methods that
-;;; handlers are calling.
-;;;
+;; These methods take just one parameter and this parameter is an instance
+;; of <lazy-gtk-cat>. Most of usefull work is done by other methods that
+;; handlers are calling.
+
 
 ;; Handler for "Set as a master" popup menu item.
 (define-method (handle-set-master (obj <lazy-gtk-cat>))
@@ -444,9 +455,7 @@
     #f))
 
 
-;;;
 ;;; Methods that do most of the hard work.
-;;;
 
 ;; Run the application.
 (define-method (run (obj <lazy-gtk-cat>) args)
@@ -566,4 +575,4 @@
     ;; Clean up a previous content of the command line
     (gtk-entry-set-text (gtk-entry obj) "")))
 
-;;;; EOF
+;;; lazy-gtk-cat.scm ends here

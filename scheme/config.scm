@@ -1,24 +1,45 @@
-;;;; A configuration file for LazyCat.
-;;;;
-;;;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
-;;;;
-;;;; This file is part of LazyCat.
-;;;;
-;;;; LazyCat is free software: you can redistribute it and/or modify
-;;;; it under the terms of the GNU General Public License as published by
-;;;; the Free Software Foundation, either version 3 of the License, or
-;;;; (at your option) any later version.
-;;;;
-;;;; LazyCat is distributed in the hope that it will be useful,
-;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;;; GNU General Public License for more details.
-;;;;
-;;;; You should have received a copy of the GNU General Public License
-;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
+;;; config.scm -- Stores configuration in a file.
+
+;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;;
+;; This file is part of LazyCat.
+;;
+;; LazyCat is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; LazyCat is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
 
-;;; Module definition
+;;; Commentary:
+
+;; This module describes a <config> class that is capable of storing a
+;; Scheme list in a file.  Currently it supports only one list per
+;; file, but this might be changed in the future.
+;;
+;; These methods are exported:
+;;
+;;   (config-load-list config list-name)
+;;   (config-save-list config list-name list)
+;;
+;; Example of usage:
+;;
+;;   ((let* ((config (make <config> #:file file-name))
+;;           (list   (config-load-list config list-name)))
+;;
+;;     ...
+;;
+;;     (config-save-list config list-name list)
+
+
+;;; Code:
 
 (define-module (lazycat config)
   #:use-module (oop goops)
@@ -35,19 +56,16 @@
   (next-method))
 
 
-;;;
 ;;; Public methods
-;;;
 
-;; Load the list LIST-NAME from the config file.
+;; Load the list LIST-NAME from the config file. Method returns an
+;; empty list if file doesn't exist.
 (define-method (config-load-list (obj <config>) (list-name <string>))
   (if (file-exists? (file obj))
-      ;; Load a list from the file
       (begin
         (load (file obj))
         (let ((list (eval-string list-name)))
           (if (list? list) list #f)))
-      ;; Return an empty list if the file doesn't exist.
       '()))
 
 ;; Save the list LIST-NAME to the config file.
@@ -90,14 +108,10 @@
 
   (with-output-to-file (file obj)
     (lambda ()
-      ;; Tell to Emacs that this file contains scheme code
       (display ";; -*- mode: scheme -*-\n\n")
-      ;; Write the list to the config file
       (display (string-append "(define " list-name "\n"))
       (display "  '(")
-
       (save-list-with-indent *basic-indent* list)
-
       (display "))\n"))))
 
-;;;; EOF
+;;; config.scm ends here

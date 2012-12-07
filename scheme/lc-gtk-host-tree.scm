@@ -1,23 +1,38 @@
-;;;; LazyCat GTK host tree.
-;;;;
-;;;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
-;;;;
-;;;; This file is part of LazyCat.
-;;;;
-;;;; LazyCat is free software: you can redistribute it and/or modify
-;;;; it under the terms of the GNU General Public License as published by
-;;;; the Free Software Foundation, either version 3 of the License, or
-;;;; (at your option) any later version.
-;;;;
-;;;; LazyCat is distributed in the hope that it will be useful,
-;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;;; GNU General Public License for more details.
-;;;;
-;;;; You should have received a copy of the GNU General Public License
-;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
+;;; lc-gtk-host-tree.scm -- LazyCat GTK host tree.
+
+;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;;
+;; This file is part of LazyCat.
+;;
+;; LazyCat is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; LazyCat is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; This module describes a <lc-gtk-host-tree> class.
+;;
+;; These methods are exported:
+;;
+;;   (lc-gtk-host-tree-add-host obj group-name host-attributes)
+;;   (lc-gtk-host-tree-rem-host obj host-id)
+;;   (lc-gtk-host-tree-get-selected obj)
+;;   (lc-gtk-host-tree-get-selected-group obj)
+;;   (lc-gtk-host-tree-set-master-host obj host-id)
+;;
 
 
+;;; Code:
+
 ;;; Module definition
 
 (define-module (lazycat lc-gtk-host-tree)
@@ -263,4 +278,4 @@
          (top-level (gtk-tree-store-append model #f)))
     (gtk-tree-store-set-value model top-level *column-name-number* group-name)))
 
-;;;; EOF
+;;; lc-gtk-host-tree.scm ends here

@@ -1,3 +1,23 @@
+2012-12-07  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Use a conventional format for comments as described in the (ice-9
+	documentation) module, so the standard GNU Guile tool
+	display-comentary can be used to display a file commentary or
+	code.
+	* scheme/lazy-gtk-cat.scm: Use the standard format for
+	comments. Remove extra comments.
+	* scheme/config.scm: Likewise.
+	* scheme/diff.scm: Likewise.
+	* scheme/host-list.scm: Likewise.
+	* scheme/host.scm: Likewise.
+	* scheme/lazy-gtk-cat.scm: Likewise.
+	* scheme/lc-gtk-add-host-dialog.scm: Likewise.
+	* scheme/lc-gtk-host-tree.scm: Likewise.
+	* scheme/lc-gtk-output-preview-dialog.scm: Likewise.
+	* scheme/lc-gtk-output-view.scm: Likewise.
+	* scheme/logger.scm: Likewise.
+
+
 2012-12-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* scheme/logger.scm: Fix a mistake in a comment.

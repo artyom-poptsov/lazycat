@@ -1,23 +1,34 @@
-;;;; LazyCat GTK output preview dialog.
-;;;;
-;;;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
-;;;;
-;;;; This file is part of LazyCat.
-;;;;
-;;;; LazyCat is free software: you can redistribute it and/or modify
-;;;; it under the terms of the GNU General Public License as published by
-;;;; the Free Software Foundation, either version 3 of the License, or
-;;;; (at your option) any later version.
-;;;;
-;;;; LazyCat is distributed in the hope that it will be useful,
-;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;;; GNU General Public License for more details.
-;;;;
-;;;; You should have received a copy of the GNU General Public License
-;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
+;;; lc-gtk-output-preview-dialog.scm -- LazyCat GTK output preview dialog.
+
+;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;;
+;; This file is part of LazyCat.
+;;
+;; LazyCat is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; LazyCat is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
 
+;;; Commentary:
+
+;; This module describes a <lc-gtk-output-preview-dialog> class.
+;; 
+;; These methods are exported:
+;; 
+;;   (show-output obj output)
+
+
+;;; Code:
+
 ;;; Module definition
 
 (define-module (lazycat lc-gtk-output-preview-dialog)
@@ -69,4 +80,4 @@
   (gtk-text-buffer-set-text (output-preview-buffer obj) output)
   (show-all obj))
 
-;;;; EOF
+;;; lc-gtk-output-preview-dialog.scm ends here

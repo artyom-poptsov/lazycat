@@ -1,21 +1,45 @@
-;;;; The host model for LazyCat.
-;;;;
-;;;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
-;;;;
-;;;; This file is part of LazyCat.
-;;;;
-;;;; LazyCat is free software: you can redistribute it and/or modify
-;;;; it under the terms of the GNU General Public License as published by
-;;;; the Free Software Foundation, either version 3 of the License, or
-;;;; (at your option) any later version.
-;;;;
-;;;; LazyCat is distributed in the hope that it will be useful,
-;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;;; GNU General Public License for more details.
-;;;;
-;;;; You should have received a copy of the GNU General Public License
-;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
+;;; host.scm -- The host model for LazyCat.
+
+;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;;
+;; This file is part of LazyCat.
+;;
+;; LazyCat is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; LazyCat is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
+
+
+;;; Commentary:
+
+;; This module describes a <host> class that represents a single host
+;; and it is used for communication with the host.
+;;
+;; This module exports:
+;;
+;;   (host-send-message host message)
+;;   (host-remove host)
+;;
+;;   (host-set-name host new-name)
+;;   (host-set-proxy host new-proxy)
+;;   (host-set-address host new-address)
+;;   (host-set-description host new-description)
+;;
+;;   (host-get-id host)
+;;   (host-get-name host)
+;;   (host-get-proxy host)
+;;   (host-get-address host)
+;;   (host-get-description host)
+
+;;; Code:
 
 
 ;;; Module definition
@@ -49,7 +73,7 @@
 ;;; Public methods
 ;;;
 
-;; Send the MESSAGE to the host
+;; Send a messsage MESSAGE to the host
 (define-method (host-send-message (obj <host>) (message <string>))
   (lc-send-msg (id obj) message))
 
@@ -60,19 +84,19 @@
 
 ;;; Setters
 
-;; Rename the host
+;; Rename the host to NEW-NAME
 (define-method (host-set-name (this <host>) (new-name <string>))
   (slot-set! this 'name new-name))
 
-;; Assign a new proxy for the host
+;; Assign a new proxy NEW-PROXY for the host
 (define-method (host-set-proxy (this <host>) (new-proxy <string>))
   (slot-set! this 'proxy new-proxy))
 
-;; Assign a new address for the host
+;; Assign a new address NEW-ADDRESS for the host
 (define-method (host-set-address (this <host>) (new-address <string>))
   (slot-set! this 'address new-address))
 
-;; Change the description of the host
+;; Change the description NEW-DESCRIPTION of the host
 (define-method (host-set-description (this <host>) (new-description <string>))
   (slot-set! this 'description new-description))
 
@@ -85,4 +109,4 @@
 (define-method (host-get-address     (obj <host>)) (address     obj))
 (define-method (host-get-description (obj <host>)) (description obj))
 
-;;;; EOF
+;;; host.scm ends here

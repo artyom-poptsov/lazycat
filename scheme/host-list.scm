@@ -1,24 +1,47 @@
-;;;; The host list for LazyCat.
-;;;;
-;;;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
-;;;;
-;;;; This file is part of LazyCat.
-;;;;
-;;;; LazyCat is free software: you can redistribute it and/or modify
-;;;; it under the terms of the GNU General Public License as published by
-;;;; the Free Software Foundation, either version 3 of the License, or
-;;;; (at your option) any later version.
-;;;;
-;;;; LazyCat is distributed in the hope that it will be useful,
-;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;;;; GNU General Public License for more details.
-;;;;
-;;;; You should have received a copy of the GNU General Public License
-;;;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
+;;; host-list.scm -- The host list for LazyCat.
+
+;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;;
+;; This file is part of LazyCat.
+;;
+;; LazyCat is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; LazyCat is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
 
-;;; Module definition
+;;; Commentary:
+
+;; This module describes a <host-list> class which stores <host>
+;; instances. The class provides some useful functions for working
+;; with this list.
+;;
+;; These methods are exported:
+;;
+;;   (host-list-empty? obj)
+;;   (host-list-load obj)
+;;   (host-list-save obj)
+;;
+;;   (host-list-add-group obj group-name)
+;;   (host-list-rem-group obj group-name)
+;;
+;;   (host-list-add-host obj group-name host-attributes)
+;;   (host-list-rem-host obj host-id)
+;;
+;;   (host-list-get-host-by-id obj id)
+;;   (host-list-get-group-name-by-host-id obj host-id)
+;;   (host-list-get-plain-list obj)
+
+
+;;; Code:
 
 (load "config.scm")
 (load "host.scm")
@@ -125,11 +148,9 @@
   (let* ((host-list (host-list obj))
          (group     (assoc group-name host-list)))
     (if (eq? group #f)
-        ;; Group doesn't exist.
         (begin
           (set! host-list (append host-list (list group-name)))
           #t)
-        ;; Group exists.
         #f)))
 
 ;;
@@ -143,7 +164,9 @@
     (set! (host-list obj) (remove-if (lambda (element)
                                        (eq? (car element) group-name)) (host-list obj))))
 
-;; Add a new host to the host list
+;; Add a new host with given HOST-ATTRIBUTES to the host list, and
+;; place it to a group GROUP-NAME. The group will be created if it
+;; doesn't exist.
 (define-method (host-list-add-host (obj <host-list>) group-name (host-attributes <list>))
   (let* ((name        (list-ref host-attributes 0))
          (proxy       (list-ref host-attributes 1))
@@ -159,9 +182,7 @@
          (group (assoc group-name (host-list obj))))
 
     (if (not (eq? group #f))
-        ;; Group exists
         (set-cdr! group (append (cdr group) (list host)))
-        ;; Group doesn't exist. Create a new group.
         (set! (host-list obj) (append (host-list obj) (list (cons group-name (list host))))))
 
     (host-get-id host)))
@@ -221,4 +242,4 @@
               (map (lambda (l) (cdr l)) (host-list obj)))
     plain-list))
   
-;;;; EOF
+;;; host-list.scm ends here
