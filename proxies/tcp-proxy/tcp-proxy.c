@@ -44,9 +44,6 @@ extern int xrecv_msg (const int sfd, char** buf, size_t* buf_sz);
  * Global variables
  */
 
-static const char SYSLOG_MSG[] = "lazycat [tcp-proxy]";
-static const char PROXY_NAME[] = "tcp-proxy";
-
 static int sfd_proxy;
 static int sfd_client;
 
@@ -65,13 +62,19 @@ static int32_t ip4_address_to_uint32 (const char *ip_addr_str,
 void
 tcp_proxy_init (void)
 {
+  enum { SYSLOG_MSG_LEN = 50 };
   enum { BACKLOG = 1 };
 
-  openlog (SYSLOG_MSG, LOG_CONS, LOG_DAEMON);
+  char syslog_msg[SYSLOG_MSG_LEN];
+
+  snprintf(syslog_msg, SYSLOG_MSG_LEN, "lazycat [%s (PID=%d)]",
+	   TCP_PROXY_NAME, getpid());
+
+  openlog (syslog_msg, LOG_CONS, LOG_DAEMON);
   syslog (LOG_INFO, "Log is opened.");
 
   /* Open a socket */
-  sfd_proxy = open_socket (PROXY_NAME);
+  sfd_proxy = open_socket (TCP_PROXY_NAME);
   if (sfd_proxy < 0)
     {
       SYSLOG_ERROR ("Unable to open socket.");

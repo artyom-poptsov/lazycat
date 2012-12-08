@@ -72,7 +72,9 @@ static void print_help (const char* pname);
 int
 main (int argc, char* argv[])
 {
-  static const char SYSLOG_MSG[]  = "lctcpd";
+  enum { SYSLOG_MSG_LEN = 50 };
+
+  char syslog_msg[SYSLOG_MSG_LEN];
 
   int opt;
   uint16_t port = 50001;
@@ -80,8 +82,10 @@ main (int argc, char* argv[])
   int sfd_server;
   int pid;
   int retval;
-  
-  openlog (SYSLOG_MSG, LOG_CONS, LOG_DAEMON);
+
+  snprintf(syslog_msg, SYSLOG_MSG_LEN, "lctcpd (PID=%d)", getpid());
+
+  openlog (syslog_msg, LOG_CONS, LOG_DAEMON);
   syslog (LOG_INFO, "-------------------------------------------------------");
   SYSLOG_INFO ("Log is opened.");
 

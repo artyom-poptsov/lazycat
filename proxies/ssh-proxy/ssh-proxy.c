@@ -18,6 +18,7 @@
  * along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <stdint.h>
 #include <libssh/libssh.h>
 #include <syslog.h>
@@ -25,6 +26,7 @@
 
 #include "common.h"             /* SYSLOG_*() */
 #include "lazy-ssh.h"           /* lazy_ssh_*() */
+#include "ssh-proxy.h"
 
 /*
  * Local variables
@@ -48,14 +50,17 @@ static void ssh_proxy_main_loop (void);
 void
 ssh_proxy_init (void)
 {
-  static const char SYSLOG_MSG[] = "lazycat [ssh-proxy]";
-  static const char PROXY_NAME[] = "ssh-proxy";
-
+  enum { SYSLOG_MSG_LEN = 50 };
   enum { BACKLOG = 1 };
 
-  openlog (SYSLOG_MSG, LOG_CONS, LOG_DAEMON);
+  char syslog_msg[SYSLOG_MSG_LEN];
 
-  sfd_proxy = open_socket (PROXY_NAME);
+  snprintf(syslog_msg, SYSLOG_MSG_LEN, "lazycat [%s (PID=%d)]",
+	   SSH_PROXY_NAME, getpid());
+
+  openlog (syslog_msg, LOG_CONS, LOG_DAEMON);
+
+  sfd_proxy = open_socket (SSH_PROXY_NAME);
   if (sfd_proxy < 0)
     {
       SYSLOG_ERROR ("Unable to open socket.");

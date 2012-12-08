@@ -51,8 +51,6 @@ typedef void (*proxy_t)(void);
  * Global definitions
  */
 
-static const char SYSLOG_MSG[] = "lazycat [server]";
-
 pid_t* proc_list  = NULL;
 int    proc_count = 0;
 
@@ -93,12 +91,18 @@ static void init_builtins_module (void* arg);
 int
 main (int argc, char* argv[])
 {
+  enum { SYSLOG_MSG_LEN = 50 };
+
+  char syslog_msg[SYSLOG_MSG_LEN];
+
   proxy_t tcp_proxy = tcp_proxy_init;
   proxy_t ssh_proxy = ssh_proxy_init;
 
   struct Rec_proxy proxy;
-    
-  openlog (SYSLOG_MSG, LOG_CONS, LOG_USER);
+
+  snprintf(syslog_msg, SYSLOG_MSG_LEN, "lazycat [server (PID=%d)]", getpid());
+
+  openlog (syslog_msg, LOG_CONS, LOG_USER);
   syslog (LOG_INFO, "-------------------------------------------------------");
   SYSLOG_INFO ("Log is opened.");
 
