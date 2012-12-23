@@ -1,3 +1,9 @@
+2012-12-23  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* scheme/lazy-gtk-cat.scm (handle-host-tree-button-press-event):
+	Disable some popup menu items according to a type of the selected
+	object of the host tree.
+
 2012-12-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* scheme/lazy-gtk-cat.scm: Do communication with hosts in a

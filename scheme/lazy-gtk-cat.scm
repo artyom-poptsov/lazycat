@@ -440,7 +440,14 @@
   (cond
    ((= button-number 3)
     (let ((menu (gtk-host-tree-menu obj)))
-      (gtk-menu-popup menu ; menu
+      (if (not (eq? (lc-gtk-host-tree-get-selected (lc-gtk-host-tree obj)) #f))
+          (begin
+            (gtk-widget-set-sensitive (gtk-host-tree-menu-remove-group obj) #f)
+            (gtk-widget-set-sensitive (gtk-host-tree-menu-set-master obj)   #t))
+          (begin
+            (gtk-widget-set-sensitive (gtk-host-tree-menu-remove-group obj) #t)
+            (gtk-widget-set-sensitive (gtk-host-tree-menu-set-master obj)   #f)))
+      (gtk-menu-popup menu
                       #f   ; parent-menu-shell
                       #f   ; parent-menu-item
                       #f   ; func
