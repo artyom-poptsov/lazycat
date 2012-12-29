@@ -23,6 +23,7 @@
 #include <syslog.h>
 
 #include "db.h"
+#include "server.h"
 
 typedef void (*sighandler_t)(int);
 
@@ -38,9 +39,6 @@ reg_sighandlers(void)
 static void
 term_handler_fn (int signum)
 {
-  extern pid_t* proc_list;
-  extern int    proc_count;
-  
   int count;
   int* proxies_list;
   int retval;
@@ -55,9 +53,7 @@ term_handler_fn (int signum)
     }
 
   for (idx = 0; idx < count; ++idx)
-    {
-      close (proxies_list[idx]);
-    }
+    close (proxies_list[idx]);
 
   for (idx = 0; idx < proc_count; ++idx)
     {

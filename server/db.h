@@ -95,4 +95,4 @@ int db_get_proxy_by_name (const char* name, struct Rec_proxy* proxy);
 
 int db_get_proxies_list (int* count, int* list[]);
 
-#endif
+#endif	/* ifndef __DB_H__ */

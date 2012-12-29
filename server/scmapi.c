@@ -26,16 +26,6 @@
 #include "db.h"
 
 /*
- * External variables and functions
- */
-
-extern int db_add_host (struct Rec_host* host);
-extern int db_rem_host (int id);
-extern int db_get_host_record (const int id, struct Rec_host* host);
-extern int db_get_proxy_by_name (const char* name, struct Rec_proxy* proxy);
-extern int db_get_hosts_list (int* count, int* list[]);
-
-/*
  * Static functions
  */
 
@@ -208,14 +198,8 @@ scm_rem_host (SCM host_id)
   id = scm_to_int (host_id);
 
   retval = db_rem_host (id);
-  if (retval < 0)
-    {
-      return SCM_BOOL_F;
-    }
-  else
-    {
-      return SCM_BOOL_T;
-    }
+
+  return (retval == 0) ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
 SCM
@@ -232,14 +216,7 @@ scm_update_host (SCM host_id, SCM field, SCM value)
 			   scm_to_locale_string (field),
 			   scm_to_locale_string (value));
 
-  if (retval < 0)
-    {
-      return SCM_BOOL_F;
-    }
-  else
-    {
-      return SCM_BOOL_T;
-    }
+  return (retval == 0) ? SCM_BOOL_T : SCM_BOOL_F;
 }
 
 /*
@@ -273,9 +250,7 @@ scm_get_host_list (void)
   elt = scm_vector_writable_elements (vector, &handle, &len, &inc);
 
   for (elem_idx = 0; elem_idx < len; elt += inc, ++elem_idx)
-    {
-      *elt = scm_from_uint (list[elem_idx]);
-    }
+    *elt = scm_from_uint (list[elem_idx]);
 
   scm_array_handle_release (&handle);
 

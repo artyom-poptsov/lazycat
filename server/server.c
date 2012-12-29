@@ -55,28 +55,6 @@ pid_t* proc_list  = NULL;
 int    proc_count = 0;
 
 /*
- * External functions
- */
-
-/* Proxies */
-extern void tcp_proxy_init (void);
-extern void ssh_proxy_init (void);
-
-extern void register_sighandlers (void);
-
-extern int db_add_proxy(struct Rec_proxy* proxy);
-
-extern SCM scm_send_msg (SCM dest, SCM msg);
-extern SCM scm_add_host (SCM proxy_name,
-			 SCM address,
-			 SCM name,
-			 SCM description);
-
-extern SCM scm_update_host (SCM host_id,
-			    SCM field,
-			    SCM value);
-
-/*
  * Prototypes of static functions
  */
 
@@ -137,12 +115,6 @@ main (int argc, char* argv[])
 static int
 start_proxy (proxy_t proxy, char* name)
 {
-  extern int    open_socket (const char* socket_name);
-  extern int    connect_to_socket (const char* socket_name);
-  
-  extern pid_t* proc_list;
-  extern int    proc_count;
-
   proc_count++;
   
   if (proc_count == 1)
