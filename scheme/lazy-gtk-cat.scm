@@ -519,7 +519,9 @@
           ;; Set default master host (the 1st host from the list)
           ;; TODO: It'll be good idea to store info about master host between
           ;;       sessions.
-          (set-master-host obj 1))
+          (let* ((list (host-list-get-plain-list host-list))
+                 (master-host-id (host-get-id (car list))))
+            (set-master-host obj master-host-id)))
         (logger-message (logger obj) 'info "Host list is empty"))))
 
 ;; Set host with HOST-ID as a master host.
