@@ -80,7 +80,7 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
   retval = db_get (host_id, &host);
   if (retval < 0)
     {
-      calcpy (response, ERROR_NO_CLIENT);
+      *response = strdup (ERROR_NO_CLIENT);
       return -1;
     }
 
@@ -90,14 +90,14 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
 		     &list_size, &proxy_list);
   if (retval < 0)
     {
-      calcpy (response, ERROR_NO_PROXY);
+      *response = strdup (ERROR_NO_PROXY);
       return -1;
     }
 
   retval = db_get (proxy_list[0], &proxy);
   if (retval < 0)
     {
-      calcpy (response, ERROR_NO_PROXY);
+      *response = strdup (ERROR_NO_PROXY);
       return -1;
     }
 
@@ -105,13 +105,13 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
    * Send host address
    */
 
-  calcpy (&msg_buf, host.addr);
+  msg_buf = strdup (host.addr);
   msg_size = strlen (msg_buf);
 
   retval = xsend_msg (proxy.fd, msg_buf, msg_size);
   if (retval < 0)
     {
-      calcpy (response, ERROR_SEND_FAILED);
+      *response = strdup (ERROR_SEND_FAILED);
       return -1;
     }
 
@@ -128,7 +128,7 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
   retval = xsend_msg (proxy.fd, msg, msg_size);
   if (retval < 0)
     {
-      calcpy (response, ERROR_SEND_FAILED);
+      *response = strdup (ERROR_SEND_FAILED);
       return -1;
     }
 
@@ -143,7 +143,7 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
   retval = xrecv_msg (proxy.fd, response, &msg_size);
   if (retval < 0)
     {
-      calcpy (response, ERROR_RECV_FAILED);
+      *response = strdup (ERROR_RECV_FAILED);
       return -1;
     }
 
@@ -171,27 +171,17 @@ scm_add_host (SCM proxy_name, SCM address, SCM name, SCM description)
 
   rec.type = DB_REC_HOST;
 
-  buf = scm_to_locale_string (proxy_name);
-  calcpy (&rec.proxy_name, buf);
-
-  free (buf);
-
-  buf = scm_to_locale_string (address);
-  calcpy (&rec.addr, buf);
-
-  free (buf);
-
-  buf = scm_to_locale_string (name);
-  calcpy (&rec.name, buf);
-
-  free (buf);
-
-  buf = scm_to_locale_string (description);
-  calcpy (&rec.desc, buf);
-
-  free (buf);
+  rec.proxy_name = scm_to_locale_string (proxy_name);
+  rec.addr       = scm_to_locale_string (address);
+  rec.name       = scm_to_locale_string (name);
+  rec.desc       = scm_to_locale_string (description);
 
   retval = db_insert (&rec);
+
+  free (rec.proxy_name);
+  free (rec.addr);
+  free (rec.name);
+  free (rec.desc);
 
   return scm_from_int (retval);
 }
@@ -241,22 +231,22 @@ scm_update_host (SCM host_id, SCM field, SCM value)
   if (! strcmp (c_field, "proxy_name"))
     {
       free (rec.proxy_name);
-      calcpy (&rec.proxy_name, c_value);
+      rec.proxy_name = strdup (c_value);
     }
   else if (! strcmp (c_field, "address"))
     {
       free (rec.addr);
-      calcpy (&rec.addr, c_value);
+      rec.addr = strdup (c_value);
     }
   else if (! strcmp (c_field, "name"))
     {
       free (rec.name);
-      calcpy (&rec.name, c_value);
+      rec.name = strdup (c_value);
     }
   else if (! strcmp (c_field, "description"))
     {
       free (rec.desc);
-      calcpy (&rec.desc, c_value);
+      rec.desc = strdup (c_value);
     }
   else
     {

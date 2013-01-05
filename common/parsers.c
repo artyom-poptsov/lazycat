@@ -46,7 +46,8 @@ get_username_from_address (const char *str, char **user_name)
 
   user_name_len = pos - str;
 
-  if (calncpy (user_name, user_name_len, str) == NULL)
+  *user_name = strndup (str, user_name_len);
+  if (*user_name == NULL)
     return -1;
 
   return user_name_len;
@@ -77,7 +78,8 @@ get_hostname_from_address (const char *str, char **host_name)
     pos_end = strchr (str, '\0');
 
   host_name_len = pos_end - pos_begin;
-  if (calncpy (host_name, host_name_len, pos_begin) == NULL)
+  *host_name = strndup (pos_begin, host_name_len);
+  if (*host_name == NULL)
     return -1;
 
   return host_name_len;

@@ -1,3 +1,13 @@
+2013-01-05  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* server/server.c: Use standard functions strdup() and strndup()
+	instead of calcpy() and calncpy().
+	* server/scmapi.c: Likewise.
+	* proxies/ssh-proxy/lazy-ssh.c: Likewise.
+	* common/parsers.c, common/common.h: Likewise.
+	* Makefile.am, Makefile.in: Update.
+	* common/common.c: Remove.
+
 2013-01-04  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	Improve the homebrew DB.

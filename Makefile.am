@@ -39,7 +39,6 @@ lazycat_SOURCES =
 
 lazycat_SOURCES += \
 	common/common.h	\
-	common/common.c	\
 	common/xsockets.c \
 	common/xsockets.h \
 	common/parsers.c \

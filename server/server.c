@@ -92,13 +92,13 @@ main (int argc, char* argv[])
   rec.type = DB_REC_PROXY;
   bzero (&rec, sizeof rec);
 
-  calcpy (&rec.name, TCP_PROXY_NAME);
+  rec.name = strdup (TCP_PROXY_NAME);
   rec.fd = start_proxy (tcp_proxy, rec.name);
   db_insert (&rec);
 
   free (rec.name);
 
-  calcpy (&rec.name, SSH_PROXY_NAME);
+  rec.name = strdup (SSH_PROXY_NAME);
   rec.fd = start_proxy (ssh_proxy, rec.name);
   db_insert (&rec);
 

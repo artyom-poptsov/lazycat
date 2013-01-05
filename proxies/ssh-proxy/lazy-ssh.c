@@ -26,7 +26,7 @@
 #include <syslog.h>
 
 #include "lazy-ssh.h"
-#include "common.h"             /* calcpy(), calncpy(), SYSLOG_*() */
+#include "common.h"             /* SYSLOG_*() */
 #include "xsockets.h"           /* xrecv_msg(), xsend_msg() */
 #include "parsers.h"            /* get_*_from_address() */
 

@@ -65,10 +65,10 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_lazycat_OBJECTS = common.$(OBJEXT) xsockets.$(OBJEXT) \
-	parsers.$(OBJEXT) tcp-proxy.$(OBJEXT) ssh-proxy.$(OBJEXT) \
-	lazy-ssh.$(OBJEXT) db.$(OBJEXT) sighandlers.$(OBJEXT) \
-	scmapi.$(OBJEXT) server.$(OBJEXT)
+am_lazycat_OBJECTS = xsockets.$(OBJEXT) parsers.$(OBJEXT) \
+	tcp-proxy.$(OBJEXT) ssh-proxy.$(OBJEXT) lazy-ssh.$(OBJEXT) \
+	db.$(OBJEXT) sighandlers.$(OBJEXT) scmapi.$(OBJEXT) \
+	server.$(OBJEXT)
 lazycat_OBJECTS = $(am_lazycat_OBJECTS)
 lazycat_LDADD = $(LDADD)
 am_lctcpd_OBJECTS = xsockets.$(OBJEXT) lctcpd.$(OBJEXT)
@@ -216,8 +216,8 @@ INCLUDES = \
 # Proxies
 
 # Server
-lazycat_SOURCES = common/common.h common/common.c common/xsockets.c \
-	common/xsockets.h common/parsers.c common/parsers.h \
+lazycat_SOURCES = common/common.h common/xsockets.c common/xsockets.h \
+	common/parsers.c common/parsers.h \
 	proxies/tcp-proxy/tcp-proxy.c proxies/tcp-proxy/tcp-proxy.h \
 	proxies/ssh-proxy/ssh-proxy.c proxies/ssh-proxy/ssh-proxy.h \
 	proxies/ssh-proxy/lazy-ssh.c proxies/ssh-proxy/lazy-ssh.h \
@@ -323,7 +323,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/db.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lazy-ssh.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lctcpd.Po@am__quote@
@@ -348,20 +347,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
-
-common.o: common/common.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT common.o -MD -MP -MF $(DEPDIR)/common.Tpo -c -o common.o `test -f 'common/common.c' || echo '$(srcdir)/'`common/common.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/common.Tpo $(DEPDIR)/common.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='common/common.c' object='common.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o common.o `test -f 'common/common.c' || echo '$(srcdir)/'`common/common.c
-
-common.obj: common/common.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT common.obj -MD -MP -MF $(DEPDIR)/common.Tpo -c -o common.obj `if test -f 'common/common.c'; then $(CYGPATH_W) 'common/common.c'; else $(CYGPATH_W) '$(srcdir)/common/common.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/common.Tpo $(DEPDIR)/common.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='common/common.c' object='common.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o common.obj `if test -f 'common/common.c'; then $(CYGPATH_W) 'common/common.c'; else $(CYGPATH_W) '$(srcdir)/common/common.c'; fi`
 
 xsockets.o: common/xsockets.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT xsockets.o -MD -MP -MF $(DEPDIR)/xsockets.Tpo -c -o xsockets.o `test -f 'common/xsockets.c' || echo '$(srcdir)/'`common/xsockets.c
