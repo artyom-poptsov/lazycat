@@ -1,6 +1,6 @@
 /* Signal handlers
  *
- * Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+ * Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
  *
  * This file is part of LazyCat.
  * 
@@ -19,6 +19,7 @@
  */
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <signal.h>
 #include <syslog.h>
 
@@ -39,21 +40,36 @@ reg_sighandlers(void)
 static void
 term_handler_fn (int signum)
 {
-  int count;
-  int* proxies_list;
-  int retval;
-  int idx;
-  int status;
+  int32_t* list;
+  size_t   list_size;
+
+  struct db_rec proxy;
+
+  int32_t retval;
+  int32_t idx;
+  int32_t status;
+
+  int32_t type = DB_REC_PROXY;
   
-  retval = db_get_proxies_list (&count, &proxies_list);
+  retval = db_query (DB_COL_TYPE, &type, &list_size, &list);
   if (retval < 0)
     {
       syslog(LOG_ERR, "Unable to get proxies list from DB.");
       exit (EXIT_FAILURE);
     }
 
-  for (idx = 0; idx < count; ++idx)
-    close (proxies_list[idx]);
+  for (idx = 0; idx < list_size; ++idx)
+    {
+      if (db_get (list[idx], &proxy) != 0)
+	{
+	  free (list);
+	  exit (EXIT_FAILURE);
+	}
+
+      close (proxy.fd);
+
+      free (proxy.name);
+    }
 
   for (idx = 0; idx < proc_count; ++idx)
     {
@@ -61,5 +77,6 @@ term_handler_fn (int signum)
       (void) waitpid (proc_list[idx], &status, 0);
     }
 
+  free (list);
   closelog ();
 }

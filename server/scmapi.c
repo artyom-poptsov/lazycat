@@ -1,6 +1,6 @@
 /* API which is used in the Scheme code.
  *
- * Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+ * Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
  *
  * This file is part of LazyCat.
  * 
@@ -67,14 +67,17 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
   static const char ERROR_SEND_FAILED[] = "Message sending failed.";
   static const char ERROR_RECV_FAILED[] = "Message receiving failed.";
 
-  struct Rec_proxy proxy;
-  struct Rec_host  host;
+  struct db_rec proxy;
+  struct db_rec host;
 
   char* msg_buf;
   int   msg_size;
-  int   retval;
+  int32_t retval;
 
-  retval = db_get_host_record (host_id, &host);
+  int32_t *proxy_list;
+  size_t  list_size;
+
+  retval = db_get (host_id, &host);
   if (retval < 0)
     {
       calcpy (response, ERROR_NO_CLIENT);
@@ -83,20 +86,28 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
 
   SYSLOG_DEBUG ("Send a message");
 
-  retval = db_get_proxy_by_name (host.proxy_name, &proxy);
+  retval = db_query (DB_COL_NAME, host.proxy_name,
+		     &list_size, &proxy_list);
   if (retval < 0)
     {
       calcpy (response, ERROR_NO_PROXY);
       return -1;
     }
-  
+
+  retval = db_get (proxy_list[0], &proxy);
+  if (retval < 0)
+    {
+      calcpy (response, ERROR_NO_PROXY);
+      return -1;
+    }
+
   /*
    * Send host address
    */
 
-  calcpy (&msg_buf, host.address);
+  calcpy (&msg_buf, host.addr);
   msg_size = strlen (msg_buf);
-  
+
   retval = xsend_msg (proxy.fd, msg_buf, msg_size);
   if (retval < 0)
     {
@@ -148,37 +159,39 @@ SCM
 scm_add_host (SCM proxy_name, SCM address, SCM name, SCM description)
 {
   const static char SUBR_NAME[] = "scm_add_host";
-  struct Rec_host host;
+  struct db_rec rec;
   
   char* buf;
-  int   retval;
+  int32_t retval;
   
   SCM_ASSERT (SCM_STRINGP (proxy_name),  proxy_name,  SCM_ARG1, SUBR_NAME);
   SCM_ASSERT (SCM_STRINGP (address),     address,     SCM_ARG2, SUBR_NAME);
   SCM_ASSERT (SCM_STRINGP (name),        name,        SCM_ARG3, SUBR_NAME);
   SCM_ASSERT (SCM_STRINGP (description), description, SCM_ARG4, SUBR_NAME);
 
+  rec.type = DB_REC_HOST;
+
   buf = scm_to_locale_string (proxy_name);
-  strncpy (host.proxy_name, buf, MAX_PROXY_NAME_LEN);
+  calcpy (&rec.proxy_name, buf);
 
   free (buf);
 
   buf = scm_to_locale_string (address);
-  strncpy (host.address, buf, MAX_ADDRESS_LEN);
+  calcpy (&rec.addr, buf);
 
   free (buf);
 
   buf = scm_to_locale_string (name);
-  strncpy (host.name, buf, MAX_HOST_NAME_LEN);
+  calcpy (&rec.name, buf);
 
   free (buf);
 
   buf = scm_to_locale_string (description);
-  strncpy (host.name, buf, MAX_HOST_DESC_LEN);
+  calcpy (&rec.desc, buf);
 
   free (buf);
 
-  retval = db_add_host (&host);
+  retval = db_insert (&rec);
 
   return scm_from_int (retval);
 }
@@ -197,7 +210,7 @@ scm_rem_host (SCM host_id)
 
   id = scm_to_int (host_id);
 
-  retval = db_rem_host (id);
+  retval = db_delete (id);
 
   return (retval == 0) ? SCM_BOOL_T : SCM_BOOL_F;
 }
@@ -206,15 +219,61 @@ SCM
 scm_update_host (SCM host_id, SCM field, SCM value)
 {
   const static char SUBR_NAME[] = "scm_update_host";
+  struct db_rec rec;
   int retval;
-  
+
+  int32_t c_host_id;
+  char    *c_field;
+  char    *c_value;
+
   SCM_ASSERT (SCM_NUMBERP (host_id), host_id, SCM_ARG1, SUBR_NAME);
   SCM_ASSERT (scm_is_string (field), field,   SCM_ARG2, SUBR_NAME);
   SCM_ASSERT (scm_is_string (value), value,   SCM_ARG3, SUBR_NAME);
 
-  retval = db_update_host (scm_to_int (host_id),
-			   scm_to_locale_string (field),
-			   scm_to_locale_string (value));
+  c_host_id = scm_to_int (host_id);
+  c_field   = scm_to_locale_string (field);
+  c_value   = scm_to_locale_string (value);
+
+  retval = db_get (c_host_id, &rec);
+  if (retval != 0)
+    return SCM_BOOL_F;
+
+  if (! strcmp (c_field, "proxy_name"))
+    {
+      free (rec.proxy_name);
+      calcpy (&rec.proxy_name, c_value);
+    }
+  else if (! strcmp (c_field, "address"))
+    {
+      free (rec.addr);
+      calcpy (&rec.addr, c_value);
+    }
+  else if (! strcmp (c_field, "name"))
+    {
+      free (rec.name);
+      calcpy (&rec.name, c_value);
+    }
+  else if (! strcmp (c_field, "description"))
+    {
+      free (rec.desc);
+      calcpy (&rec.desc, c_value);
+    }
+  else
+    {
+      free (c_field);
+      free (c_value);
+      return SCM_BOOL_F;
+    }
+
+  retval = db_update (c_host_id, &rec);
+
+  free (c_field);
+  free (c_value);
+
+  free (rec.proxy_name);
+  free (rec.addr);
+  free (rec.name);
+  free (rec.desc);
 
   return (retval == 0) ? SCM_BOOL_T : SCM_BOOL_F;
 }
@@ -238,9 +297,11 @@ scm_get_host_list (void)
   SCM  vector;
   SCM* elt;
 
+  int32_t type = DB_REC_HOST;
+
   /* Get list of hosts from DB */
   
-  retval = db_get_hosts_list (&count, &list);
+  retval = db_query (DB_COL_TYPE, &type, &count, &list);
   if (retval < 0)
     return SCM_BOOL_F;
 

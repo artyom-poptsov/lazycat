@@ -1,3 +1,23 @@
+2013-01-04  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Improve the homebrew DB.
+	* server/db.c: Improve.
+	(db_get, db_query, select_from, get_free_node, is_type_equal)
+	(is_proxy_name_equal, is_name_equal, is_addr_equal, id_desc_equal)
+	(is_stat_equal, free_selection): New functions.
+	(get_host_by_id): Rename to get_hode_by_id.
+	(db_add_host): Rename to db_insert.
+	(db_rem_host): Rename to db_delete.
+	(db_update_host): Rename to db_update.
+	(db_check_host): Rename to db_check.
+	(db_get_host_list, db_set_client_status, db_get_proxy_by_fd)
+	(db_rem_proxy, db_get_proxies_list, get_proxy_by_fd)
+	(get_proxy_by_name, get_free_node_for_proxy)
+	(get_free_node_for_host): Remove.
+	* server/db.h: Update.
+	* server/scmapi.c, server/server.c: Use the new DB API.
+	* server/sighandlers.c: Likewise.
+
 2013-01-03  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* scheme/lazy-gtk-cat.scm (load-hosts): Remove the hardcoded

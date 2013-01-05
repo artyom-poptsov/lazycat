@@ -1,6 +1,6 @@
 /* LazyCat server.
  *
- * Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+ * Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
  *
  * This file is part of LazyCat.
  * 
@@ -76,7 +76,7 @@ main (int argc, char* argv[])
   proxy_t tcp_proxy = tcp_proxy_init;
   proxy_t ssh_proxy = ssh_proxy_init;
 
-  struct Rec_proxy proxy;
+  struct db_rec rec;
 
   snprintf(syslog_msg, SYSLOG_MSG_LEN, "lazycat [server (PID=%d)]", getpid());
 
@@ -89,16 +89,23 @@ main (int argc, char* argv[])
 
   /* Load proxies */
   
-  strcpy(proxy.name, TCP_PROXY_NAME);
-  proxy.fd = start_proxy (tcp_proxy, proxy.name);
-  db_add_proxy (&proxy);
+  rec.type = DB_REC_PROXY;
+  bzero (&rec, sizeof rec);
 
-  strcpy(proxy.name, SSH_PROXY_NAME);
-  proxy.fd = start_proxy (ssh_proxy, proxy.name);
-  db_add_proxy (&proxy);
+  calcpy (&rec.name, TCP_PROXY_NAME);
+  rec.fd = start_proxy (tcp_proxy, rec.name);
+  db_insert (&rec);
+
+  free (rec.name);
+
+  calcpy (&rec.name, SSH_PROXY_NAME);
+  rec.fd = start_proxy (ssh_proxy, rec.name);
+  db_insert (&rec);
+
+  free (rec.name);
 
   /* Start Guile */
-  
+
   scm_boot_guile (argc, argv, scm_thread, 0);
 
   /* Never reached. */
@@ -106,10 +113,10 @@ main (int argc, char* argv[])
 }
 
 /*
- * This function is used for starting the proxy process.
+ * Start the proxy process.
  *
- * It adds new proxy to DB and opens socket for communicating with this proxy.
- * The function returns descriptor of the new proxy.
+ * This function opens a socket for communicating with this
+ * proxy. Returns descriptor of the new proxy.
  */
 
 static int

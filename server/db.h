@@ -19,80 +19,74 @@
 #ifndef __DB_H__
 #define __DB_H__
 
+#include <stdint.h>
+
+/* Wildcard character that can be used in queries to the DB. */
+#define DB_WILDCARD 0
+
+/* Status of a proxy or a host */
 enum STATUS {
-  OFFLINE,
+  OFFLINE = 1,
   ONLINE
 };
 
-
-enum {
-  MAX_PROXY_NAME_LEN  = 20,
-  MAX_ADDRESS_LEN     = 100,
-  MAX_HOST_NAME_LEN   = 100,
-  MAX_HOST_DESC_LEN   = 100
+/* Type of a record */
+enum DB_REC_TYPE {
+  DB_REC_PROXY = 1,
+  DB_REC_HOST
 };
 
-/********************************************************************************
- * Types
+/* Column numbers in the DB. */
+enum DB_COL {
+  DB_COL_ID = 1,
+  DB_COL_TYPE,      
+  DB_COL_PROXY_NAME,
+  DB_COL_NAME,
+  DB_COL_ADDR,
+  DB_COL_DESC,
+  DB_COL_STAT
+};
+
+/* Single record in the DB. */
+struct db_rec
+{
+  enum DB_REC_TYPE type;
+  int32_t fd;
+
+  char *proxy_name;
+  char *name;
+  char *addr;
+  char *desc;
+
+  enum STATUS stat;
+};
+
+
+/*
+ * Interface to the DB
  */
 
-struct Rec_host
-{
-  int         id;
-  
-  /* Information related to communicating with host */
-  char        proxy_name[MAX_PROXY_NAME_LEN];
-  char        address[MAX_ADDRESS_LEN];
-  
-  /* Brief information about host */
-  char        name[MAX_HOST_NAME_LEN];
-  char        description[MAX_HOST_DESC_LEN];
-  
-  /* Status of the host */
-  enum STATUS status;
-};
+/* Add a new record REC to the DB. */
+int32_t db_insert (struct db_rec *rec);
 
-struct Rec_proxy
-{
-  char  name[MAX_PROXY_NAME_LEN];
-  int   fd;
-};
+/* Remove a record with the given ID from the DB */
+int32_t db_delete (const int32_t id);
 
-/********************************************************************************
- * Interface to DB
- */
+/* Replace current record with id ID with a new one. */
+int32_t db_update (const int32_t id, struct db_rec *rec);
 
-/* This function is used for getting a list of IDs of all hosts in DB */
-int db_get_hosts_list (int* count, int* list[]);
-  
-/* This function makes a new record in DB for host. */
-int db_add_host (struct Rec_host* host);
+/* Check that a host with the id ID is exists in DB.  This function
+   works faster than db_get () because it does no copying of host'
+   data. */
+int32_t db_check (const int32_t id);
 
-/* This function removes a host from DB. */
-int db_rem_host (const int id);
+/* Get a record with the given ID. */
+int32_t db_get (const int32_t id, struct db_rec *rec);
 
-int db_update_host (const int id, const char* field, const char* value);
-
-/* This function checks if host with given ID exists in DB. */
-int db_check_host (const int id);
-
-/* This function is used for getting a record from DB for host with given ID. */
-int db_get_host_record (const int id, struct Rec_host* host);
-
-/* This function is used for setting a new status for host with given ID. */
-int db_set_host_status (int id, enum STATUS new_status);
-
-/* This function makes new record in DB for protocol. */
-int db_add_proxy(struct Rec_proxy* proxy);
-
-/* This function remves protocol from DB. */
-int db_rem_proxy(const int fd);
-
-/* This function is used for getting information about protocol. */
-int db_get_proxy_by_fd (const int fd, struct Rec_proxy* proxy);
-
-int db_get_proxy_by_name (const char* name, struct Rec_proxy* proxy);
-
-int db_get_proxies_list (int* count, int* list[]);
+/* Query DB for information.  The function searches a value VALUE in
+   column COL and stores IDs of matched records in a newly allocated
+   LIST of size SIZE.  List should be freed after usage.
+   Return 0 on success, -1 on failure. */
+int32_t db_query (enum DB_COL col, void *value, size_t *size, int32_t **list);
 
 #endif	/* ifndef __DB_H__ */
