@@ -23,6 +23,7 @@
 #include <libssh/libssh.h>
 #include <syslog.h>
 #include <stdlib.h>
+#include <string.h>		/* strlen() */
 
 #include "common.h"             /* SYSLOG_*() */
 #include "lazy-ssh.h"           /* lazy_ssh_*() */
@@ -102,6 +103,9 @@ ssh_proxy_init (void)
 static void
 ssh_proxy_main_loop (void)
 {
+  static char* ERR_LOGIN = "Couldn't login on the host.";
+  static char* ERR_EXEC  = "Couldn't execute the command.";
+
   char   *ssh_addr;
   size_t ssh_addr_len;
 
@@ -157,13 +161,20 @@ ssh_proxy_main_loop (void)
 
       session = lazy_ssh_login (ssh_addr);
       if (session == NULL)
-        goto end;
+	{
+	  xsend_msg (sfd_client, ERR_LOGIN, strlen (ERR_LOGIN));
+	  continue;
+	}
 
       SYSLOG_DEBUG ("Send the command.");
 
       output_len = lazy_ssh_exec (session, cmd, &output);
       if (output_len <= 0)
-        goto end;
+	{
+	  xsend_msg (sfd_client, ERR_EXEC, strlen (ERR_EXEC));
+	  lazy_ssh_logout (session);
+	  continue;
+	}
 
       lazy_ssh_logout (session);
 

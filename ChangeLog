@@ -1,3 +1,8 @@
+2013-02-10  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* proxies/ssh-proxy/ssh-proxy.c (ssh_proxy_main_loop): Handle
+	connection/execution errors instead of breaking the main loop.
+
 2013-01-05  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* server/server.c: Use standard functions strdup() and strndup()
