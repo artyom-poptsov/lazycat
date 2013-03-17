@@ -1,3 +1,7 @@
+2013-03-17  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* server/scmapi.c: Use __func__ macro instead of SUBR_NAME.
+
 2013-02-10  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* proxies/ssh-proxy/ssh-proxy.c (ssh_proxy_main_loop): Handle

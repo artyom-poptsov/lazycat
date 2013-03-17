@@ -39,15 +39,13 @@ static int send_msg_to_host (const int host_id,
 SCM
 scm_send_msg (SCM dest, SCM msg)
 {
-  const static char SUBR_NAME[] = "scm_send_msg";
-  
   int host_id;
   char* msg_buf;
   char* response;
   int retval;
 
-  SCM_ASSERT (SCM_NUMBERP (dest), msg, SCM_ARG1, SUBR_NAME);
-  SCM_ASSERT (SCM_STRINGP (msg),  msg, SCM_ARG1, SUBR_NAME);
+  SCM_ASSERT (SCM_NUMBERP (dest), msg, SCM_ARG1, __func__);
+  SCM_ASSERT (SCM_STRINGP (msg),  msg, SCM_ARG1, __func__);
 
   host_id = scm_to_int (dest);
   msg_buf = scm_to_locale_string (msg);
@@ -158,16 +156,15 @@ send_msg_to_host (const int host_id, char* msg, char* response[])
 SCM
 scm_add_host (SCM proxy_name, SCM address, SCM name, SCM description)
 {
-  const static char SUBR_NAME[] = "scm_add_host";
   struct db_rec rec;
   
   char* buf;
   int32_t retval;
   
-  SCM_ASSERT (SCM_STRINGP (proxy_name),  proxy_name,  SCM_ARG1, SUBR_NAME);
-  SCM_ASSERT (SCM_STRINGP (address),     address,     SCM_ARG2, SUBR_NAME);
-  SCM_ASSERT (SCM_STRINGP (name),        name,        SCM_ARG3, SUBR_NAME);
-  SCM_ASSERT (SCM_STRINGP (description), description, SCM_ARG4, SUBR_NAME);
+  SCM_ASSERT (SCM_STRINGP (proxy_name),  proxy_name,  SCM_ARG1, __func__);
+  SCM_ASSERT (SCM_STRINGP (address),     address,     SCM_ARG2, __func__);
+  SCM_ASSERT (SCM_STRINGP (name),        name,        SCM_ARG3, __func__);
+  SCM_ASSERT (SCM_STRINGP (description), description, SCM_ARG4, __func__);
 
   rec.type = DB_REC_HOST;
 
@@ -192,11 +189,10 @@ scm_add_host (SCM proxy_name, SCM address, SCM name, SCM description)
 SCM
 scm_rem_host (SCM host_id)
 {
-  const static char SUBR_NAME[] = "scm_rem_host";
   int id;
   int retval;
   
-  SCM_ASSERT (SCM_NUMBERP (host_id), host_id, SCM_ARG1, SUBR_NAME);
+  SCM_ASSERT (SCM_NUMBERP (host_id), host_id, SCM_ARG1, __func__);
 
   id = scm_to_int (host_id);
 
@@ -208,7 +204,6 @@ scm_rem_host (SCM host_id)
 SCM
 scm_update_host (SCM host_id, SCM field, SCM value)
 {
-  const static char SUBR_NAME[] = "scm_update_host";
   struct db_rec rec;
   int retval;
 
@@ -216,9 +211,9 @@ scm_update_host (SCM host_id, SCM field, SCM value)
   char    *c_field;
   char    *c_value;
 
-  SCM_ASSERT (SCM_NUMBERP (host_id), host_id, SCM_ARG1, SUBR_NAME);
-  SCM_ASSERT (scm_is_string (field), field,   SCM_ARG2, SUBR_NAME);
-  SCM_ASSERT (scm_is_string (value), value,   SCM_ARG3, SUBR_NAME);
+  SCM_ASSERT (SCM_NUMBERP (host_id), host_id, SCM_ARG1, __func__);
+  SCM_ASSERT (scm_is_string (field), field,   SCM_ARG2, __func__);
+  SCM_ASSERT (scm_is_string (value), value,   SCM_ARG3, __func__);
 
   c_host_id = scm_to_int (host_id);
   c_field   = scm_to_locale_string (field);
