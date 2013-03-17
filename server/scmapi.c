@@ -33,6 +33,8 @@ static int send_msg_to_host (const int host_id,
 			     char* msg,
 			     char* response[]);
 
+static int update_host (const int host_id, char *field, char *value);
+
 /*
  * This function sends message to the remote host and returns response.
  */
@@ -204,8 +206,7 @@ scm_rem_host (SCM host_id)
 SCM
 scm_update_host (SCM host_id, SCM field, SCM value)
 {
-  struct db_rec rec;
-  int retval;
+  int32_t res;
 
   int32_t c_host_id;
   char    *c_field;
@@ -219,48 +220,59 @@ scm_update_host (SCM host_id, SCM field, SCM value)
   c_field   = scm_to_locale_string (field);
   c_value   = scm_to_locale_string (value);
 
-  retval = db_get (c_host_id, &rec);
-  if (retval != 0)
-    return SCM_BOOL_F;
-
-  if (! strcmp (c_field, "proxy_name"))
-    {
-      free (rec.proxy_name);
-      rec.proxy_name = strdup (c_value);
-    }
-  else if (! strcmp (c_field, "address"))
-    {
-      free (rec.addr);
-      rec.addr = strdup (c_value);
-    }
-  else if (! strcmp (c_field, "name"))
-    {
-      free (rec.name);
-      rec.name = strdup (c_value);
-    }
-  else if (! strcmp (c_field, "description"))
-    {
-      free (rec.desc);
-      rec.desc = strdup (c_value);
-    }
-  else
-    {
-      free (c_field);
-      free (c_value);
-      return SCM_BOOL_F;
-    }
-
-  retval = db_update (c_host_id, &rec);
+  res = update_host (c_host_id, c_field, c_value);
 
   free (c_field);
   free (c_value);
 
+  return (res == 0) ? SCM_BOOL_T : SCM_BOOL_F;
+}
+
+static int32_t
+update_host (const int32_t host_id, char *field, char *value)
+{
+  struct db_rec rec;
+  int32_t res = 0;
+
+  res = db_get (host_id, &rec);
+  if (res != 0)
+    goto end;
+
+  if (! strcmp (field, "proxy_name"))
+    {
+      free (rec.proxy_name);
+      rec.proxy_name = strdup (value);
+    }
+  else if (! strcmp (field, "address"))
+    {
+      free (rec.addr);
+      rec.addr = strdup (value);
+    }
+  else if (! strcmp (field, "name"))
+    {
+      free (rec.name);
+      rec.name = strdup (value);
+    }
+  else if (! strcmp (field, "description"))
+    {
+      free (rec.desc);
+      rec.desc = strdup (value);
+    }
+  else
+    {
+      res = -1;
+      goto end;
+    }
+  
+  res = db_update (host_id, &rec);
+
+ end:
   free (rec.proxy_name);
   free (rec.addr);
   free (rec.name);
   free (rec.desc);
 
-  return (retval == 0) ? SCM_BOOL_T : SCM_BOOL_F;
+  return res;
 }
 
 /*

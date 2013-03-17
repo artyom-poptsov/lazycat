@@ -1,6 +1,8 @@
 2013-03-17  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* server/scmapi.c: Use __func__ macro instead of SUBR_NAME.
+	(scm_update_host): Move host updating to a separate function.
+	(update_host): New function.
 
 2013-02-10  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
