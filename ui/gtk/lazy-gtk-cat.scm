@@ -1,6 +1,6 @@
 ;;; lazy-gtk-cat.scm -- A GTK interface for LazyCat.
 
-;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;; Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
 ;; This file is part of LazyCat.
 ;;
@@ -33,30 +33,28 @@
 
 ;;; Code:
 
-(for-each (lambda (file) (load file))
-          '("host.scm"
-            "host-list.scm"
-            "diff.scm"
-            "lc-gtk-output-preview-dialog.scm"
-            "lc-gtk-add-host-dialog.scm"
-            "lc-gtk-output-view.scm"
-            "lc-gtk-host-tree.scm"
-            "logger.scm"))
+(load-from-path "protocol.scm")
 
-(define-module (lazycat lazy-gtk-cat)
+(load-from-path "output-preview-dialog.scm")
+(load-from-path "add-host-dialog.scm")
+(load-from-path "output-view.scm")
+(load-from-path "host-tree.scm")
+
+(load-from-path "logger.scm")
+
+(define-module (lazycat ui gtk lazy-gtk-cat)
+  #:use-module (ice-9 rdelim)
   #:use-module (oop goops)
   #:use-module (gnome gtk)
   #:use-module (gnome gobject)
   #:use-module (gnome gtk gdk-event)
   ;; LazyCat modules
-  #:use-module (lazycat lc-gtk-output-preview-dialog)
-  #:use-module (lazycat lc-gtk-add-host-dialog)
-  #:use-module (lazycat lc-gtk-output-view)
-  #:use-module (lazycat lc-gtk-host-tree)
-  #:use-module (lazycat logger)
-  #:use-module (lazycat host)
-  #:use-module (lazycat host-list)
-  #:use-module (lazycat diff)
+  #:use-module (lazycat ui gtk output-preview-dialog)
+  #:use-module (lazycat ui gtk add-host-dialog)
+  #:use-module (lazycat ui gtk output-view)
+  #:use-module (lazycat ui gtk host-tree)
+  #:use-module (lazycat server scm protocol)
+  #:use-module (lazycat server scm logger)
   #:export (<lazy-gtk-cat> run))
 
 
@@ -64,28 +62,35 @@
 
 (define *mode-raw*         "raw-mode")
 (define *mode-diff*        "diff-mode")
-(define *application-name* "LazyCat")
-(define *syslog-tag*       "lazycat-gui")
+(define *application-name* "Lazy GTK Cat")
 
 
 ;;; Main class
 
 (define-class <lazy-gtk-cat> ()
+
+  (server-socket-path
+   #:getter get-server-socket-path
+   #:init-value "/tmp/lazycat/server")
+
+  (server-socket
+   #:getter get-server-socket
+   #:setter set-server-socket)
+
   ;; Directories
-  (tmp-dir      #:accessor tmp-dir)
-  (lazycat-home #:accessor lazycat-home)
+  (mode
+   #:getter get-mode
+   #:setter set-mode
+   #:init-value *mode-raw*)
 
-  (logger #:accessor logger)
-
-  (mode #:accessor mode #:init-value *mode-raw*)
-  (master-host-id #:accessor master-host-id #:init-value 1)
-
-  ;; Objects
-  (host-list #:accessor host-list)
+  (master-host-id
+   #:getter get-master-host-id
+   #:setter set-master-host-id
+   #:init-value 1)
 
   ;; Dialog windows
-  (lc-gtk-output-preview-dialog #:accessor lc-gtk-output-preview-dialog)
-  (lc-gtk-add-host-dialog       #:accessor lc-gtk-add-host-dialog)
+  (output-preview-dialog #:accessor output-preview-dialog)
+  (add-host-dialog       #:accessor add-host-dialog)
 
   ;; GUI objects
 
@@ -105,8 +110,6 @@
   (gtk-left-vbox  #:accessor gtk-left-vbox)
   (gtk-right-vbox #:accessor gtk-right-vbox)
 
-  (lc-gtk-host-tree #:accessor lc-gtk-host-tree)
-
   (gtk-button-hbox     #:accessor gtk-button-hbox)
   (gtk-add-host-button #:accessor gtk-add-host-button)
   (gtk-rem-host-button #:accessor gtk-rem-host-button)
@@ -114,12 +117,22 @@
   (gtk-scrolled-window #:accessor gtk-scrolled-window)
   (gtk-entry           #:accessor gtk-entry)
 
-  (lc-gtk-output-view #:accessor lc-gtk-output-view)
-
   (gtk-host-tree-menu              #:accessor gtk-host-tree-menu)
   (gtk-host-tree-menu-set-master   #:accessor gtk-host-tree-menu-set-master)
   (gtk-host-tree-menu-create-group #:accessor gtk-host-tree-menu-create-group)
-  (gtk-host-tree-menu-remove-group #:accessor gtk-host-tree-menu-remove-group))
+  (gtk-host-tree-menu-remove-group #:accessor gtk-host-tree-menu-remove-group)
+
+  (logger
+   #:accessor logger
+   #:init-value (make <logger> #:ident "lazy-gkt-cat" #:facility 'user))
+
+  (output-view
+   #:getter get-output-view
+   #:init-value (make <output-view>))
+
+  (host-tree
+   #:getter get-host-tree
+   #:init-value (make <host-tree>)))
 
 
 ;;; Class initialization
@@ -127,25 +140,14 @@
 (define-method (initialize (obj <lazy-gtk-cat>) args)
   (next-method)
 
+  (set-server-socket obj (socket PF_UNIX SOCK_STREAM 0))
+
   (gdk-threads-init)
 
-  (slot-set! obj 'logger (make <logger>
-                           #:ident    *syslog-tag*
-                           #:facility 'user))
-
-  ;; Initialize pathes
-  (slot-set! obj 'tmp-dir      "/tmp/lazycat")
-  (slot-set! obj 'lazycat-home (string-append (getenv "HOME") "/.lazycat"))
-
-  ;; Objects
-  (slot-set! obj 'host-list (make <host-list> #:lazycat-home (lazycat-home obj)))
-
   ;; Dialog windows
-  (slot-set! obj 'lc-gtk-output-preview-dialog
-             (make <lc-gtk-output-preview-dialog>))
-  (slot-set! obj 'lc-gtk-add-host-dialog
-             (make <lc-gtk-add-host-dialog>
-               #:proxy-list '("tcp-proxy" "ssh-proxy")))
+  (slot-set! obj 'output-preview-dialog (make <output-preview-dialog>))
+  (slot-set! obj 'add-host-dialog (make <add-host-dialog>
+                                    #:proxy-list '("tcp-proxy" "ssh-proxy")))
 
 
   ;; Create LazyCat GUI
@@ -228,8 +230,7 @@
   ;;  |  -------------------
   ;;   ---------------------
   ;;
-  (slot-set! obj 'lc-gtk-host-tree (make <lc-gtk-host-tree>))
-  (pack-start (gtk-left-vbox obj) (lc-gtk-host-tree obj) #t #t 0)
+  (pack-start (gtk-left-vbox obj) (get-host-tree obj) #t #t 0)
 
   ;;
   ;; Button hbox
@@ -286,8 +287,7 @@
   ;;  | | Output view
   ;;  | |
   ;;
-  (slot-set! obj 'lc-gtk-output-view (make <lc-gtk-output-view>))
-  (gtk-container-add (gtk-scrolled-window obj) (lc-gtk-output-view obj))
+  (gtk-container-add (gtk-scrolled-window obj) (get-output-view obj))
 
 
   ;;
@@ -331,9 +331,9 @@
   (gtype-instance-signal-connect-after (gtk-menu-file-quit obj) 'activate
                                        (lambda (w) (handle-lazycat-quit obj)))
   (gtype-instance-signal-connect-after (gtk-menu-mode-raw  obj) 'activate
-                                       (lambda (w) (slot-set! obj 'mode *mode-raw*)))
+                                       (lambda (w) (set-mode obj *mode-raw*)))
   (gtype-instance-signal-connect-after (gtk-menu-mode-diff obj) 'activate
-                                       (lambda (w) (slot-set! obj 'mode *mode-diff*)))
+                                       (lambda (w) (set-mode obj *mode-diff*)))
 
   (gtype-instance-signal-connect-after (gtk-entry obj) 'activate
                                        (lambda (e) (handle-send-message obj)))
@@ -345,7 +345,7 @@
   (gtype-instance-signal-connect-after (gtk-rem-host-button obj) 'clicked
                                        (lambda (e) (handle-rem-host obj)))
 
-  (connect (lc-gtk-host-tree obj) 'button-press-event
+  (connect (get-host-tree obj) 'button-press-event
            (lambda (w e)
              (handle-host-tree-button-press-event obj (gdk-event-button:button e))))
 
@@ -362,14 +362,13 @@
 ;; of <lazy-gtk-cat>. Most of usefull work is done by other methods that
 ;; handlers are calling.
 
-
 ;; Handler for "Set as a master" popup menu item.
 (define-method (handle-set-master (obj <lazy-gtk-cat>))
-  (let* ((host-tree (lc-gtk-host-tree obj))
-         (host-id   (lc-gtk-host-tree-get-selected host-tree)))
+  (let* ((host-tree (get-host-tree obj))
+         (host-id   (host-tree-get-selected host-tree)))
     ;; Check that the selected row is a host.
     (if (not (eq? host-id #f))
-        (set-master-host obj host-id))))
+        (lazycat-set-master-host obj host-id))))
 
 ;; This method makes a dialog window to ask the user a group name and
 ;; add a new group to host-list and host-tree.
@@ -385,8 +384,7 @@
 
     (connect ok-button 'clicked
              (lambda (w) (let ((group-name (gtk-entry-get-text entry)))
-                           (host-list-add-group (host-list obj) group-name)
-                           (add-group (lc-gtk-host-tree obj)    group-name)
+                           (host-tree-add-group (get-host-tree obj) group-name)
                            (destroy dialog))))
 
     (connect cancel-button 'clicked (lambda (w) (destroy dialog)))
@@ -394,17 +392,15 @@
     (show-all dialog)))
 
 (define-method (handle-rem-group (obj <lazy-gtk-cat>))
-  (let ((host-list  (host-list obj))
-        (group-name (lc-gtk-host-tree-get-selected-group (lc-gtk-host-tree obj))))
-    (host-list-rem-group host-list group-name)))
+  (host-tree-rem-group (get-host-tree obj)))
 
 (define-method (handle-rem-host (obj <lazy-gtk-cat>))
-  (let* ((host-tree (lc-gtk-host-tree obj))
-         (host-id   (lc-gtk-host-tree-get-selected host-tree)))
-    (lc-rem-host obj host-id)))
+  (let* ((host-tree (get-host-tree obj))
+         (host-id   (host-tree-get-selected host-tree)))
+    (lazycat-remove-host obj host-id)))
 
 (define-method (handle-add-host (obj <lazy-gtk-cat>))
-  (let ((dialog     (lc-gtk-add-host-dialog obj))
+  (let ((dialog     (add-host-dialog obj))
         (handler-id #f))
 
     (define (handle-dialog-response rsp)
@@ -420,8 +416,8 @@
             ;;
             ;; TODO: Should we do the check for an empty string passed
             ;;       as a group name here -- or somewhere else?
-            (lc-add-host obj (if (eq? (string-length group) 0) #f group)
-                         host-attributes)))
+            (lazycat-add-host obj (if (eq? (string-length group) 0) #f group)
+                              host-attributes)))
       (gsignal-handler-disconnect dialog handler-id))
 
     (set! handler-id
@@ -433,14 +429,14 @@
 ;; Handler for message sending.
 (define-method (handle-send-message (obj <lazy-gtk-cat>))
   (let ((entry (gtk-entry obj)))
-    (send-message obj (gtk-entry-get-text entry))))
+    (lazycat-send-message obj (gtk-entry-get-text entry))))
 
 (define-method (handle-host-tree-button-press-event (obj           <lazy-gtk-cat>)
                                                     (button-number <number>))
   (cond
    ((= button-number 3)
     (let ((menu (gtk-host-tree-menu obj)))
-      (if (not (eq? (lc-gtk-host-tree-get-selected (lc-gtk-host-tree obj)) #f))
+      (if (not (eq? (host-tree-get-selected (get-host-tree obj)) #f))
           (begin
             (gtk-widget-set-sensitive (gtk-host-tree-menu-remove-group obj) #f)
             (gtk-widget-set-sensitive (gtk-host-tree-menu-set-master obj)   #t))
@@ -459,151 +455,139 @@
 ;; Cancel the application
 (define-method (handle-lazycat-quit (obj <lazy-gtk-cat>))
   (begin
-    (host-list-save (host-list obj))
     (gtk-main-quit)
     #f))
 
 
 ;;; Methods that do most of the hard work.
 
-;; Run the application.
-(define-method (run (obj <lazy-gtk-cat>) args)
-  (logger-message (logger obj) 'info "Starting the application")
-  (show-all (gtk-main-window obj))
-  (load-hosts obj)
-  (gdk-threads-enter)
-  (gtk-main)
-  (gdk-threads-leave))
+;; Send message to the server
+(define-method (send-message (obj <lazy-gtk-cat>) (type <number>) message)
+  (set-server-socket obj (socket PF_UNIX SOCK_STREAM 0))
+  (connect (get-server-socket obj) AF_UNIX (get-server-socket-path obj))
+  (let ((message     (list type message))
+        (server-socket (get-server-socket obj)))
+
+    ;; Send the message
+    (write message server-socket)
+    (newline server-socket)
+
+    ;; Receive a response
+    (let ((output (let r ((output "")
+                          (line   ""))
+                    (if (not (eof-object? line))
+                        (r (string-append output line "\n")
+                           (read-line server-socket 'trim))
+                        output))))
+      (close-port server-socket)
+      (read (open-input-string output)))))
+
+;; Refresh list of hosts
+(define-method (refresh-host-list (obj <lazy-gtk-cat>))
+  (let ((group-list (cadr (send-message obj *cmd-list* 'hosts)))
+        (host-tree  (get-host-tree obj)))
+
+    (host-tree-clear host-tree)
+
+    (for-each
+     (lambda (group)
+       (for-each
+        (lambda (host)
+          (let ((group-name (car group))
+                (host-attributes (list (list-ref host 0)    ; ID
+                                       (list-ref host 1)    ; Name
+                                       (list-ref host 2)    ; Proxy
+                                       (list-ref host 3)    ; Address
+                                       (list-ref host 4)))) ; Description
+            (host-tree-add-host host-tree group-name host-attributes)))
+        (cdr group)))
+     group-list)
+
+    (lazycat-get-master-host obj)))
 
 ;; Add host to the GTK host three and to the host list
 ;;
 ;; This function takes host attributes as the following list:
 ;;   '(name proxy address description)
-(define-method (lc-add-host (obj <lazy-gtk-cat>) group (host-attributes <list>))
-  (let* ((host-tree (lc-gtk-host-tree obj))
-         (host-list (host-list obj))
-         (host-id (host-list-add-host host-list group host-attributes)))
-    ;; Add the host ID to addributes and add the host to the host tree
-    (lc-gtk-host-tree-add-host host-tree group (cons host-id host-attributes))))
+(define-method (lazycat-add-host (obj <lazy-gtk-cat>) group (host-attributes <list>))
+  (send-message obj *cmd-add-host* (cons group host-attributes))
+  (refresh-host-list obj))
 
 ;; Remove host
-(define-method (lc-rem-host (obj <lazy-gtk-cat>) (host-id <number>))
-  (let ((host-tree (lc-gtk-host-tree obj))
-        (host-list (host-list obj)))
-    (lc-gtk-host-tree-rem-host host-tree host-id)
-    (host-list-rem-host host-list host-id)))
-
-;; Load the host list from a config file
-(define-method (load-hosts (obj <lazy-gtk-cat>))
-  (let* ((host-list  (host-list obj))
-         (host-tree  (lc-gtk-host-tree obj)))
-
-    (define (add-host-to-host-tree host)
-      (let ((group-name (host-list-get-group-name-by-host-id host-list
-                                                             (host-get-id host)))
-            (host-attributes (list (host-get-id          host)
-                                   (host-get-name        host)
-                                   (host-get-proxy       host)
-                                   (host-get-address     host)
-                                   (host-get-description host))))
-        (lc-gtk-host-tree-add-host host-tree group-name host-attributes)))
-
-    (logger-message (logger obj) 'info "Loading host list")
-
-    (host-list-load host-list)
-
-    (if (not (host-list-empty? host-list))
-        (begin
-          (for-each (lambda (host) (add-host-to-host-tree host))
-                    (host-list-get-plain-list host-list))
-          ;; Set default master host (the 1st host from the list)
-          ;; TODO: It'll be good idea to store info about master host between
-          ;;       sessions.
-          (let* ((list (host-list-get-plain-list host-list))
-                 (master-host-id (host-get-id (car list))))
-            (set-master-host obj master-host-id)))
-        (logger-message (logger obj) 'info "Host list is empty"))))
+(define-method (lazycat-remove-host (obj <lazy-gtk-cat>) (host-id <number>))
+  (let ((host-tree (get-host-tree obj)))
+    (host-tree-rem-host host-tree host-id)
+    (send-message obj *cmd-rem-host* host-id)))
 
 ;; Set host with HOST-ID as a master host.
-(define-method (set-master-host (obj <lazy-gtk-cat>) (host-id <number>))
-  (slot-set! obj 'master-host-id host-id)
-  (lc-gtk-host-tree-set-master-host (lc-gtk-host-tree obj) host-id))
+(define-method (lazycat-set-master-host (obj <lazy-gtk-cat>) (host-id <number>))
+  (send-message obj *cmd-set* (list 'master host-id))
+  (set-master-host-id obj host-id)
+  (host-tree-set-master-host (get-host-tree obj) host-id))
+
+(define-method (lazycat-get-master-host (obj <lazy-gtk-cat>))
+  (let* ((result  (send-message obj *cmd-get* 'master))
+         (host-id (string->number (cadr result))))
+    (set-master-host-id obj host-id)
+    (host-tree-set-master-host (get-host-tree obj) host-id)))
 
 ;; Send a message
-(define-method (send-message (obj <lazy-gtk-cat>) (message <string>))
+(define-method (lazycat-send-message (obj <lazy-gtk-cat>) (message <string>))
 
-  (define (just-send-and-print host)
-    (let ((response    (host-send-message host message))
-          (host-id     (number->string (host-get-id host)))
-          (output-view (lc-gtk-output-view obj)))
-      (gdk-threads-enter)
-      (lc-gtk-output-view-append output-view host-id response)
-      (gdk-threads-leave)))
+  (let ((handler-id #f))
 
-  (define (fetch-and-analyse host pattern)
-    (let* ((output      (host-send-message host message))
-           (output-view (lc-gtk-output-view obj))
-           (diff        (make-string-diff (tmp-dir obj) pattern output))
-           (host-id     (number->string (host-get-id host))))
-
-      (if (diff-empty? diff)
-          (let ((header (string-append host-id " OK")))
-            (gdk-threads-enter)
-            (lc-gtk-output-view-append output-view header (diff-get diff))
-            (gdk-threads-leave))
-          (let ((header (string-append host-id " NOK")))
-            (gdk-threads-enter)
-            (lc-gtk-output-view-append-error output-view header (diff-get diff))
-            (gdk-threads-leave)))))
-
-  (let* ((host-list       (host-list obj))
-         (plain-host-list (host-list-get-plain-list host-list))
-         (handler-id      #f))
-
-    (if (string=? (mode obj) *mode-raw*)
+    (if (string=? (get-mode obj) *mode-raw*)
 
         ;; Raw mode. Just send the message to all hosts and print responses.
         (call-with-new-thread
-         (lambda () (begin
-                      (gdk-threads-enter)
-                      (gtk-widget-set-sensitive (gtk-entry obj) #f)
-                      (gdk-threads-leave)
+         (lambda ()
+           (begin
+             (gdk-threads-enter)
+             (gtk-widget-set-sensitive (gtk-entry obj) #f)
+             (gdk-threads-leave)
 
-                      (for-each just-send-and-print plain-host-list)
+             (let ((output-view (get-output-view obj))
+                   (result      (send-message obj *cmd-exec* message)))
+               (gdk-threads-enter)
+               (output-view-append output-view "output" (cadr result))
+               (gdk-threads-leave))
 
-                      (gdk-threads-enter)
-                      (gtk-widget-set-sensitive (gtk-entry obj) #t)
-                      (gtk-widget-grab-focus (gtk-entry obj))
-                      (gdk-threads-leave))))
+             (gdk-threads-enter)
+             (gtk-widget-set-sensitive (gtk-entry obj) #t)
+             (gtk-widget-grab-focus (gtk-entry obj))
+             (gdk-threads-leave))))
 
         ;; Diff mode. An output from a master host will be taken as a
         ;; pattern. Then we will compare the output from every host
         ;; with the pattern.
-        (let* ((master-host-id        (master-host-id obj))
-               (master-host           (host-list-get-host-by-id host-list master-host-id))
-               (pattern               (host-send-message master-host message))
-               (output-preview-dialog (lc-gtk-output-preview-dialog obj)))
+        (let* ((output-preview-dialog (output-preview-dialog obj)))
 
           ;; Handler for a dialog response
           (define (handle-dialog-response rsp)
             (if (= rsp 1)
                 ;; Execute
                 (call-with-new-thread
-                 (lambda () (begin
-                              (gdk-threads-enter)
-                              (gtk-widget-set-sensitive (gtk-entry obj) #f)
-                              (gdk-threads-leave)
+                 (lambda ()
+                   (begin
+                     (gdk-threads-enter)
+                     (gtk-widget-set-sensitive (gtk-entry obj) #f)
+                     (gdk-threads-leave)
 
-                              (for-each (lambda (host) (fetch-and-analyse host pattern))
-                                        plain-host-list)
+                     (let ((output-view (get-output-view obj))
+                           (result      (send-message obj *cmd-diff*
+                                                      (list 'continue))))
+                       (gdk-threads-enter)
+                       (output-view-append output-view "output" (cadr result))
+                       (gdk-threads-leave))
 
-                              (gdk-threads-enter)
-                              (gtk-widget-set-sensitive (gtk-entry obj) #t)
-                              (gtk-widget-grab-focus (gtk-entry obj))
-                              (gdk-threads-leave))))
+                     (gdk-threads-enter)
+                     (gtk-widget-set-sensitive (gtk-entry obj) #t)
+                     (gtk-widget-grab-focus (gtk-entry obj))
+                     (gdk-threads-leave))))
+
                 ;; Cancel
-                (let ((output-view (lc-gtk-output-view obj)))
-                  (lc-gtk-output-view-append output-view "Canceled by user." "")))
+                (let ((output-view (output-view obj)))
+                  (output-view-append output-view "Canceled by user." "")))
             ;; Disconnect the connected handler
             (gsignal-handler-disconnect output-preview-dialog handler-id))
 
@@ -614,9 +598,20 @@
                                                (lambda (w rsp)
                                                  (handle-dialog-response rsp))))
           ;; Show an output preview
-          (show-output output-preview-dialog pattern)))
+          (let* ((message (list 'get-pattern message))
+                 (result  (send-message obj *cmd-diff* message))
+                 (pattern (cadr result)))
+            (show-output output-preview-dialog pattern))))
 
     ;; Clean up a previous content of the command line
     (gtk-entry-set-text (gtk-entry obj) "")))
+
+;; Run the application.
+(define-method (run (obj <lazy-gtk-cat>) args)
+  (show-all (gtk-main-window obj))
+  (refresh-host-list obj)
+  (gdk-threads-enter)
+  (gtk-main)
+  (gdk-threads-leave))
 
 ;;; lazy-gtk-cat.scm ends here

@@ -1,6 +1,6 @@
 ;;; host-list.scm -- The host list for LazyCat.
 
-;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;; Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
 ;; This file is part of LazyCat.
 ;;
@@ -39,6 +39,7 @@
 ;;   (host-list-get-host-by-id obj id)
 ;;   (host-list-get-group-name-by-host-id obj host-id)
 ;;   (host-list-get-plain-list obj)
+;;   (host-list-get-unrolled-list obj)
 
 
 ;;; Code:
@@ -46,12 +47,12 @@
 (load "config.scm")
 (load "host.scm")
 
-(define-module (lazycat host-list)
+(define-module (lazycat server scm host-list)
   #:use-module (oop goops)
   #:use-module (ice-9 common-list)
   ;; LazyCat modules:
-  #:use-module (lazycat config)
-  #:use-module (lazycat host)
+  #:use-module (lazycat server scm config)
+  #:use-module (lazycat server scm host)
   #:export (<host-list> host-list-load
                         host-list-save
                         host-list-empty?
@@ -60,6 +61,7 @@
                         host-list-rem-host
                         host-list-rem-group
                         host-list-get-plain-list
+                        host-list-get-unrolled-list
                         host-list-get-host-by-id
                         host-list-get-group-name-by-host-id))
 
@@ -127,19 +129,31 @@
                             (host-list-add-host obj #f h))))
                   list)))
 
+;; Make a list from host attributes
+(define (unroll-host host)
+  (list (host-get-name        host)
+        (host-get-proxy       host)
+        (host-get-address     host)
+        (host-get-description host)))
+
+;; FIXME: Temporary solution.
+(define (unroll-host-with-id host)
+  (list (host-get-id          host)
+        (host-get-name        host)
+        (host-get-proxy       host)
+        (host-get-address     host)
+        (host-get-description host)))
+
+;; Get members of a group GROUP as a list.
+(define (unroll-group group)
+  (append (list (car group)) (map unroll-host (cdr group))))
+
+;; FIXME: Temporary solution.
+(define (unroll-group-with-id group)
+  (append (list (car group)) (map unroll-host-with-id (cdr group))))
+
 ;; Save host list to a file
 (define-method (host-list-save (obj <host-list>))
-
-  ;; Make a list from host attributes
-  (define (unroll-host host)
-        (list (host-get-name        host)
-              (host-get-proxy       host)
-              (host-get-address     host)
-              (host-get-description host)))
-
-  (define (unroll-group group)
-    (append (list (car group)) (map unroll-host (cdr group))))
-
   (let ((unrolled-list (map unroll-group (host-list obj))))
     (config-save-list (config obj) *default-list-name* unrolled-list)))
 
@@ -241,5 +255,8 @@
     (for-each (lambda (l) (set! plain-list (append plain-list l)))
               (map (lambda (l) (cdr l)) (host-list obj)))
     plain-list))
+
+(define-method (host-list-get-unrolled-list (obj <host-list>))
+  (map unroll-group-with-id (host-list obj)))
   
 ;;; host-list.scm ends here

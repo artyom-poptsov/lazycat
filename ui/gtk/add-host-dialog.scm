@@ -1,6 +1,6 @@
-;;; lc-gtk-add-host-dialog.scm -- LazyCat GTK "Add host" dialog.
+;;; add-host-dialog.scm -- LazyCat GTK "Add host" dialog.
 
-;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;; Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
 ;; This file is part of LazyCat.
 ;;
@@ -19,7 +19,7 @@
 
 ;;; Commentary:
 
-;; This module describes a <lc-gtk-add-host-dialog> class.
+;; This module describes a <add-host-dialog> class.
 
 ;; These methods are exported:
 ;;
@@ -34,19 +34,19 @@
 
 ;;; Module definition
 
-(define-module (lazycat lc-gtk-add-host-dialog)
+(define-module (lazycat ui gtk add-host-dialog)
   #:use-module (oop goops)
   #:use-module (gnome-2)
   #:use-module (gnome gobject)
   #:use-module (gnome gtk)
   #:use-module (gnome gtk gdk-event)
-  #:export (<lc-gtk-add-host-dialog> get-host-name get-proxy-name get-address
-                                     get-host-description))
+  #:export (<add-host-dialog> get-host-name get-proxy-name get-address
+                              get-host-description))
 
 
 ;;; Main class
 
-(define-class <lc-gtk-add-host-dialog> (<gtk-dialog>)
+(define-class <add-host-dialog> (<gtk-dialog>)
   (cbox-proxy-name        #:accessor cbox-proxy-name)
   (entry-group            #:accessor entry-group)
   (entry-address          #:accessor entry-address)
@@ -58,7 +58,7 @@
 
 ;;; Class initialization
 
-(define-method (initialize (obj <lc-gtk-add-host-dialog>) args)
+(define-method (initialize (obj <add-host-dialog>) args)
 
   (define (add-widgets-to-box box . widgets)
     (for-each (lambda (widget) (pack-start box widget #t #t 0)) widgets))
@@ -114,19 +114,19 @@
 
 ;;; Getters
 
-(define-method (get-group (obj <lc-gtk-add-host-dialog>))
+(define-method (get-group (obj <add-host-dialog>))
   (gtk-entry-get-text (entry-group obj)))
 
-(define-method (get-host-name (obj <lc-gtk-add-host-dialog>))
+(define-method (get-host-name (obj <add-host-dialog>))
   (gtk-entry-get-text (entry-host-name obj)))
 
-(define-method (get-proxy-name (obj <lc-gtk-add-host-dialog>))
+(define-method (get-proxy-name (obj <add-host-dialog>))
   (gtk-combo-box-get-active-text (cbox-proxy-name obj)))
 
-(define-method (get-address (obj <lc-gtk-add-host-dialog>))
+(define-method (get-address (obj <add-host-dialog>))
   (gtk-entry-get-text (entry-address obj)))
 
-(define-method (get-host-description (obj <lc-gtk-add-host-dialog>))
+(define-method (get-host-description (obj <add-host-dialog>))
   (gtk-entry-get-text (entry-host-description obj)))
 
-;;; lc-gtk-add-host-dialog.scm ends here
+;;; add-host-dialog.scm ends here

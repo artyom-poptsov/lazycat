@@ -1,6 +1,6 @@
 ;;; diff.scm -- Get diff between two files or strings.
 
-;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;; Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
 ;; This file is part of LazyCat.
 ;;
@@ -33,7 +33,7 @@
 
 ;;; Code:
 
-(define-module (lazycat diff)
+(define-module (lazycat server scm diff)
   #:use-module (oop goops)
   #:use-module (ice-9 popen)
   #:use-module (ice-9 rdelim)

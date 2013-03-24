@@ -1,6 +1,6 @@
 ;;; config.scm -- Stores configuration in a file.
 
-;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;; Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
 ;; This file is part of LazyCat.
 ;;
@@ -41,7 +41,7 @@
 
 ;;; Code:
 
-(define-module (lazycat config)
+(define-module (lazycat server scm config)
   #:use-module (oop goops)
   #:export     (<config> config-load-list config-save-list))
 

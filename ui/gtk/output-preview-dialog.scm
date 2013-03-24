@@ -1,6 +1,6 @@
-;;; lc-gtk-output-preview-dialog.scm -- LazyCat GTK output preview dialog.
+;;; output-preview-dialog.scm -- LazyCat GTK output preview dialog.
 
-;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;; Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
 ;; This file is part of LazyCat.
 ;;
@@ -20,7 +20,7 @@
 
 ;;; Commentary:
 
-;; This module describes a <lc-gtk-output-preview-dialog> class.
+;; This module describes a <output-preview-dialog> class.
 ;; 
 ;; These methods are exported:
 ;; 
@@ -31,22 +31,22 @@
 
 ;;; Module definition
 
-(define-module (lazycat lc-gtk-output-preview-dialog)
+(define-module (lazycat ui gtk output-preview-dialog)
   #:use-module (oop goops)
   #:use-module (gnome-2)
   #:use-module (gnome gobject)
   #:use-module (gnome gtk)
   #:use-module (gnome gtk gdk-event)
-  #:export (<lc-gtk-output-preview-dialog> show-output))
+  #:export (<output-preview-dialog> show-output))
 
 
 ;;; Main class
 
-(define-class <lc-gtk-output-preview-dialog> (<gtk-dialog>)
+(define-class <output-preview-dialog> (<gtk-dialog>)
   (output-preview-buffer #:accessor output-preview-buffer))
 
 ;; Class inititalization
-(define-method (initialize (obj <lc-gtk-output-preview-dialog>) args)
+(define-method (initialize (obj <output-preview-dialog>) args)
   (next-method)
 
   (slot-set! obj 'title "Output preview")
@@ -76,8 +76,8 @@
       (gtk-box-pack-start vbox label #f #f 0)
       (gtk-box-pack-start vbox scrolled-window #t #t 0))))
 
-(define-method (show-output (obj <lc-gtk-output-preview-dialog>) (output <string>))
+(define-method (show-output (obj <output-preview-dialog>) (output <string>))
   (gtk-text-buffer-set-text (output-preview-buffer obj) output)
   (show-all obj))
 
-;;; lc-gtk-output-preview-dialog.scm ends here
+;;; output-preview-dialog.scm ends here

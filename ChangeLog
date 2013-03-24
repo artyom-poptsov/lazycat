@@ -1,3 +1,23 @@
+2013-03-26  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Improve the LazyCat server.  Make the server work as a daemon and
+	split UI and the server part.  Make UI communicate with the server
+	through the well-defined protocol, so it become more
+	straightforward and flexible.  Improve the module hierarchy.  Move
+	all UI-related sources to ui directory.  Add a CLI for LazyCat.
+	* scheme/config.scm, scheme/diff.scm, scheme/host.scm,
+	scheme/host-list.scm, scheme/logger.scm: Move to server/scm.
+	* lazycat-gtk.sh: Move to the ui directory.  Rename to
+	lazycat-gtk.
+	* scheme/lazy-gtk-cat.scm: Move to ui/gtk.  Move all GTK-related
+	stuff to ui/gtk.
+	* server/scm/lazycatd.scm: New file.
+	* ui/lc: New file.
+	* ui/cli/pretty-format.scm: New file.
+	* server/scm/protocol.scm: New file.
+	* server/server.c: Don't start the Guile shell -- run the lazycatd
+	instead.
+
 2013-03-17  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* server/scmapi.c: Use __func__ macro instead of SUBR_NAME.

@@ -1,6 +1,6 @@
-;;; lc-gtk-host-tree.scm -- LazyCat GTK host tree.
+;;; host-tree.scm -- LazyCat GTK host tree.
 
-;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;; Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
 ;; This file is part of LazyCat.
 ;;
@@ -19,15 +19,16 @@
 
 ;;; Commentary:
 
-;; This module describes a <lc-gtk-host-tree> class.
+;; This module describes a <host-tree> class.
 ;;
 ;; These methods are exported:
 ;;
-;;   (lc-gtk-host-tree-add-host obj group-name host-attributes)
-;;   (lc-gtk-host-tree-rem-host obj host-id)
-;;   (lc-gtk-host-tree-get-selected obj)
-;;   (lc-gtk-host-tree-get-selected-group obj)
-;;   (lc-gtk-host-tree-set-master-host obj host-id)
+;;   (host-tree-add-host obj group-name host-attributes)
+;;   (host-tree-rem-host obj host-id)
+;;   (host-tree-get-selected obj)
+;;   (host-tree-get-selected-group obj)
+;;   (host-tree-set-master-host obj host-id)
+;;   (host-tree-clear obj)
 ;;
 
 
@@ -35,18 +36,21 @@
 
 ;;; Module definition
 
-(define-module (lazycat lc-gtk-host-tree)
+(define-module (lazycat ui gtk host-tree)
   #:use-module (oop goops)
   #:use-module (gnome-2)
   #:use-module (gnome gobject)
   #:use-module (gnome gtk)
   #:use-module (gnome gtk gdk-event)
   #:use-module (ice-9 receive)
-  #:export (<lc-gtk-host-tree> lc-gtk-host-tree-add-host
-                               lc-gtk-host-tree-rem-host
-                               lc-gtk-host-tree-get-selected
-                               lc-gtk-host-tree-get-selected-group
-                               lc-gtk-host-tree-set-master-host))
+  #:export (<host-tree> host-tree-add-host
+                        host-tree-rem-host
+                        host-tree-add-group
+                        host-tree-rem-group
+                        host-tree-get-selected
+                        host-tree-get-selected-group
+                        host-tree-set-master-host
+                        host-tree-clear))
 
 ;;; Constants
 
@@ -66,11 +70,11 @@
 
 ;;; Main class
 
-(define-class <lc-gtk-host-tree> (<gtk-tree-view>)
+(define-class <host-tree> (<gtk-tree-view>)
   (master-host-id #:accessor master-host-id #:init-value #f))
 
 ;; Class initialization
-(define-method (initialize (obj <lc-gtk-host-tree>) args)
+(define-method (initialize (obj <host-tree>) args)
   (next-method)
 
   ;; FIXME: Host IDs (the 1st column) have to be stored as numbers,
@@ -126,7 +130,7 @@
 ;;   '(id name proxy address description)
 ;;
 ;; TODO: Add check that the new host is not exist in the host tree.
-(define-method (lc-gtk-host-tree-add-host (obj <lc-gtk-host-tree>)
+(define-method (host-tree-add-host (obj <host-tree>)
                                           group-name
                                           (host-attributes <list>))
   (let* ((id          (list-ref host-attributes 0))
@@ -162,7 +166,7 @@
 ;; Remove a host from the host tree.
 ;;
 ;; TODO: This function should handle list of IDs instead of one ID.
-(define-method (lc-gtk-host-tree-rem-host (obj <lc-gtk-host-tree>) (host-id <number>))
+(define-method (host-tree-rem-host (obj <host-tree>) (host-id <number>))
   (let* ((model (gtk-tree-view-get-model obj))
          (iter  (gtk-tree-model-get-iter model "0")))
     (let f ((it iter))
@@ -183,7 +187,7 @@
 ;; TODO: This method should return list of IDs of all selected hosts. This
 ;;       feature depends on possibility of multiple selection in the host tree,
 ;;       so it should be implemented before.
-(define-method (lc-gtk-host-tree-get-selected (obj <lc-gtk-host-tree>))
+(define-method (host-tree-get-selected (obj <host-tree>))
   (let* ((selection (gtk-tree-view-get-selection obj)))
     (receive (model iter) (gtk-tree-selection-get-selected selection)
       (let ((host-id (gtk-tree-model-get-value model iter *column-id-number*)))
@@ -196,22 +200,37 @@
 ;;
 ;; TODO: This is a quite stupid function, so it should be merged with
 ;;       -get-selected.
-(define-method (lc-gtk-host-tree-get-selected-group (obj <lc-gtk-host-tree>))
+(define-method (host-tree-get-selected-group (obj <host-tree>))
   (let* ((selection (gtk-tree-view-get-selection obj)))
     (receive (model iter) (gtk-tree-selection-get-selected selection)
       (gtk-tree-model-get-value model iter *column-name-number*))))
 
 ;; Mark the host with given ID as a master host.
-(define-method (lc-gtk-host-tree-set-master-host (obj <lc-gtk-host-tree>) (host-id <number>))
+(define-method (host-tree-set-master-host (obj <host-tree>) (host-id <number>))
   (let ((new-iter (get-row-by-host-id obj host-id)))
     (set-master-host obj new-iter)))
+
+;; Add a new group
+(define-method (host-tree-add-group (obj <host-tree>) (group-name <string>))
+  (let* ((model     (get-model obj))
+         (top-level (gtk-tree-store-append model #f)))
+    (gtk-tree-store-set-value model top-level *column-name-number* group-name)))
+
+;; Remove a selected group.
+(define-method (host-tree-rem-group (obj <host-tree>))
+  (let ((selection (gtk-tree-view-get-selection obj)))
+    (receive (model iter) (gtk-tree-selection-get-selected selection)
+      (gtk-tree-store-remove model iter))))
+
+(define-method (host-tree-clear (obj <host-tree>))
+  (gtk-tree-store-clear (get-model obj)))
 
 
 ;;;
 ;;; Private methods.
 ;;;
 
-(define-method (set-master-host (obj <lc-gtk-host-tree>) (iter <gtk-tree-iter>))
+(define-method (set-master-host (obj <host-tree>) (iter <gtk-tree-iter>))
   ;; Set the default color for old master host.
   (let ((current-master-id (master-host-id obj))
         (model             (gtk-tree-view-get-model obj)))
@@ -232,7 +251,7 @@
 ;;
 ;; Function returns an iterator pointed to the row, or #f if a host
 ;; with given ID is not found.
-(define-method (get-row-by-host-id (obj <lc-gtk-host-tree>) (host-id <number>))
+(define-method (get-row-by-host-id (obj <host-tree>) (host-id <number>))
   (let* ((column (gtk-tree-view-get-column obj *column-id-number*))
          (model  (gtk-tree-view-get-model obj))
          (iter   (gtk-tree-model-get-iter-first model)))
@@ -257,7 +276,7 @@
           #f))))
 
 ;; Get a group by name
-(define-method (get-group (obj <lc-gtk-host-tree>) (group-name <string>))
+(define-method (get-group (obj <host-tree>) (group-name <string>))
   (let* ((model (gtk-tree-view-get-model obj))
          (iter  (gtk-tree-model-get-iter model "0")))
     (let f ((it iter))
@@ -272,10 +291,4 @@
           ;; There are no more rows to search in.
           #f))))
 
-;; Add a new group
-(define-method (add-group (obj <lc-gtk-host-tree>) (group-name <string>))
-  (let* ((model     (get-model obj))
-         (top-level (gtk-tree-store-append model #f)))
-    (gtk-tree-store-set-value model top-level *column-name-number* group-name)))
-
-;;; lc-gtk-host-tree.scm ends here
+;;; host-tree.scm ends here

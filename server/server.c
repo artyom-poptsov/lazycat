@@ -160,8 +160,19 @@ start_proxy (proxy_t proxy, char* name)
 static void
 scm_thread (void* closure, int argc, char* argv[])
 {
-  scm_c_define_module ("lazycat builtins", init_builtins_module, NULL);
-  scm_shell (argc, argv);
+  SCM main;
+  SCM args;
+  SCM module;
+
+  scm_c_define_module ("lazycat server builtins", init_builtins_module, NULL);
+
+  scm_primitive_load_path ( scm_from_locale_string ("main.scm") );
+
+  module = scm_c_resolve_module ("lazycat server scm main");
+  main   = scm_c_module_lookup (module, "main");
+  args   = scm_program_arguments ();
+
+  scm_call_1 (scm_variable_ref (main), args);
 }
 
 /*

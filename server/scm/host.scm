@@ -44,9 +44,9 @@
 
 ;;; Module definition
 
-(define-module (lazycat host)
+(define-module (lazycat server scm host)
   #:use-module (oop goops)
-  #:use-module (lazycat builtins)
+  #:use-module (lazycat server builtins)
   #:export (<host>
             host-get-id host-get-name host-get-proxy host-get-address
             host-get-description host-send-message host-remove))

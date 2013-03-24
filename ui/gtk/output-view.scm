@@ -1,6 +1,6 @@
 ;;; LazyCat GTK output view.
 
-;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;; Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
 ;; This file is part of LazyCat.
 ;;
@@ -20,35 +20,35 @@
 
 ;;; Commentary:
 
-;; This module describes a <lc-gtk-output-view> class -- a simply text
+;; This module describes a <output-view> class -- a simply text
 ;; view that is capable of showing messages with their headers.
 ;; 
 ;; These methods are exported:
 ;; 
-;;   (lc-gtk-output-view-append obj header message)
-;;   (lc-gtk-output-view-append-error obj header message)
+;;   (output-view-append obj header message)
+;;   (output-view-append-error obj header message)
 ;;
 
 
 ;;; Code:
 
 ;; Module definition
-(define-module (lazycat lc-gtk-output-view)
+(define-module (lazycat ui gtk output-view)
   #:use-module (oop goops)
   #:use-module (gnome-2)
   #:use-module (gnome gobject)
   #:use-module (gnome gtk)
   #:use-module (gnome gtk gdk-event)
-  #:export (<lc-gtk-output-view>
-            lc-gtk-output-view-append lc-gtk-output-view-append-error))
+  #:export (<output-view>
+            output-view-append output-view-append-error))
 
 
 ;;; Main class
 
-(define-class <lc-gtk-output-view> (<gtk-text-view>))
+(define-class <output-view> (<gtk-text-view>))
 
 ;; Class initialization
-(define-method (initialize (obj <lc-gtk-output-view>) args)
+(define-method (initialize (obj <output-view>) args)
   (next-method)
 
   (slot-set! obj 'editable #f)
@@ -77,13 +77,13 @@
 ;;; Public methods
 
 ;; Append a message to the output view.
-(define-method (lc-gtk-output-view-append (obj     <lc-gtk-output-view>)
+(define-method (output-view-append (obj     <output-view>)
                                           (header  <string>)
                                           (message <string>))
   (insert obj "normal" header message))
 
 ;; Append an error message to the output view.
-(define-method (lc-gtk-output-view-append-error (obj     <lc-gtk-output-view>)
+(define-method (output-view-append-error (obj     <output-view>)
                                                 (header  <string>)
                                                 (message <string>))
   (insert obj "error" header message))
@@ -92,7 +92,7 @@
 ;;; Private methods
 
 ;; Insert generic message to the output view.
-(define-method (insert (obj      <lc-gtk-output-view>)
+(define-method (insert (obj      <output-view>)
                        (tag-name <string>)
                        (header   <string>)
                        (message  <string>))
@@ -111,4 +111,4 @@
     (let ((mark (gtk-text-buffer-create-mark buffer #f text-iter #t)))
       (gtk-text-view-scroll-mark-onscreen obj mark))))
 
-;;; lc-gtk-output-view.scm ends here
+;;; output-view.scm ends here
