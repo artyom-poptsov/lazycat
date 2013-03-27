@@ -1,5 +1,16 @@
 2013-03-27  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	Don't do any formatting of outputs on the server side.
+	* server/scm/lazycatd.scm (lazycat-exec, lazycat-diff): Send
+	results to a client as a list instead of squashing all in a
+	string.  Add comments.
+	* ui/lc (lazycat-exec, lazycat-diff): Improve.
+	* ui/cli/pretty-format.scm (format-output, format-output-list)
+	(format-diff): New functions.
+	* server/scmapi.c (scm_send_msg): Throw an exception on error.
+	(lazycat_throw): New function.
+	* server/scm/host.scm (host-send-message): Catch an exception.
+
 	* ui/lc (lazycat-set): Fix a message format.
 
 2013-03-26  Artyom Poptsov  <poptsov.artyom@gmail.com>

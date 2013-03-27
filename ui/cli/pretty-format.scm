@@ -26,7 +26,11 @@
 
 (define-module (lazycat ui cli pretty-format)
   #:use-module (ice-9 format)
-  #:export (format-host-list format-options-list))
+  #:export (format-host-list
+            format-options-list
+            format-output
+            format-output-list
+            format-diff))
 
 
 ;; Display the host list LIST as a table
@@ -79,5 +83,43 @@
    list)
 
   (newline))
+
+;; Format output from a host.
+(define (format-output output)
+
+  (define *header-fmt* "<<< ~5d ~5a\n")
+  (define *output-fmt* "~a\n")
+
+  (let ((host-id  (car output))
+        (status   (car (cadr output)))
+        (response (cadr (cadr output))))
+    (format #t *header-fmt* host-id (if status "OK" "ERROR"))
+    (format #t *output-fmt* response)))
+
+(define (format-output-list list)
+  (let ((status (car list)))
+    (if status
+        (for-each format-output (cdr list))
+        (format #t "ERROR: ~a\n" (cadr list)))))
+
+(define (format-diff diff)
+
+  (define *header-fmt* "<<< ~5d ~5a\n")
+  (define *output-fmt* "~a\n")
+
+  (let ((status (car diff)))
+    (if status
+        (for-each
+         (lambda (diff-result)
+           (let ((host-id (car diff-result))
+                 (result  (cadr diff-result)))
+
+             (format #t *header-fmt* host-id result)
+
+             (if (or (eq? result 'different) (eq? result 'error))
+                 (format #t *output-fmt* (caddr diff-result)))))
+         (cadr diff))
+
+        (format #t "ERROR: ~a\n" (cadr diff)))))
 
 ;;; pretty-format.scm ends here.

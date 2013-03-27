@@ -29,6 +29,8 @@
  * Static functions
  */
 
+static void lazycat_throw (char *message);
+
 static int send_msg_to_host (const int host_id,
 			     char* msg,
 			     char* response[]);
@@ -54,7 +56,10 @@ scm_send_msg (SCM dest, SCM msg)
 
   retval = send_msg_to_host (host_id, msg_buf, &response);
   if (retval < 0)
-    SYSLOG_WARNING ("%s (host ID=%d)", response, host_id);
+    {
+      SYSLOG_WARNING ("%s (host ID=%d)", response, host_id);
+      lazycat_throw (response);
+    }
 
   return scm_from_locale_string (response);
 }
@@ -313,4 +318,11 @@ scm_get_host_list (void)
   scm_array_handle_release (&handle);
 
   return vector;
+}
+
+static void 
+lazycat_throw (char *message)
+{
+  scm_throw (scm_from_locale_symbol ("lazycat-builtins-error"),
+	     scm_from_locale_string (message));
 }

@@ -75,7 +75,11 @@
 
 ;; Send a messsage MESSAGE to the host
 (define-method (host-send-message (obj <host>) (message <string>))
-  (lc-send-msg (id obj) message))
+  (catch 'lazycat-builtins-error
+    (lambda ()
+      (list #t (lc-send-msg (id obj) message)))
+    (lambda (key . args)
+      (list #f (car args)))))
 
 ;; Close the host
 (define-method (host-remove (obj <host>))

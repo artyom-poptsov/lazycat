@@ -181,17 +181,19 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 ;; Execute a command CMD on the every accessible host.
 (define-method (lazycat-exec (obj <lc>) (cmd <string>))
-  (let ((result (send-message obj *cmd-exec* cmd)))
-    (if (eq? (car result) #t)
-        (display (cadr result))
+  (let* ((result (send-message obj *cmd-exec* cmd))
+         (status (car result)))
+    (if status
+        (format-output-list (cadr result))
         (let ((error-message (string-append "ERROR: "(cadr result) "\n")))
           (display error-message)))))
 
 ;; Execute a command CMD on a host with the given HOST-ID.
 (define-method (lazycat-exec (obj <lc>) (host-id <number>) (cmd <string>))
-  (let ((result (send-message obj *cmd-exec* (list host-id cmd))))
-    (if (eq? (car result) #t)
-        (display (cadr result))
+  (let* ((result (send-message obj *cmd-exec* (list host-id cmd)))
+         (status (car result)))
+    (if status
+        (format-output (cadr result))
         (let ((error-message (string-append "ERROR: "(cadr result) "\n")))
           (display error-message)))))
 
@@ -222,11 +224,11 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
    ((or (string=? (car args) "--get-pattern") (string=? (car args) "-g"))
     (let* ((command (string-join (cdr args) " "))
            (result  (send-message obj *cmd-diff* (list 'get-pattern command))))
-      (display (cadr result))))
+      (format-output (cadr result))))
 
    ((or (string=? (car args) "--continue") (string=? (car args) "-c"))
     (let ((result (send-message obj *cmd-diff* (list 'continue))))
-      (display (cadr result))))
+      (format-diff result)))
 
    ((or (string=? action "--abort") (string=? action "-a"))
     (send-message obj *cmd-diff* (list 'abort)))

@@ -219,16 +219,37 @@
 
 (define-generic lazycat-exec)
 
-;; Execute the command COMMAND on a host.
-(define-method (lazycat-exec (obj <lazycatd>) (command <list>))
+;; Execute a command on a host.
+;;
+;; Takes arguments ARGS in the following format:
+;;   <args> ::= (<host-id> <command>)
+;;   <host-id> ::= <number>
+;;   <command> ::= <string>
+;;
+;; Return:
+;;   <result> ::= (<host-id> (<status> <output>))
+;;   <status> ::= <boolean>
+;;   <output> ::= <string>
+;;
+(define-method (lazycat-exec (obj <lazycatd>) (args <list>))
   (let* ((host-list (get-host-list obj))
-         (host-id   (car command))
+         (host-id   (car args))
          (host      (host-list-get-host-by-id host-list host-id))
-         (cmd       (cadr command)))
+         (cmd       (cadr args)))
 
-    (host-send-message host cmd)))
+    (list host-id (host-send-message host cmd))))
 
 ;; Execute the command COMMAND on all accessible hosts.
+;;
+;; Return a list in the following format:
+;;
+;;   <result> ::= (<status> <response>)
+;;   <response>    ::= ((<host-id> <host-result>) ...) | <error-message>
+;;   <host-id>     ::= <number>
+;;   <host-result> ::= (<status> <output>)
+;;   <output>      ::= <string>
+;;   <status>      ::= <boolean>
+;;
 (define-method (lazycat-exec (obj <lazycatd>) (command <string>))
 
   (logger-message (get-logger obj) 'debug
@@ -236,35 +257,32 @@
 
   (let* ((host-list  (get-host-list obj))
          (plain-list (host-list-get-plain-list host-list))
-         (output     ""))
+         (result     '()))
 
     (for-each
 
      (lambda (host)
        (let ((host-id  (host-get-id host))
              (response (host-send-message host command)))
+         (set! result (cons (list host-id response) result))))
 
-         (set! output (string-append output "\n"
-                                     "<<< " (number->string host-id) "\n"
-                                     response "\n"))))
      plain-list)
 
-    output))
+    result))
 
 ;; Compare output from hosts with an output from the master host.
 ;; Return diffs.  Throw lazycat-diff-error on error.
 (define-method (lazycat-diff (obj <lazycatd>) (args <list>))
 
   (define (fetch-and-analyse host pattern message)
-    (let* ((output  (host-send-message host message))
-           (diff    (make-string-diff (get-tmp-dir obj) pattern output))
-           (host-id (number->string (host-get-id host))))
-
-      (if (diff-empty? diff)
-          (let ((header (string-append "<<< " host-id " OK\n")))
-            (string-append header (diff-get diff) "\n"))
-          (let ((header (string-append "<<< " host-id " NOK\n")))
-            (string-append header (diff-get diff) "\n")))))
+    (let ((output (host-send-message host message)))
+      (if (eq? (car output) #t)
+          (let ((diff (make-string-diff (get-tmp-dir obj) pattern (cadr output)))
+                (host-id (host-get-id host)))
+            (if (diff-empty? diff)
+                (list host-id 'similar)
+                (list host-id 'different (diff-get diff))))
+          (list host-id 'error (cadr output)))))
 
   (let ((action  (car args)))
     (cond
@@ -273,7 +291,7 @@
       (let* ((command (cadr args))
              (master (string->number (hash-ref (get-options obj) 'master)))
              (result (lazycat-exec obj (list master command))))
-        (set-pattern obj (list command result))
+        (set-pattern obj (list command (cadr (cadr result))))
         result))
 
      ((eq? action 'continue)
@@ -281,26 +299,26 @@
           (let* ((host-list  (get-host-list obj))
                  (plain-list (host-list-get-plain-list host-list))
                  (pattern    (get-pattern obj))
-                 (result     ""))
+                 (result     '()))
 
             (for-each
              (lambda (host)
                (let* ((cmd (car pattern))
                       (ptn (cadr pattern))
                       (output (fetch-and-analyse host ptn cmd)))
-                 (set! result (string-append result output))))
+                 (set! result (cons output result))))
              plain-list)
 
             result)
 
-          (throw 'lazycat-diff-error "ERROR: No pattern found.\n")))
+          (throw 'lazycat-diff-error "No pattern found.")))
 
      ((eq? action 'abort)
       (set-pattern obj #f))
 
      (#t
       (let ((error-message (string-append
-                            "ERROR: Wrong action: "
+                            "Wrong action: "
                             (symbol->string action))))
         (throw 'lazycat-diff-error error-message))))))
 
