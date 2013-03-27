@@ -67,7 +67,7 @@ lazycat-daemon:
 		"export GUILE_LOAD_PATH=\$${GUILE_LOAD_PATH}:${lazycat_serverdir}\n"\
 		"lazycatd\n" > $@
 	@echo "done"
-
+	chmod +x $@
 
 CLEANFILES	= lc lazycat-gtk lazycat-daemon
 

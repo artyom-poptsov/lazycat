@@ -1030,6 +1030,7 @@ lazycat-daemon:
 		"export GUILE_LOAD_PATH=\$${GUILE_LOAD_PATH}:${lazycat_serverdir}\n"\
 		"lazycatd\n" > $@
 	@echo "done"
+	chmod +x $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
