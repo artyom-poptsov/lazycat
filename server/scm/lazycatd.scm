@@ -240,8 +240,9 @@
   (if (null? args)
       (lazycat-throw "Malformed message" args))
 
-  (let ((option (car args))
-        (value  (cadr args)))
+  (let* ((args   (car args))
+         (option (car args))
+         (value  (cadr args)))
 
     (if (eqv? (member option *options*) #f)
         (lazycat-throw "No such option" option))
