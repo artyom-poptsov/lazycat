@@ -1,5 +1,11 @@
 2013-03-27  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/gtk/lazy-gtk-cat.scm (lazycat-send-message): Fix broken exec
+	and diff command handler.
+	(lazycat-set-master-host): Fix malformed message.
+	* ui/gtk/output-view.scm (output-view-format)
+	(output-view-format-list, output-view-format-diff): New methods.
+
 	* server/scm/lazycatd.scm: Don't parse arguments of commands in
 	main-loop -- do it in a command handler instead.  Improve error
 	handling.

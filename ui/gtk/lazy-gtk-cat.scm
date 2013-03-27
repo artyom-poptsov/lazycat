@@ -521,7 +521,7 @@
 
 ;; Set host with HOST-ID as a master host.
 (define-method (lazycat-set-master-host (obj <lazy-gtk-cat>) (host-id <number>))
-  (send-message obj *cmd-set* (list 'master host-id))
+  (send-message obj *cmd-set* (list 'master (number->string host-id)))
   (set-master-host-id obj host-id)
   (host-tree-set-master-host (get-host-tree obj) host-id))
 
@@ -533,9 +533,7 @@
 
 ;; Send a message
 (define-method (lazycat-send-message (obj <lazy-gtk-cat>) (message <string>))
-
   (let ((handler-id #f))
-
     (if (string=? (get-mode obj) *mode-raw*)
 
         ;; Raw mode. Just send the message to all hosts and print responses.
@@ -549,7 +547,7 @@
              (let ((output-view (get-output-view obj))
                    (result      (send-message obj *cmd-exec* message)))
                (gdk-threads-enter)
-               (output-view-append output-view "output" (cadr result))
+               (output-view-format-list output-view (cadr result))
                (gdk-threads-leave))
 
              (gdk-threads-enter)
@@ -577,7 +575,7 @@
                            (result      (send-message obj *cmd-diff*
                                                       (list 'continue))))
                        (gdk-threads-enter)
-                       (output-view-append output-view "output" (cadr result))
+                       (output-view-format-diff output-view result)
                        (gdk-threads-leave))
 
                      (gdk-threads-enter)
@@ -586,7 +584,8 @@
                      (gdk-threads-leave))))
 
                 ;; Cancel
-                (let ((output-view (output-view obj)))
+                (let ((output-view (get-output-view obj)))
+                  (send-message obj *cmd-diff* (list 'abort))
                   (output-view-append output-view "Canceled by user." "")))
             ;; Disconnect the connected handler
             (gsignal-handler-disconnect output-preview-dialog handler-id))
@@ -600,7 +599,7 @@
           ;; Show an output preview
           (let* ((message (list 'get-pattern message))
                  (result  (send-message obj *cmd-diff* message))
-                 (pattern (cadr result)))
+                 (pattern (cadr (cadadr result)))) ; Abra'cadadr'a!
             (show-output output-preview-dialog pattern))))
 
     ;; Clean up a previous content of the command line

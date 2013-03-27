@@ -27,6 +27,9 @@
 ;; 
 ;;   (output-view-append obj header message)
 ;;   (output-view-append-error obj header message)
+;;   (output-view-format obj output)
+;;   (output-view-format-list obj output-list)
+;;   (output-view-format-diff obj diff)
 ;;
 
 
@@ -35,12 +38,15 @@
 ;; Module definition
 (define-module (lazycat ui gtk output-view)
   #:use-module (oop goops)
+  #:use-module (ice-9 format)
   #:use-module (gnome-2)
   #:use-module (gnome gobject)
   #:use-module (gnome gtk)
   #:use-module (gnome gtk gdk-event)
   #:export (<output-view>
-            output-view-append output-view-append-error))
+            output-view-append output-view-append-error
+            output-view-format output-view-format-list
+            output-view-format-diff))
 
 
 ;;; Main class
@@ -76,6 +82,60 @@
 
 ;;; Public methods
 
+;; Format an OUTPUT from a host.
+(define-method (output-view-format (obj <output-view>) (output <list>))
+
+  (define *header-fmt* "<<< ~5d ~5a\n")
+
+  (let ((host-id  (car output))
+        (status   (car (cadr output)))
+        (response (cadr (cadr output))))
+    (if status
+        (let ((header (with-output-to-string
+                       (lambda ()
+                         (format #t *header-fmt* host-id "OK")))))
+          (output-view-append obj header response))
+        (let ((header (with-output-to-string
+                       (lambda ()
+                         (format #t *header-fmt* host-id "ERROR")))))
+          (output-view-append-error obj header response)))))
+
+;; Format the list of outputs LIST from hosts.
+(define-method (output-view-format-list (obj <output-view>) (list <list>))
+  (let ((status (car list)))
+    (if status
+        (for-each
+         (lambda (output)
+           (output-view-format obj output))
+         (cdr list))
+
+        (let ((header "*** ERROR\n"))
+          (output-view-append-error obj header (cadr list))))))
+
+;; Format a diff.
+(define-method (output-view-format-diff (obj <output-view>) (diff <list>))
+
+  (define *header-fmt* "<<< ~5d ~5a\n")
+  (define *output-fmt* "~a\n")
+
+  (let ((status (car diff)))
+    (if status
+        (for-each
+         (lambda (diff-result)
+           (let* ((host-id (car diff-result))
+                  (result  (cadr diff-result))
+                  (header  (with-output-to-string
+                            (lambda ()
+                              (format #t *header-fmt* host-id result)))))
+
+             (if (or (eq? result 'different) (eq? result 'error))
+                 (output-view-append-error obj header (caddr diff-result))
+                 (output-view-append obj header ""))))
+         (cadr diff))
+
+        (let ((header "*** ERROR"))
+          (output-view-append-error obj header (cadr diff))))))
+
 ;; Append a message to the output view.
 (define-method (output-view-append (obj     <output-view>)
                                           (header  <string>)
@@ -101,8 +161,7 @@
          (mark         (gtk-text-buffer-create-mark  buffer #f text-iter #t))
          (iter-at-mark (gtk-text-buffer-get-iter-at-mark buffer mark)))
 
-    (gtk-text-buffer-insert buffer text-iter
-                            (string-append "<<< " header "\n") -1)
+    (gtk-text-buffer-insert buffer text-iter header -1)
     (let ((iter-at-mark (gtk-text-buffer-get-iter-at-mark buffer mark)))
       (gtk-text-buffer-apply-tag-by-name buffer tag-name iter-at-mark text-iter))
     (gtk-text-buffer-insert buffer text-iter message -1)
