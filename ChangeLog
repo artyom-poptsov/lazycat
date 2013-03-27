@@ -1,5 +1,11 @@
 2013-03-27  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* server/scm/lazycatd.scm: Don't parse arguments for commands in
+	main-loop -- do it in a command handler instead.  Improve error
+	handling.
+	(lazycat-exec): New generic method.
+	(lazycat-throw): New procedure.
+
 	* ui/lc: Fix a bug in handling "diff --abort" command.
 	* server/scm/lazycatd.scm: Likewise.
 

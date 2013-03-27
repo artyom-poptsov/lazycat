@@ -164,60 +164,100 @@
   (write message port)
   (newline port))
 
+;; Throw an exception
+(define-method (lazycat-throw msg . info)
+  (apply throw 'lazycat-exception msg info))
+
 
 ;; Stop the lazycat daemon.
 (define-method (lazycat-stop (obj <lazycatd>))
   (host-list-save (get-host-list obj)))
 
 ;; Add a new host to the host list.
-(define-method (lazycat-add (obj <lazycatd>) group (host-attributes <list>))
-  (let ((host-list (get-host-list obj)))
-    (host-list-add-host host-list group host-attributes)))
+(define-method (lazycat-add (obj <lazycatd>) args (client <port>))
+  (if (null? args)
+      (lazycat-throw "Malformed message" args))
+
+  (let ((group           (car args))
+        (host-attributes (cdr args))
+        (host-list       (get-host-list obj)))
+    (host-list-add-host host-list group host-attributes)
+    (send-message obj (list #t) client)))
 
 ;; Remove the host with given HOST-ID from the host list.
-(define-method (lazycat-rem (obj <lazycatd>) (host-id <number>))
-  (let ((host-list (get-host-list obj)))
-    (host-list-rem-host host-list host-id)))
+(define-method (lazycat-rem (obj <lazycatd>) args (client <port>))
+  (if (null? args)
+      (lazycat-throw "Malformed message" args))
+
+  (let ((host-list (get-host-list obj))
+        (host-id   (car args)))
+    (host-list-rem-host host-list host-id)
+    (send-message obj (list #t) client)))
 
 ;; Get list of objects with the given type TYPE.
 ;;
-;; Throws lazycat-wrong-object-type if the type is not exist.
-(define-method (lazycat-list (obj <lazycatd>) (type <symbol>))
-  (if (eqv? (member type *object-types*) #f)
-      (throw 'lazycat-wrong-object-type type))
+;; Throws lazycat-exception on error.
+(define-method (lazycat-list (obj <lazycatd>) args (client <port>))
+  (if (null? args)
+      (lazycat-throw "Malformed message" args))
 
-  (logger-message (get-logger obj) 'debug
-                  (string-append "lazycat-list: type: " (symbol->string type)))
+  (let ((type (car args)))
+    (if (eqv? (member type *object-types*) #f)
+        (lazycat-throw "Wrong object type" type))
 
-  (cond
+    (logger-message (get-logger obj) 'debug
+                    (string-append "lazycat-list: type: " (symbol->string type)))
 
-   ((eq? type 'hosts)
-    (let ((host-list (get-host-list obj)))
-      (host-list-get-unrolled-list host-list)))
+    (cond
 
-   ((eq? type 'options)
-    (let ((options (get-options obj)))
-      (hash-map->list cons options)))))
+     ((eq? type 'hosts)
+      (let* ((host-list (get-host-list obj))
+             (response  (list #t (host-list-get-unrolled-list host-list))))
+        (send-message obj response client)))
+
+     ((eq? type 'options)
+      (let* ((options  (get-options obj))
+             (response (list #t (hash-map->list cons options))))
+        (send-message obj response client))))))
 
 ;; Get value of an option OPTION
-;;
-;; Return option value on success, #f on failure.
-(define-method (lazycat-get (obj <lazycatd>) (option <symbol>))
-  (if (eqv? (member option *options*) #f)
-      (throw 'lazycat-wrong-option option))
+(define-method (lazycat-get (obj <lazycatd>) args (client <port>))
+  (if (null? args)
+      (lazycat-throw "Malformed message" args))
 
-  (hash-ref (get-options obj) option))
+  (let ((option (car args)))
+
+    (if (eqv? (member option *options*) #f)
+        (lazycat-throw "No such option" option))
+
+    (let ((value (hash-ref (get-options obj) option)))
+      (send-message obj (list #t value) client))))
 
 ;; Set a VALUE for the OPTION.
 ;;
-;; Throws lazycat-wrong-option if an option is not exist.
-(define-method (lazycat-set (obj <lazycatd>) (option <symbol>) value)
-  (if (eqv? (member option *options*) #f)
-      (throw 'lazycat-wrong-option option))
+;; Throws lazycat-exception on error.
+(define-method (lazycat-set (obj <lazycatd>) args (client <port>))
+  (if (null? args)
+      (lazycat-throw "Malformed message" args))
 
-  (hash-set! (get-options obj) option value))
+  (let ((option (car args))
+        (value  (cadr args)))
+
+    (if (eqv? (member option *options*) #f)
+        (lazycat-throw "No such option" option))
+
+    (if (hash-set! (get-options obj) option value)
+        (send-message obj (list #t) client)
+        (send-message obj (list #f) client))))
 
 (define-generic lazycat-exec)
+
+;; Execute a command and send output to the CLIENT.
+(define-method (lazycat-exec (obj <lazycatd>) args (client <port>))
+  (if (null? args)
+      (lazycat-throw "Malformed message" args))
+  (let ((result (lazycat-exec obj (car args))))
+    (send-message obj (list #t result) client)))
 
 ;; Execute a command on a host.
 ;;
@@ -272,7 +312,7 @@
 
 ;; Compare output from hosts with an output from the master host.
 ;; Return diffs.  Throw lazycat-diff-error on error.
-(define-method (lazycat-diff (obj <lazycatd>) (args <list>))
+(define-method (lazycat-diff (obj <lazycatd>) args (client <port>))
 
   (define (fetch-and-analyse host pattern message)
     (let ((output (host-send-message host message)))
@@ -284,7 +324,11 @@
                 (list host-id 'different (diff-get diff))))
           (list host-id 'error (cadr output)))))
 
-  (let ((action  (car args)))
+  (if (null? args)
+      (lazycat-throw "Malformed message" args))
+
+  (let* ((args   (car args))
+         (action (car args)))
     (cond
      
      ((eq? action 'get-pattern)
@@ -292,7 +336,7 @@
              (master (string->number (hash-ref (get-options obj) 'master)))
              (result (lazycat-exec obj (list master command))))
         (set-pattern obj (list command (cadr (cadr result))))
-        result))
+        (send-message obj (list #t result) client)))
 
      ((eq? action 'continue)
       (if (not (eq? (get-pattern obj) #f))
@@ -309,20 +353,17 @@
                  (set! result (cons output result))))
              plain-list)
 
-            result)
+            (send-message obj (list #t result) client))
 
-          (throw 'lazycat-diff-error "No pattern found.")))
+          (lazycat-throw "No pattern found")))
 
      ((eq? action 'abort)
       (begin
         (set-pattern obj #f)
-        #t))
+        (send-message obj (list #t) client)))
 
      (#t
-      (let ((error-message (string-append
-                            "Wrong action: "
-                            (symbol->string action))))
-        (throw 'lazycat-diff-error error-message))))))
+      (lazycat-throw "Wrong action" action)))))
 
 
 (define-method (main-loop (obj <lazycatd>))
@@ -353,88 +394,57 @@
           (logger-message (get-logger obj) 'debug (string-append
                                                    "Message: " (number->string message-type)))
 
-          (cond
+          (catch 'lazycat-exception
 
-           ;; Get protocol version
-           ((eq? message-type *cmd-get-protocol-version*)
-            (send-message obj (list #t *protocol-version*) client))
+            (lambda ()
+              (cond
 
-           ;; List objects
-           ((eq? message-type *cmd-list*)
-            (catch 'lazycat-wrong-object-type
-              (lambda ()
-                (let ((result (lazycat-list obj (cadr message))))
-                  (send-message obj (list #t result) client)))
-              (lambda (key . args)
-                (let ((error-message (string-append
-                                      "Wrong object type: "
-                                      (symbol->string (car args)))))
-                  (logger-message (get-logger obj) 'warning error-message)
-                  (send-message obj (list #f error-message) client)))))
+               ;; Get protocol version
+               ((eq? message-type *cmd-get-protocol-version*)
+                (send-message obj (list #t *protocol-version*) client))
 
-           ;; Add a new host
-           ((eq? message-type *cmd-add-host*)
-            (let ((group           (car (cadr message)))
-                  (host-attributes (cdr (cadr message))))
-              (lazycat-add obj group host-attributes)
-              (send-message obj (list #t) client)))
+               ;; List objects
+               ((eq? message-type *cmd-list*)
+                (lazycat-list obj (cdr message) client))
 
-           ;; Remote a host
-           ((eq? message-type *cmd-rem-host*)
-            (begin
-              (lazycat-rem obj (cadr message))
-              (send-message obj (list #t) client)))
+               ;; Add a new host
+               ((eq? message-type *cmd-add-host*)
+                (lazycat-add obj (cdr message) client))
 
-           ;; Get an option value
-           ((eq? message-type *cmd-get*)
-            (catch 'lazycat-wrong-option
-              (lambda ()
-                (let ((result (lazycat-get obj (cadr message))))
-                  (send-message obj (list #t result) client)))
-              (lambda (key . args)
-                (let ((error-message (string-append
-                                      "No such option: "
-                                      (symbol->string (car args)))))
-                  (logger-message (get-logger obj) 'warning error-message)
-                  (send-message obj (list #f error-message) client)))))
+               ;; Remote a host
+               ((eq? message-type *cmd-rem-host*)
+                (lazycat-rem obj (cdr message) client))
 
-           ;; Set an option
-           ((eq? message-type *cmd-set*)
-            (catch 'lazycat-wrong-option
-              (lambda ()
-                (lazycat-set obj (car (cadr message)) (cadr (cadr message)))
-                (send-message obj (list #t) client))
-              (lambda (key . args)
+               ;; Get an option value
+               ((eq? message-type *cmd-get*)
+                (lazycat-get obj (cdr message) client))
+
+               ;; Set an option
+               ((eq? message-type *cmd-set*)
+                (lazycat-set obj (cdr message) client))
+
+               ;; Execute a command
+               ((eq? message-type *cmd-exec*)
+                (lazycat-exec obj (cdr message) client))
+
+               ;; Get a diff
+               ((eq? message-type *cmd-diff*)
+                (lazycat-diff obj (cdr message) client))
+
+               ;; Stop the daemon
+               ((eq? message-type *cmd-stop*)
                 (begin
-                  (let ((error-message (string-append
-                                        "No such option: "
-                                        (symbol->string (car args)))))
-                    (logger-message (get-logger obj) 'warning error-message)
-                    (send-message obj (list #f error-message) client))))))
+                  (lazycat-stop obj)
+                  (send-message obj (list #t) client)
+                  (close lazycatd-socket)
+                  (break)))))
 
-           ;; Execute a command
-           ((eq? message-type *cmd-exec*)
-            (let ((result (lazycat-exec obj (cadr message))))
-              (send-message obj (list #t result) client)))
+            (lambda (key . args)
+              (let ((error-message (car args)))
+                (logger-message (get-logger obj) 'warning error-message)
+                (send-message obj (list #f error-message) client)))))
 
-           ;; Get a diff
-           ((eq? message-type *cmd-diff*)
-            (catch 'lazycat-diff-error
-              (lambda ()
-                (let ((result (lazycat-diff obj (cadr message))))
-                  (send-message obj (list #t result) client)))
-              (lambda (key . args)
-                (send-message obj (list #f (car args)) client))))
-
-           ;; Stop the daemon
-           ((eq? message-type *cmd-stop*)
-            (begin
-              (lazycat-stop obj)
-              (send-message obj (list #t) client)
-              (close lazycatd-socket)
-              (break))))
-
-          (close client))))))
+          (close client)))))
 
 (define-method (run (obj <lazycatd>))
   (daemonize obj))
