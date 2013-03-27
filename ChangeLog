@@ -1,3 +1,7 @@
+2013-03-27  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* ui/lc (lazycat-set): Fix a message format.
+
 2013-03-26  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	Improve the LazyCat server.  Make the server work as a daemon and

@@ -251,8 +251,8 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
       (print-help)
 
-      (let* ((option (car args))
-             (value  (cdr args))
+      (let* ((option (string->symbol (car args)))
+             (value  (cadr args))
              (result (send-message obj *cmd-set* (list option value))))
         (if (eq? (car result) #f)
             (let ((error-message (string-append "ERROR: " (cadr result) "\n")))
