@@ -230,7 +230,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
     (let ((result (send-message obj *cmd-diff* (list 'continue))))
       (format-diff result)))
 
-   ((or (string=? action "--abort") (string=? action "-a"))
+   ((or (string=? (car args) "--abort") (string=? (car args) "-a"))
     (send-message obj *cmd-diff* (list 'abort)))
 
    (#t

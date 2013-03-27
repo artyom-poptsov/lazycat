@@ -314,7 +314,9 @@
           (throw 'lazycat-diff-error "No pattern found.")))
 
      ((eq? action 'abort)
-      (set-pattern obj #f))
+      (begin
+        (set-pattern obj #f)
+        #t))
 
      (#t
       (let ((error-message (string-append

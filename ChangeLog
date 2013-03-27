@@ -1,5 +1,8 @@
 2013-03-27  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/lc: Fix a bug in handling "diff --abort" command.
+	* server/scm/lazycatd.scm: Likewise.
+
 	Don't do any formatting of outputs on the server side.
 	* server/scm/lazycatd.scm (lazycat-exec, lazycat-diff): Send
 	results to a client as a list instead of squashing all in a
