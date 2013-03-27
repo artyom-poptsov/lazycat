@@ -47,12 +47,12 @@
 (load "config.scm")
 (load "host.scm")
 
-(define-module (lazycat server scm host-list)
+(define-module (lazycat server host-list)
   #:use-module (oop goops)
   #:use-module (ice-9 common-list)
   ;; LazyCat modules:
-  #:use-module (lazycat server scm config)
-  #:use-module (lazycat server scm host)
+  #:use-module (lazycat server config)
+  #:use-module (lazycat server host)
   #:export (<host-list> host-list-load
                         host-list-save
                         host-list-empty?

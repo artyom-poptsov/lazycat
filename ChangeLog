@@ -1,3 +1,17 @@
+2013-03-28  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Automate LazyCat installation with autotools.
+	* Makefile.am: Improve.
+	* Makefile.in: Update.
+	* server/server.c, server/scm/config.scm, server/scm/diff.scm,
+	server/scm/host-list.scm, server/scm/host.scm,
+	server/scm/lazycatd.scm, server/scm/logger.scm,
+	server/scm/main.scm, server/scm/protocol.scm,
+	ui/gtk/lazy-gtk-cat.scm: Remove "scm" from a module path.  All
+	dependent modules updated.
+	* ui/lc: Rename to ui/lc.scm.
+	* ui/lazycat-gtk: Rename to ui/lazycat-gtk.scm.
+
 2013-03-27  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/gtk/lazy-gtk-cat.scm (lazycat-send-message): Fix broken exec

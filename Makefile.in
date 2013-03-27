@@ -15,6 +15,8 @@
 
 @SET_MAKE@
 
+
+
 VPATH = @srcdir@
 am__make_dryrun = \
   { \
@@ -49,11 +51,12 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = lazycat$(EXEEXT) lctcpd$(EXEEXT)
+bin_PROGRAMS = lazycatd$(EXEEXT) lctcpd$(EXEEXT)
 subdir = .
-DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(top_srcdir)/configure AUTHORS COPYING \
-	ChangeLog INSTALL NEWS TODO depcomp install-sh missing
+DIST_COMMON = README $(am__configure_deps) $(dist_doc_DATA) \
+	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	$(top_srcdir)/configure AUTHORS COPYING ChangeLog INSTALL NEWS \
+	TODO depcomp install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -63,17 +66,48 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" \
+	"$(DESTDIR)$(docdir)" "$(DESTDIR)$(lazycat_serverdir)" \
+	"$(DESTDIR)$(lazycat_ui_clidir)" \
+	"$(DESTDIR)$(lazycat_ui_gtkdir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_lazycat_OBJECTS = xsockets.$(OBJEXT) parsers.$(OBJEXT) \
+am_lazycatd_OBJECTS = xsockets.$(OBJEXT) parsers.$(OBJEXT) \
 	tcp-proxy.$(OBJEXT) ssh-proxy.$(OBJEXT) lazy-ssh.$(OBJEXT) \
 	db.$(OBJEXT) sighandlers.$(OBJEXT) scmapi.$(OBJEXT) \
 	server.$(OBJEXT)
-lazycat_OBJECTS = $(am_lazycat_OBJECTS)
-lazycat_LDADD = $(LDADD)
+lazycatd_OBJECTS = $(am_lazycatd_OBJECTS)
+lazycatd_LDADD = $(LDADD)
 am_lctcpd_OBJECTS = xsockets.$(OBJEXT) lctcpd.$(OBJEXT)
 lctcpd_OBJECTS = $(am_lctcpd_OBJECTS)
 lctcpd_LDADD = $(LDADD)
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
+am__install_max = 40
+am__nobase_strip_setup = \
+  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
+am__nobase_strip = \
+  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
+am__nobase_list = $(am__nobase_strip_setup); \
+  for p in $$list; do echo "$$p $$p"; done | \
+  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
+  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
+    if (++n[$$2] == $(am__install_max)) \
+      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
+    END { for (dir in files) print dir, files[dir] }'
+am__base_list = \
+  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
+  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
+am__uninstall_files_from_dir = { \
+  test -z "$$files" \
+    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
+    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
+         $(am__cd) "$$dir" && rm -f $$files; }; \
+  }
+SCRIPTS = $(bin_SCRIPTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -82,13 +116,15 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(lazycat_SOURCES) $(lctcpd_SOURCES)
-DIST_SOURCES = $(lazycat_SOURCES) $(lctcpd_SOURCES)
+SOURCES = $(lazycatd_SOURCES) $(lctcpd_SOURCES)
+DIST_SOURCES = $(lazycatd_SOURCES) $(lctcpd_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+DATA = $(dist_doc_DATA) $(lazycat_server_DATA) $(lazycat_ui_cli_DATA) \
+	$(lazycat_ui_gtk_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -206,6 +242,17 @@ INCLUDES = \
 	-I$(top_srcdir)/proxies/tcp-proxy \
 	-I$(top_srcdir)/proxies/ssh-proxy
 
+dist_doc_DATA = README NEWS COPYING AUTHORS ChangeLog TODO
+
+# Scheme files
+lazycat_serverdir = $(pkgdatadir)/server
+lazycat_ui_gtkdir = $(pkgdatadir)/ui/gtk
+lazycat_ui_clidir = $(pkgdatadir)/ui/cli
+lazycat_server_DATA = server/scm/*
+lazycat_ui_gtk_DATA = ui/gtk/*
+lazycat_ui_cli_DATA = ui/cli/*
+bin_SCRIPTS = lc lazycat-gtk lazycat-daemon
+CLEANFILES = lc lazycat-gtk lazycat-daemon
 
 ################################################################################
 # Lazycat sources
@@ -216,7 +263,7 @@ INCLUDES = \
 # Proxies
 
 # Server
-lazycat_SOURCES = common/common.h common/xsockets.c common/xsockets.h \
+lazycatd_SOURCES = common/common.h common/xsockets.c common/xsockets.h \
 	common/parsers.c common/parsers.h \
 	proxies/tcp-proxy/tcp-proxy.c proxies/tcp-proxy/tcp-proxy.h \
 	proxies/ssh-proxy/ssh-proxy.c proxies/ssh-proxy/ssh-proxy.h \
@@ -310,12 +357,47 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-lazycat$(EXEEXT): $(lazycat_OBJECTS) $(lazycat_DEPENDENCIES) $(EXTRA_lazycat_DEPENDENCIES) 
-	@rm -f lazycat$(EXEEXT)
-	$(LINK) $(lazycat_OBJECTS) $(lazycat_LDADD) $(LIBS)
+lazycatd$(EXEEXT): $(lazycatd_OBJECTS) $(lazycatd_DEPENDENCIES) $(EXTRA_lazycatd_DEPENDENCIES) 
+	@rm -f lazycatd$(EXEEXT)
+	$(LINK) $(lazycatd_OBJECTS) $(lazycatd_LDADD) $(LIBS)
 lctcpd$(EXEEXT): $(lctcpd_OBJECTS) $(lctcpd_DEPENDENCIES) $(EXTRA_lctcpd_DEPENDENCIES) 
 	@rm -f lctcpd$(EXEEXT)
 	$(LINK) $(lctcpd_OBJECTS) $(lctcpd_LDADD) $(LIBS)
+install-binSCRIPTS: $(bin_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  if test -f "$$d$$p"; then echo "$$d$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n' \
+	    -e 'h;s|.*|.|' \
+	    -e 'p;x;s,.*/,,;$(transform)' | sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1; } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) { files[d] = files[d] " " $$1; \
+	      if (++n[d] == $(am__install_max)) { \
+		print "f", d, files[d]; n[d] = 0; files[d] = "" } } \
+	    else { print "f", d "/" $$4, $$1 } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	     if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	     test -z "$$files" || { \
+	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(bindir)$$dir'"; \
+	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
+	     } \
+	; done
+
+uninstall-binSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || exit 0; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	       sed -e 's,.*/,,;$(transform)'`; \
+	dir='$(DESTDIR)$(bindir)'; $(am__uninstall_files_from_dir)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -487,6 +569,90 @@ lctcpd.obj: host/lctcpd.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='host/lctcpd.c' object='lctcpd.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o lctcpd.obj `if test -f 'host/lctcpd.c'; then $(CYGPATH_W) 'host/lctcpd.c'; else $(CYGPATH_W) '$(srcdir)/host/lctcpd.c'; fi`
+install-dist_docDATA: $(dist_doc_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(dist_doc_DATA)'; test -n "$(docdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(docdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(docdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(docdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(docdir)" || exit $$?; \
+	done
+
+uninstall-dist_docDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_doc_DATA)'; test -n "$(docdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(docdir)'; $(am__uninstall_files_from_dir)
+install-lazycat_serverDATA: $(lazycat_server_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(lazycat_server_DATA)'; test -n "$(lazycat_serverdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(lazycat_serverdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(lazycat_serverdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(lazycat_serverdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(lazycat_serverdir)" || exit $$?; \
+	done
+
+uninstall-lazycat_serverDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(lazycat_server_DATA)'; test -n "$(lazycat_serverdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(lazycat_serverdir)'; $(am__uninstall_files_from_dir)
+install-lazycat_ui_cliDATA: $(lazycat_ui_cli_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(lazycat_ui_cli_DATA)'; test -n "$(lazycat_ui_clidir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(lazycat_ui_clidir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(lazycat_ui_clidir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(lazycat_ui_clidir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(lazycat_ui_clidir)" || exit $$?; \
+	done
+
+uninstall-lazycat_ui_cliDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(lazycat_ui_cli_DATA)'; test -n "$(lazycat_ui_clidir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(lazycat_ui_clidir)'; $(am__uninstall_files_from_dir)
+install-lazycat_ui_gtkDATA: $(lazycat_ui_gtk_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(lazycat_ui_gtk_DATA)'; test -n "$(lazycat_ui_gtkdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(lazycat_ui_gtkdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(lazycat_ui_gtkdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(lazycat_ui_gtkdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(lazycat_ui_gtkdir)" || exit $$?; \
+	done
+
+uninstall-lazycat_ui_gtkDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(lazycat_ui_gtk_DATA)'; test -n "$(lazycat_ui_gtkdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(lazycat_ui_gtkdir)'; $(am__uninstall_files_from_dir)
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -704,9 +870,9 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(PROGRAMS) $(SCRIPTS) $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(lazycat_serverdir)" "$(DESTDIR)$(lazycat_ui_clidir)" "$(DESTDIR)$(lazycat_ui_gtkdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -731,6 +897,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -762,13 +929,14 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-dist_docDATA install-lazycat_serverDATA \
+	install-lazycat_ui_cliDATA install-lazycat_ui_gtkDATA
 
 install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS
+install-exec-am: install-binPROGRAMS install-binSCRIPTS
 
 install-html: install-html-am
 
@@ -809,7 +977,9 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS
+uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
+	uninstall-dist_docDATA uninstall-lazycat_serverDATA \
+	uninstall-lazycat_ui_cliDATA uninstall-lazycat_ui_gtkDATA
 
 .MAKE: install-am install-strip
 
@@ -819,16 +989,47 @@ uninstall-am: uninstall-binPROGRAMS
 	dist-zip distcheck distclean distclean-compile \
 	distclean-generic distclean-tags distcleancheck distdir \
 	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+	install install-am install-binPROGRAMS install-binSCRIPTS \
+	install-data install-data-am install-dist_docDATA install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am \
+	install-lazycat_serverDATA install-lazycat_ui_cliDATA \
+	install-lazycat_ui_gtkDATA install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-binPROGRAMS
+	uninstall-am uninstall-binPROGRAMS uninstall-binSCRIPTS \
+	uninstall-dist_docDATA uninstall-lazycat_serverDATA \
+	uninstall-lazycat_ui_cliDATA uninstall-lazycat_ui_gtkDATA
 
+
+lc: ui/lc.scm
+	sed -e 's|__UI_CLI_DATA_DIR__|$(lazycat_ui_clidir)|g' \
+		-e 's|__SERVER_DATA_DIR__|$(lazycat_serverdir)|g' $< > $@
+	chmod +x $@
+
+lazycat-gtk: ui/lazycat-gtk.scm
+	sed -e 's|__UI_GTK_DATA_DIR__|$(lazycat_ui_gtkdir)|g' \
+		-e 's|__SERVER_DATA_DIR__|$(lazycat_serverdir)|g' $< > $@
+	chmod +x $@
+
+lazycat-daemon:
+	@echo -n "Generating lazycat-daemon script... "
+	@echo -e "#!/bin/sh\n"\
+		"\n"\
+		"# Copyright (C) 2013 Artyom V. Poptsov <poptsov.artyom@gmail.com>\n"\
+		"#\n"\
+		"# This auto-generated file is a part of LazyCat.\n"\
+		"#\n"\
+		"# Copying and distribution of this file, with or without modification,\n"\
+		"# are permitted in any medium without royalty provided the copyright\n"\
+		"# notice and this notice are preserved.  This file is offered as-is,\n"\
+		"# without any warranty.\n"\
+		"\n"\
+		"export GUILE_LOAD_PATH=\$${GUILE_LOAD_PATH}:${lazycat_serverdir}\n"\
+		"lazycatd\n" > $@
+	@echo "done"
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

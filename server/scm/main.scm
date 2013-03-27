@@ -31,9 +31,9 @@
 
 (load-from-path "lazycatd.scm")
 
-(define-module (lazycat server scm main)
+(define-module (lazycat server main)
   #:use-module (oop goops)
-  #:use-module (lazycat server scm lazycatd)
+  #:use-module (lazycat server lazycatd)
   #:export (main))
 
 (define (main args)

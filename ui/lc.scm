@@ -1,5 +1,6 @@
 #!/bin/sh
 # aside from this initial boilerplate, this is actually -*- scheme -*- code
+export GUILE_LOAD_PATH=${GUILE_LOAD_PATH}:__UI_CLI_DATA_DIR__:__SERVER_DATA_DIR__
 main='(module-ref (resolve-module '\''(lazycat ui lc)) '\'main')'
 exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 !#
@@ -45,7 +46,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 format)
   #:use-module (lazycat ui cli pretty-format)
-  #:use-module (lazycat server scm protocol)
+  #:use-module (lazycat server protocol)
   #:export (<lc> main))
 
 

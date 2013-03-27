@@ -26,7 +26,7 @@
 
 ;;; Code:
 
-(define-module (lazycat server scm protocol))
+(define-module (lazycat server protocol))
 
 (define-public *protocol-version* 1)
 

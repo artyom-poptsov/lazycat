@@ -1,5 +1,6 @@
 #!/bin/sh
 # aside from this initial boilerplate, this is actually -*- scheme -*- code
+export GUILE_LOAD_PATH=${GUILE_LOAD_PATH}:__UI_GTK_DATA_DIR__:__SERVER_DATA_DIR__
 main='(module-ref (resolve-module '\''(lazycat ui lazy-gtk-cat)) '\'main')'
 exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 !#

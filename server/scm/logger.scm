@@ -38,7 +38,7 @@
 
 ;;; Module definition
 
-(define-module (lazycat server scm logger)
+(define-module (lazycat server logger)
   #:use-module (oop goops)
   #:export     (<logger> logger-message))
 

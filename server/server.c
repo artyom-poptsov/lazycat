@@ -168,7 +168,7 @@ scm_thread (void* closure, int argc, char* argv[])
 
   scm_primitive_load_path ( scm_from_locale_string ("main.scm") );
 
-  module = scm_c_resolve_module ("lazycat server scm main");
+  module = scm_c_resolve_module ("lazycat server main");
   main   = scm_c_module_lookup (module, "main");
   args   = scm_program_arguments ();
 

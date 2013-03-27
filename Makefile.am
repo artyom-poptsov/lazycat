@@ -1,6 +1,6 @@
 ## Config file for GNU Automake. 
 ##
-## Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+## Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
 ##
 ## This file is part of LazyCat.
 ## 
@@ -27,17 +27,59 @@ INCLUDES = \
 	-I$(top_srcdir)/proxies/tcp-proxy \
 	-I$(top_srcdir)/proxies/ssh-proxy
 
-bin_PROGRAMS = lazycat lctcpd
+dist_doc_DATA = README NEWS COPYING AUTHORS ChangeLog TODO
+
+bin_PROGRAMS = lazycatd lctcpd
+
+# Scheme files
+lazycat_serverdir	= $(pkgdatadir)/server
+lazycat_ui_gtkdir	= $(pkgdatadir)/ui/gtk
+lazycat_ui_clidir	= $(pkgdatadir)/ui/cli
+lazycat_server_DATA	= server/scm/*
+lazycat_ui_gtk_DATA	= ui/gtk/*
+lazycat_ui_cli_DATA	= ui/cli/*
+
+bin_SCRIPTS = lc lazycat-gtk lazycat-daemon
+
+lc: ui/lc.scm
+	sed -e 's|__UI_CLI_DATA_DIR__|$(lazycat_ui_clidir)|g' \
+		-e 's|__SERVER_DATA_DIR__|$(lazycat_serverdir)|g' $< > $@
+	chmod +x $@
+
+lazycat-gtk: ui/lazycat-gtk.scm
+	sed -e 's|__UI_GTK_DATA_DIR__|$(lazycat_ui_gtkdir)|g' \
+		-e 's|__SERVER_DATA_DIR__|$(lazycat_serverdir)|g' $< > $@
+	chmod +x $@
+
+lazycat-daemon:
+	@echo -n "Generating lazycat-daemon script... "
+	@echo -e "#!/bin/sh\n"\
+		"\n"\
+		"# Copyright (C) 2013 Artyom V. Poptsov <poptsov.artyom@gmail.com>\n"\
+		"#\n"\
+		"# This auto-generated file is a part of LazyCat.\n"\
+		"#\n"\
+		"# Copying and distribution of this file, with or without modification,\n"\
+		"# are permitted in any medium without royalty provided the copyright\n"\
+		"# notice and this notice are preserved.  This file is offered as-is,\n"\
+		"# without any warranty.\n"\
+		"\n"\
+		"export GUILE_LOAD_PATH=\$${GUILE_LOAD_PATH}:${lazycat_serverdir}\n"\
+		"lazycatd\n" > $@
+	@echo "done"
+
+
+CLEANFILES	= lc lazycat-gtk lazycat-daemon
 
 ################################################################################
 # Lazycat sources
 #
 
-lazycat_SOURCES =
+lazycatd_SOURCES =
 
 # Common
 
-lazycat_SOURCES += \
+lazycatd_SOURCES += \
 	common/common.h	\
 	common/xsockets.c \
 	common/xsockets.h \
@@ -46,11 +88,11 @@ lazycat_SOURCES += \
 
 # Proxies
 
-lazycat_SOURCES += \
+lazycatd_SOURCES += \
 	proxies/tcp-proxy/tcp-proxy.c \
 	proxies/tcp-proxy/tcp-proxy.h
 
-lazycat_SOURCES += \
+lazycatd_SOURCES += \
 	proxies/ssh-proxy/ssh-proxy.c \
 	proxies/ssh-proxy/ssh-proxy.h \
 	proxies/ssh-proxy/lazy-ssh.c \
@@ -58,7 +100,7 @@ lazycat_SOURCES += \
 
 # Server
 
-lazycat_SOURCES += \
+lazycatd_SOURCES += \
 	server/db.c \
 	server/db.h \
 	server/sighandlers.c \

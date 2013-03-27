@@ -53,8 +53,8 @@
   #:use-module (lazycat ui gtk add-host-dialog)
   #:use-module (lazycat ui gtk output-view)
   #:use-module (lazycat ui gtk host-tree)
-  #:use-module (lazycat server scm protocol)
-  #:use-module (lazycat server scm logger)
+  #:use-module (lazycat server protocol)
+  #:use-module (lazycat server logger)
   #:export (<lazy-gtk-cat> run))
 
 

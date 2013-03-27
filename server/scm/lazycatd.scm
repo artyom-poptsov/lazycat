@@ -35,15 +35,15 @@
 (load-from-path "host-list.scm")
 (load-from-path "diff.scm")
 
-(define-module (lazycat server scm lazycatd)
+(define-module (lazycat server lazycatd)
   #:use-module (oop goops)
   #:use-module (ice-9 rdelim)
   #:use-module (lazycat server builtins)
-  #:use-module (lazycat server scm logger)
-  #:use-module (lazycat server scm protocol)
-  #:use-module (lazycat server scm host)
-  #:use-module (lazycat server scm host-list)
-  #:use-module (lazycat server scm diff)
+  #:use-module (lazycat server logger)
+  #:use-module (lazycat server protocol)
+  #:use-module (lazycat server host)
+  #:use-module (lazycat server host-list)
+  #:use-module (lazycat server diff)
   #:export (<lazycatd> run))
 
 
