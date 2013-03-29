@@ -115,7 +115,7 @@
         (let* ((list (host-list-get-plain-list host-list))
                (master-host-id (host-get-id (car list))))
           (hash-set! (get-options obj) 'master (number->string master-host-id)))
-        (logger-message (logger obj) 'info "Host list is empty"))))
+        (logger-message (get-logger obj) 'info "Host list is empty"))))
 
 
 ;; Run the daemon.

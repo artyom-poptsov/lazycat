@@ -1,3 +1,8 @@
+2013-03-29  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* server/scm/lazycatd.scm (initialize): Fix an unbound variable
+	error.
+
 2013-03-28  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	Automate LazyCat installation with autotools.
