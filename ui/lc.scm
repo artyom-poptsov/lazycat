@@ -6,7 +6,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 !#
 
 
-;;; lc -- A CLI interface for LazyCat.
+;;; lc -- A CLI for LazyCat.
 
 ;; Copyright (C) 2013 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
@@ -28,11 +28,21 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 ;;; Commentary:
 
-;; A CLI interface for LazyCat.
+;; A CLI for LazyCat.
 ;;
-;; This module exports:
+;; Usage: lc <command> [ args ]
 ;;
-;;   (main)
+;; Possible commands:
+;;   a, add     -- add a new host
+;;   d, diff    -- compare outputs from hosts
+;;   e, exec    -- execute a command
+;;   l, list    -- list objects
+;;   r, rem     -- remove host
+;;   s, set     -- set a new value for an option
+;;   stop       -- stop LazyCat daemon
+;;   version    -- print current version
+;;
+;; See "<command> --help" for more information.
 
 
 ;;; Code:

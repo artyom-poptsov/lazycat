@@ -1,3 +1,7 @@
+2013-03-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* ui/lc.scm: Update file commentary.  Fix tautology in comments.
+
 2013-03-29  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* server/scm/lazycatd.scm (initialize): Fix an unbound variable
