@@ -172,9 +172,11 @@
   (if (null? args)
       (lazycat-throw "Malformed message" args))
 
-  (let ((group           (car args))
-        (host-attributes (cdr args))
-        (host-list       (get-host-list obj)))
+  (let* ((args            (car args))
+         (group           (car args))
+         (host-attributes (cdr args))
+         (host-list       (get-host-list obj)))
+    (logger-message (get-logger obj) 'debug (object->string args))
     (host-list-add-host host-list group host-attributes)
     (send-message obj (list #t) client)))
 

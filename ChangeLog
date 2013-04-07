@@ -1,5 +1,7 @@
 2013-04-07  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* server/scm/lazycatd.scm (lazycat-add): Fix a bug.
+
 	Improve usage of the Guile module system.
 	* Makefile.am: Replace AM_CPPFLAGS with AM_CFLAGS.  Use datadir as
 	GUILE_LOAD_PATH.  Rename lazycatd to lazycat-daemon.  Cleanup.
