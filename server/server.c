@@ -105,7 +105,7 @@ main (int argc, char* argv[])
   free (rec.name);
 
   /* Start Guile */
-
+  setenv ("GUILE_LOAD_PATH", GUILE_LOAD_PATH, 1);
   scm_boot_guile (argc, argv, scm_thread, 0);
 
   /* Never reached. */
@@ -165,8 +165,6 @@ scm_thread (void* closure, int argc, char* argv[])
   SCM module;
 
   scm_c_define_module ("lazycat server builtins", init_builtins_module, NULL);
-
-  scm_primitive_load_path ( scm_from_locale_string ("main.scm") );
 
   module = scm_c_resolve_module ("lazycat server main");
   main   = scm_c_module_lookup (module, "main");

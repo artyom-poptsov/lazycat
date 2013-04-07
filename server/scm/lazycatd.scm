@@ -29,12 +29,6 @@
 
 ;;; Code:
 
-(load-from-path "logger.scm")
-(load-from-path "protocol.scm")
-(load-from-path "host.scm")
-(load-from-path "host-list.scm")
-(load-from-path "diff.scm")
-
 (define-module (lazycat server lazycatd)
   #:use-module (oop goops)
   #:use-module (ice-9 rdelim)

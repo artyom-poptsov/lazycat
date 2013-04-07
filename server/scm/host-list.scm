@@ -44,9 +44,6 @@
 
 ;;; Code:
 
-(load "config.scm")
-(load "host.scm")
-
 (define-module (lazycat server host-list)
   #:use-module (oop goops)
   #:use-module (ice-9 common-list)

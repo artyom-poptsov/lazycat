@@ -1,3 +1,14 @@
+2013-04-07  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Improve usage of the Guile module system.
+	* Makefile.am: Replace AM_CPPFLAGS with AM_CFLAGS.  Use datadir as
+	GUILE_LOAD_PATH.  Rename lazycatd to lazycat-daemon.  Cleanup.
+	* Makefile.in: Update.
+	* server/server.c: Use setenv call to set GUILE_LOAD_PATH.
+	* server/scm/host-list.scm, server/scm/lazycatd.scm,
+	server/scm/main.scm, ui/lazycat-gtk.scm, ui/lc.scm: Remove
+	load-from-path calls.
+
 2013-03-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/lc.scm: Update file commentary.  Fix tautology in comments.

@@ -1,6 +1,6 @@
 #!/bin/sh
 # aside from this initial boilerplate, this is actually -*- scheme -*- code
-export GUILE_LOAD_PATH=${GUILE_LOAD_PATH}:__UI_CLI_DATA_DIR__:__SERVER_DATA_DIR__
+export GUILE_LOAD_PATH=__DATA_DIR__
 main='(module-ref (resolve-module '\''(lazycat ui lc)) '\'main')'
 exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 !#
@@ -46,9 +46,6 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 
 ;;; Code:
-
-(load-from-path "protocol.scm")
-(load-from-path "pretty-format.scm")
 
 (define-module (lazycat ui lc)
   #:use-module (oop goops)

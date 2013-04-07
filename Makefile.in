@@ -51,7 +51,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = lazycatd$(EXEEXT) lctcpd$(EXEEXT)
+bin_PROGRAMS = lazycat-daemon$(EXEEXT) lctcpd$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(dist_doc_DATA) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -71,12 +71,12 @@ am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(lazycat_ui_clidir)" \
 	"$(DESTDIR)$(lazycat_ui_gtkdir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_lazycatd_OBJECTS = xsockets.$(OBJEXT) parsers.$(OBJEXT) \
+am_lazycat_daemon_OBJECTS = xsockets.$(OBJEXT) parsers.$(OBJEXT) \
 	tcp-proxy.$(OBJEXT) ssh-proxy.$(OBJEXT) lazy-ssh.$(OBJEXT) \
 	db.$(OBJEXT) sighandlers.$(OBJEXT) scmapi.$(OBJEXT) \
 	server.$(OBJEXT)
-lazycatd_OBJECTS = $(am_lazycatd_OBJECTS)
-lazycatd_LDADD = $(LDADD)
+lazycat_daemon_OBJECTS = $(am_lazycat_daemon_OBJECTS)
+lazycat_daemon_LDADD = $(LDADD)
 am_lctcpd_OBJECTS = xsockets.$(OBJEXT) lctcpd.$(OBJEXT)
 lctcpd_OBJECTS = $(am_lctcpd_OBJECTS)
 lctcpd_LDADD = $(LDADD)
@@ -116,8 +116,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(lazycatd_SOURCES) $(lctcpd_SOURCES)
-DIST_SOURCES = $(lazycatd_SOURCES) $(lctcpd_SOURCES)
+SOURCES = $(lazycat_daemon_SOURCES) $(lctcpd_SOURCES)
+DIST_SOURCES = $(lazycat_daemon_SOURCES) $(lctcpd_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -233,7 +233,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CPPFLAGS = `pkg-config --cflags guile-1.8`
+AM_CFLAGS = @GUILE_CFLAGS@ `pkg-config --cflags guile-1.8` \
+	-DGUILE_LOAD_PATH=\"$(datadir)\"
 AM_LDFLAGS = `pkg-config --libs guile-1.8` -lssh
 INCLUDES = \
 	-I$(top_srcdir)/server \
@@ -251,8 +252,8 @@ lazycat_ui_clidir = $(pkgdatadir)/ui/cli
 lazycat_server_DATA = server/scm/*
 lazycat_ui_gtk_DATA = ui/gtk/*
 lazycat_ui_cli_DATA = ui/cli/*
-bin_SCRIPTS = lc lazycat-gtk lazycat-daemon
-CLEANFILES = lc lazycat-gtk lazycat-daemon
+bin_SCRIPTS = lc lazycat-gtk
+CLEANFILES = lc lazycat-gtk
 
 ################################################################################
 # Lazycat sources
@@ -263,8 +264,8 @@ CLEANFILES = lc lazycat-gtk lazycat-daemon
 # Proxies
 
 # Server
-lazycatd_SOURCES = common/common.h common/xsockets.c common/xsockets.h \
-	common/parsers.c common/parsers.h \
+lazycat_daemon_SOURCES = common/common.h common/xsockets.c \
+	common/xsockets.h common/parsers.c common/parsers.h \
 	proxies/tcp-proxy/tcp-proxy.c proxies/tcp-proxy/tcp-proxy.h \
 	proxies/ssh-proxy/ssh-proxy.c proxies/ssh-proxy/ssh-proxy.h \
 	proxies/ssh-proxy/lazy-ssh.c proxies/ssh-proxy/lazy-ssh.h \
@@ -357,9 +358,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-lazycatd$(EXEEXT): $(lazycatd_OBJECTS) $(lazycatd_DEPENDENCIES) $(EXTRA_lazycatd_DEPENDENCIES) 
-	@rm -f lazycatd$(EXEEXT)
-	$(LINK) $(lazycatd_OBJECTS) $(lazycatd_LDADD) $(LIBS)
+lazycat-daemon$(EXEEXT): $(lazycat_daemon_OBJECTS) $(lazycat_daemon_DEPENDENCIES) $(EXTRA_lazycat_daemon_DEPENDENCIES) 
+	@rm -f lazycat-daemon$(EXEEXT)
+	$(LINK) $(lazycat_daemon_OBJECTS) $(lazycat_daemon_LDADD) $(LIBS)
 lctcpd$(EXEEXT): $(lctcpd_OBJECTS) $(lctcpd_DEPENDENCIES) $(EXTRA_lctcpd_DEPENDENCIES) 
 	@rm -f lctcpd$(EXEEXT)
 	$(LINK) $(lctcpd_OBJECTS) $(lctcpd_LDADD) $(LIBS)
@@ -1005,31 +1006,11 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 
 
 lc: ui/lc.scm
-	sed -e 's|__UI_CLI_DATA_DIR__|$(lazycat_ui_clidir)|g' \
-		-e 's|__SERVER_DATA_DIR__|$(lazycat_serverdir)|g' $< > $@
+	sed -e 's|__DATA_DIR__|$(datadir)|g' $< > $@
 	chmod +x $@
 
 lazycat-gtk: ui/lazycat-gtk.scm
-	sed -e 's|__UI_GTK_DATA_DIR__|$(lazycat_ui_gtkdir)|g' \
-		-e 's|__SERVER_DATA_DIR__|$(lazycat_serverdir)|g' $< > $@
-	chmod +x $@
-
-lazycat-daemon:
-	@echo -n "Generating lazycat-daemon script... "
-	@echo -e "#!/bin/sh\n"\
-		"\n"\
-		"# Copyright (C) 2013 Artyom V. Poptsov <poptsov.artyom@gmail.com>\n"\
-		"#\n"\
-		"# This auto-generated file is a part of LazyCat.\n"\
-		"#\n"\
-		"# Copying and distribution of this file, with or without modification,\n"\
-		"# are permitted in any medium without royalty provided the copyright\n"\
-		"# notice and this notice are preserved.  This file is offered as-is,\n"\
-		"# without any warranty.\n"\
-		"\n"\
-		"export GUILE_LOAD_PATH=\$${GUILE_LOAD_PATH}:${lazycat_serverdir}\n"\
-		"lazycatd\n" > $@
-	@echo "done"
+	sed -e 's|__DATA_DIR__|$(datadir)|g' $< > $@
 	chmod +x $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

@@ -17,7 +17,9 @@
 ## You should have received a copy of the GNU General Public License
 ## along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
-AM_CPPFLAGS=`pkg-config --cflags guile-1.8`
+AM_CFLAGS = @GUILE_CFLAGS@ `pkg-config --cflags guile-1.8` 
+AM_CFLAGS += -DGUILE_LOAD_PATH=\"$(datadir)\"
+
 AM_LDFLAGS=`pkg-config --libs guile-1.8` -lssh
 
 INCLUDES = \
@@ -29,7 +31,7 @@ INCLUDES = \
 
 dist_doc_DATA = README NEWS COPYING AUTHORS ChangeLog TODO
 
-bin_PROGRAMS = lazycatd lctcpd
+bin_PROGRAMS = lazycat-daemon lctcpd
 
 # Scheme files
 lazycat_serverdir	= $(pkgdatadir)/server
@@ -39,47 +41,27 @@ lazycat_server_DATA	= server/scm/*
 lazycat_ui_gtk_DATA	= ui/gtk/*
 lazycat_ui_cli_DATA	= ui/cli/*
 
-bin_SCRIPTS = lc lazycat-gtk lazycat-daemon
+bin_SCRIPTS = lc lazycat-gtk
 
 lc: ui/lc.scm
-	sed -e 's|__UI_CLI_DATA_DIR__|$(lazycat_ui_clidir)|g' \
-		-e 's|__SERVER_DATA_DIR__|$(lazycat_serverdir)|g' $< > $@
+	sed -e 's|__DATA_DIR__|$(datadir)|g' $< > $@
 	chmod +x $@
 
 lazycat-gtk: ui/lazycat-gtk.scm
-	sed -e 's|__UI_GTK_DATA_DIR__|$(lazycat_ui_gtkdir)|g' \
-		-e 's|__SERVER_DATA_DIR__|$(lazycat_serverdir)|g' $< > $@
+	sed -e 's|__DATA_DIR__|$(datadir)|g' $< > $@
 	chmod +x $@
 
-lazycat-daemon:
-	@echo -n "Generating lazycat-daemon script... "
-	@echo -e "#!/bin/sh\n"\
-		"\n"\
-		"# Copyright (C) 2013 Artyom V. Poptsov <poptsov.artyom@gmail.com>\n"\
-		"#\n"\
-		"# This auto-generated file is a part of LazyCat.\n"\
-		"#\n"\
-		"# Copying and distribution of this file, with or without modification,\n"\
-		"# are permitted in any medium without royalty provided the copyright\n"\
-		"# notice and this notice are preserved.  This file is offered as-is,\n"\
-		"# without any warranty.\n"\
-		"\n"\
-		"export GUILE_LOAD_PATH=\$${GUILE_LOAD_PATH}:${lazycat_serverdir}\n"\
-		"lazycatd\n" > $@
-	@echo "done"
-	chmod +x $@
-
-CLEANFILES	= lc lazycat-gtk lazycat-daemon
+CLEANFILES	= lc lazycat-gtk
 
 ################################################################################
 # Lazycat sources
 #
 
-lazycatd_SOURCES =
+lazycat_daemon_SOURCES =
 
 # Common
 
-lazycatd_SOURCES += \
+lazycat_daemon_SOURCES += \
 	common/common.h	\
 	common/xsockets.c \
 	common/xsockets.h \
@@ -88,11 +70,11 @@ lazycatd_SOURCES += \
 
 # Proxies
 
-lazycatd_SOURCES += \
+lazycat_daemon_SOURCES += \
 	proxies/tcp-proxy/tcp-proxy.c \
 	proxies/tcp-proxy/tcp-proxy.h
 
-lazycatd_SOURCES += \
+lazycat_daemon_SOURCES += \
 	proxies/ssh-proxy/ssh-proxy.c \
 	proxies/ssh-proxy/ssh-proxy.h \
 	proxies/ssh-proxy/lazy-ssh.c \
@@ -100,7 +82,7 @@ lazycatd_SOURCES += \
 
 # Server
 
-lazycatd_SOURCES += \
+lazycat_daemon_SOURCES += \
 	server/db.c \
 	server/db.h \
 	server/sighandlers.c \
