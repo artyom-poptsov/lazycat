@@ -1,3 +1,7 @@
+2013-04-13  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* ui/gtk/lazy-gtk-cat.scm: Remove load-from-path calls.
+
 2013-04-07  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* server/scm/lazycatd.scm (lazycat-add): Fix a bug.

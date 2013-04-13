@@ -33,15 +33,6 @@
 
 ;;; Code:
 
-(load-from-path "protocol.scm")
-
-(load-from-path "output-preview-dialog.scm")
-(load-from-path "add-host-dialog.scm")
-(load-from-path "output-view.scm")
-(load-from-path "host-tree.scm")
-
-(load-from-path "logger.scm")
-
 (define-module (lazycat ui gtk lazy-gtk-cat)
   #:use-module (ice-9 rdelim)
   #:use-module (oop goops)
