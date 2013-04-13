@@ -7,8 +7,6 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 ;;; lazycat-gtk.scm -- Run the Lazy GTK Cat application.
 
-;; The script uses lazycat as a shell to eval the Scheme code.
-;;
 ;; Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
 ;; This file is part of LazyCat.
