@@ -177,7 +177,12 @@
          (host-attributes (cdr args))
          (host-list       (get-host-list obj)))
     (logger-message (get-logger obj) 'debug (object->string args))
-    (host-list-add-host host-list group host-attributes)
+    (host-list-add-host host-list
+                        #:group       group
+                        #:name        (list-ref host-attributes 0)
+                        #:proxy       (list-ref host-attributes 1)
+                        #:address     (list-ref host-attributes 2)
+                        #:description (list-ref host-attributes 3))
     (send-message obj (list #t) client)))
 
 ;; Remove the host with given HOST-ID from the host list.
