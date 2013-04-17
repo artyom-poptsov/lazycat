@@ -42,9 +42,6 @@
 ;;                  <body>)
 ;;   <args>   ::= (<variable> <default-value>) ...
 ;;
-;; FIXME: Doesn't work correctly if a defined method called with the empty
-;;        args list.
-;;
 (define-syntax define-method*
   (syntax-rules ()
     ((_ (m (o <class>) (var defval) ...) body ...)

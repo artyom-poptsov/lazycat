@@ -1,5 +1,7 @@
 2013-04-14  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* server/scm/utils.scm: Fix a comment.
+
 	* server/scm/host-list.scm (host-list-add-host): Use keywords for
 	passing arguments into the procedure.  All callers updated.
 	* server/scm/lazycatd.scm (lazycat-add): Update.
