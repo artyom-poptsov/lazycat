@@ -1,3 +1,8 @@
+2013-04-18  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* server/scmapi.c (scm_send_msg, scm_add_host, scm_update_host):
+	Replace deprecated SCM_STRINGP with scm_is_string.
+
 2013-04-14  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* server/scm/utils.scm: Fix a comment.

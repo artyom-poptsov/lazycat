@@ -49,7 +49,7 @@ scm_send_msg (SCM dest, SCM msg)
   int retval;
 
   SCM_ASSERT (SCM_NUMBERP (dest), msg, SCM_ARG1, __func__);
-  SCM_ASSERT (SCM_STRINGP (msg),  msg, SCM_ARG1, __func__);
+  SCM_ASSERT (scm_is_string (msg),  msg, SCM_ARG1, __func__);
 
   host_id = scm_to_int (dest);
   msg_buf = scm_to_locale_string (msg);
@@ -168,10 +168,10 @@ scm_add_host (SCM proxy_name, SCM address, SCM name, SCM description)
   char* buf;
   int32_t retval;
   
-  SCM_ASSERT (SCM_STRINGP (proxy_name),  proxy_name,  SCM_ARG1, __func__);
-  SCM_ASSERT (SCM_STRINGP (address),     address,     SCM_ARG2, __func__);
-  SCM_ASSERT (SCM_STRINGP (name),        name,        SCM_ARG3, __func__);
-  SCM_ASSERT (SCM_STRINGP (description), description, SCM_ARG4, __func__);
+  SCM_ASSERT (scm_is_string (proxy_name),  proxy_name,  SCM_ARG1, __func__);
+  SCM_ASSERT (scm_is_string (address),     address,     SCM_ARG2, __func__);
+  SCM_ASSERT (scm_is_string (name),        name,        SCM_ARG3, __func__);
+  SCM_ASSERT (scm_is_string (description), description, SCM_ARG4, __func__);
 
   rec.type = DB_REC_HOST;
 
