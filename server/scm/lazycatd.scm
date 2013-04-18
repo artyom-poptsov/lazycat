@@ -136,6 +136,10 @@
   (set-socket obj (socket PF_UNIX SOCK_STREAM 0))
   (let ((path            (get-socket-path obj))
         (lazycatd-socket (get-socket obj)))
+
+    (if (file-exists? path)
+        (delete-file path))
+
     (bind lazycatd-socket AF_UNIX path)
     (listen lazycatd-socket 1)))
 
@@ -164,8 +168,12 @@
 
 
 ;; Stop the lazycat daemon.
-(define-method (lazycat-stop (obj <lazycatd>))
-  (host-list-save (get-host-list obj)))
+(define-method (lazycat-stop (obj <lazycatd>) (port <port>))
+  (host-list-save (get-host-list obj))
+
+  (send-message obj (list #t) port)
+
+  (close (get-socket obj)))
 
 ;; Add a new host to the host list.
 (define-method (lazycat-add (obj <lazycatd>) args (client <port>))
@@ -436,9 +444,7 @@
                ;; Stop the daemon
                ((eq? message-type *cmd-stop*)
                 (begin
-                  (lazycat-stop obj)
-                  (send-message obj (list #t) client)
-                  (close lazycatd-socket)
+                  (lazycat-stop obj client)
                   (break)))))
 
             (lambda (key . args)

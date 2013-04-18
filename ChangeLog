@@ -1,5 +1,10 @@
 2013-04-18  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* server/scm/lazycatd.scm: Handle the "stop" command in
+	lazycat-stop procedure.
+	(lazycat-stop): Close the server socket.
+	(open-socket): Delete old socket file if it exists.
+
 	* server/scmapi.c (scm_send_msg, scm_add_host, scm_update_host):
 	Replace deprecated SCM_STRINGP with scm_is_string.
 
