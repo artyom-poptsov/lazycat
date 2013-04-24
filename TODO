@@ -1,6 +1,10 @@
 -*- Mode: Outline -*-
 
-* Asynchronous API.
+* Rewrite the server in Scheme.
+  It seems that the most of the code that written in C is not needed
+  and adds extra complexity.  Server part should be rewritten in
+  Scheme, and C should be used only when it is obvious that it is
+  unavoidable and/or adds significant benefits.
 
 * Proxy configuration.
   There is a potential issue with configuration of proxies.  It seems

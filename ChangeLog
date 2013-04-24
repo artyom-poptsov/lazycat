@@ -1,3 +1,7 @@
+2013-04-24  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* TODO: Update.
+
 2013-04-18  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* server/scm/lazycatd.scm: Handle the "stop" command in
