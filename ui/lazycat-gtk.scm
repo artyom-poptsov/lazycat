@@ -2,7 +2,7 @@
 # aside from this initial boilerplate, this is actually -*- scheme -*- code
 export GUILE_LOAD_PATH=__DATA_DIR__
 main='(module-ref (resolve-module '\''(lazycat ui lazy-gtk-cat)) '\'main')'
-exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
+exec ${GUILE-guile-gnome-2} -l $0 -c "(apply $main (command-line))" "$@"
 !#
 
 ;;; lazycat-gtk.scm -- Run the Lazy GTK Cat application.

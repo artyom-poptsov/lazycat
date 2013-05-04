@@ -9,6 +9,9 @@
 # Binary files
 lazycat
 lctcpd
+lazycat-daemon
+lazycat-gtk
+lc
 
 # Auto-generated Makefile
 Makefile

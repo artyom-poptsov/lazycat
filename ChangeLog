@@ -1,3 +1,12 @@
+2013-05-04  DrDeimos  <drdeimosnn@gmail.com>
+
+	* autoconf.ac: Fix Guile modules check error on some
+	systems. Remove unnecesary checks for Guile modules.
+	* ui/lazycat-gtk.scm: Change the interpreter to the 
+	guile-gnome-2.
+	* .gitignore: Ignore binary files and scripts.
+	* Makefile.in, aclocal.m4, configure: Update.
+
 2013-04-18  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* server/scm/lazycatd.scm: Handle the "stop" command in
