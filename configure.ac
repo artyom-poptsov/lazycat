@@ -29,13 +29,8 @@ GUILE_PROGS
 GUILE_FLAGS
 
 # Check for required Guile modules
-GUILE_MODULE_REQUIRED(ice-9 popen)
-GUILE_MODULE_REQUIRED(ice-9 rdelim)
-GUILE_MODULE_REQUIRED(ice-9 common-list)
+export GUILE=`which guile-gnome-2`
 GUILE_MODULE_REQUIRED(gnome gtk)
-GUILE_MODULE_REQUIRED(gnome gobject)
-GUILE_MODULE_REQUIRED(gnome-2)
-GUILE_MODULE_REQUIRED(oop goops)
 
 AC_CHECK_FUNCS([mkdir socket])
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/socket.h syslog.h unistd.h])
