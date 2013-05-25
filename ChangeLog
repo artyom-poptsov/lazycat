@@ -1,3 +1,7 @@
+2013-05-26  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* README: Update.
+
 2013-05-25  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	Fix the problem with building against libssh 0.4.x

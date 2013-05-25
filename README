@@ -1,11 +1,7 @@
--*- text -*-
-
 			LazyCat
 
-LazyCat is a tool which allows you serve cluster of Linux hosts in
-comfortable way. The main idea is that you can install, upgrade or
-remove software on all hosts at the same time, and get general view of
-what is going on with your cluster.
+LazyCat is a configuration management system.  It is on the early
+stages of development, but already can do some useful work.
 
 LazyCat is distributed under the terms of GNU GPLv3 license or (at
 your option) any later version. See COPYING for details.
@@ -15,103 +11,100 @@ project see TODO file.
 
 	ARCHITECTURE
 
-LazyCat consists of the four main parts: a GUI, the server, proxies
-and optional clients that running on hosts (see figure 1.1 below).
+LazyCat consists of the four main parts: UI, daemon, proxies and
+optional clients that are running on hosts (see figure 1.1 below).
 
-The top part of the server is written in Scheme, which is a dialect of
-the Lisp language. Why Scheme? Because it is good for hacking and
-making new features upon the core of a program. LazyCat was written to
-be extensible, to fit to user's needs.
+Currently there are two user interfaces:
+ - lazycat-gtk (GTK)
+ - lc (CLI)
 
-The bottom part of the server is written in C, and offers API
-functions which can be called from a Scheme code. This part contains
-DB which stores basic information about hosts. Other job that the
-server does on this level is sending messages through proxies.
-
-Proxies are processes which are used by the server to sending messages
-through computer network. A proxy is just a function which is executed
-in different process.
+Proxies are processes which are used by the lazycat-daemon to send
+messages through computer network.
 
 	+--------------------------------------------+
-	| GUI (Scheme)                               |
-	+---------------------API--------------------+
-	| Server (C)                                 |
+	| UI                                         |
+        +--------------------------------------------+
+                               ^
+                               |  Unix socket
+                               v
+	+--------------------------------------------+
+	| lazycat-daemon                             |
 	+--------------------------------------------+
 	          ^                        ^
 	          |      Unix sockets      |
 	          v                        v
 	+-------------------+    +-------------------+
-	| Proxy (C)         |    | Proxy (C)         |
+	| proxy             |    | proxy             |
 	+-------------------+    +-------------------+
 	          ^                        ^
 	..........|.........Network........|..........
 	          v                        v
 	+-------------------+    +-------------------+
-	| Host              |    | Host              |
+	| host              |    | host              |
 	+-------------------+    +-------------------+
-	
+
 	figure 1.1: LazyCat architecture
 
 
-Right now LazyCat contains TCP and SSH proxy. I don't recommend you to
-use TCP proxy in the real tasks because it hasn't got any
-authentification mechanism yet, and sends data as unencrypted text
+Currently LazyCat shipped with TCP and SSH proxy. It is not
+recommended to use TCP proxy in the real tasks because it hasn't got
+any authentification mechanism yet, and sends data as unencrypted text
 streams.
 
 SSH proxy uses authorisation based on public keys. To use this proxy
 you must have SSH daemon running on the every host.
 
-	USAGE
+The private/public key names are hardcoded for now: they are
+~/.ssh/lazycat and ~/.ssh/lazycat.pub respectively.
 
-After building LazyCat from lazy sources (see INSTALL for details
-about this process), you can run it from command line - just type
-follows:
+	USAGE EXAMPLE
 
-  $ ./lazycat
+First of all, you have to start the daemon:
 
-and you'll get the Guile shell extended with LazyCat API. That's
-it. You can use LazyCat right now, by using LazyCat API directly. At
-first you have to load (lazycat builtins) module to be able to use
-API:
+  $ lazycat-daemon
 
-  guile> (use-modules (lazycat builtins))
+Then you can add hosts to be able to manage them:
 
-Then you can add new hosts to the cluster:
+  $ lc add home-network lazy-pc1 ssh-proxy "avp@pc1:22" \
+      "A lazy computer"
 
-  guile> (lc-add-host "tcp-proxy" "127.0.0.1:50001" "localhost" "My first Lazy Server")
-  1
-  guile> (lc-add-host "tcp-proxy" "127.0.0.2:50001" "localhost" "My second Lazy Server")
-  2
+You can get list of hosts with "list" command:
 
-  ...
+  $ lc list hosts
 
-Now you can get list of hosts:
+Hosts are addressed by their IDs.  For example, to send command to a
+concrete host, you can pass its ID to the "exec" command.  Say you
+want to send "uname -a" to the host with ID 2 :
 
-  guile> (lc-get-host-list)
-  '(1 2 3)
+  $ lc exec -n 2 "uname -a"
 
-and, of course, you can do something useful with this:
+If you don't specify a host ID, a command will be sent to all the
+accessible hosts:
 
-  guile> (lc-send-msg 1 "uname")
-  Linux
+  $ lc exec "uname -a"
 
-But wait, where is the promised perfect GUI with beautiful buttons,
-menus etc? OK, try run this script that you can find in the root dir
-of the repository:
+It's possible to compare outputs from hosts with output from the
+master host.  In other words, you'll get only diff between different
+outputs instead of full output from the every host.
 
-  ./lazycat-gtk.sh
+Set master host:
 
-This script makes instance of the <lazy-gtk-cat> application and
-then runs it.
+  $ lc set master 5
 
-	HACKING
+Get output from the master host:
 
-The server uses GNU Guile extension language upon C code, which allows
-to call C functions from Scheme code and vice versa. It means that you
-can extend and improve the server without knowledge of C language.
+  $ lc diff --get-pattern "uname -a"
 
-In fact, the server is a Scheme interpreter extended with LazyCat
-API. So you can easy build your own GUI or even use LazyCat in the
-batch mode.
+Check the output.  If it's OK, continue the operation:
 
-Happy hacking!
+  $ lc diff --continue
+
+If something went wrong, you can abort the operation:
+
+  $ lc diff --abort
+
+All commands have short documentation and usage examples.  Use "-h"
+key to get help:
+
+  $ lc -h
+  $ lc exec -h
