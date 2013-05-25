@@ -1,3 +1,11 @@
+2013-05-25  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Fix the problem with building against libssh 0.4.x
+	* configure.ac: Add check for libssh API version.
+	* proxies/ssh-proxy/libssh-compat.h: New file.
+	* proxies/ssh-proxy/lazy-ssh.c: Include libssh-compat.h.
+	* Makefile.in, aclocal.m4, configure: Update.
+
 2013-05-04  DrDeimos  <drdeimosnn@gmail.com>
 
 	* autoconf.ac: Fix Guile modules check error on some

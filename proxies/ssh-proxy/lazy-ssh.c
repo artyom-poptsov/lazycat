@@ -30,6 +30,8 @@
 #include "xsockets.h"           /* xrecv_msg(), xsend_msg() */
 #include "parsers.h"            /* get_*_from_address() */
 
+#include "libssh-compat.h"
+
 /*
  * Global variables and constants
  */
