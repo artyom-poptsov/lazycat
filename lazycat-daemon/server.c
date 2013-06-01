@@ -1,4 +1,6 @@
-/* Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+/* LazyCat server.
+ *
+ * Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
  *
  * This file is part of LazyCat.
  * 
@@ -16,13 +18,33 @@
  * along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SCMAPI_H__
-#define __SCMAPI_H__
+#include <libguile.h>
 
-SCM scm_send_msg (SCM dest, SCM msg);
-SCM scm_add_host (SCM proxy_name, SCM address, SCM name, SCM description);
-SCM scm_rem_host (SCM host_id);
-SCM scm_update_host (SCM host_id, SCM field, SCM value);
-SCM scm_get_host_list (void);
+
+/* Start the LazyCat main procedure. */
+static void
+inner_main (void* closure, int argc, char** argv)
+{
+  SCM main;
+  SCM args;
+  SCM module;
 
-#endif
+  module = scm_c_resolve_module ("lazycat lazycat-daemon main");
+  main   = scm_c_module_lookup (module, "main");
+  args   = scm_program_arguments ();
+
+  scm_call_1 (scm_variable_ref (main), args);
+}
+
+
+/* Entry point of the program */
+int
+main (int argc, char* argv[])
+{
+  setenv ("GUILE_LOAD_PATH", GUILE_LOAD_PATH, 1);
+  scm_boot_guile (argc, argv, inner_main, 0);
+
+  return 0;
+}
+
+/* server.c ends here */

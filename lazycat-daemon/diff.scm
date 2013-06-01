@@ -33,7 +33,7 @@
 
 ;;; Code:
 
-(define-module (lazycat server diff)
+(define-module (lazycat lazycat-daemon diff)
   #:use-module (oop goops)
   #:use-module (ice-9 popen)
   #:use-module (ice-9 rdelim)

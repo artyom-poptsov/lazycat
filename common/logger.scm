@@ -38,7 +38,7 @@
 
 ;;; Module definition
 
-(define-module (lazycat server logger)
+(define-module (lazycat logger)
   #:use-module (oop goops)
   #:export     (<logger> logger-message))
 
@@ -92,6 +92,6 @@
     "logger"
     " -t " (ident obj)
     " -p " (string-append (symbol->string (facility obj)) "." level)
-    " -- " message)))
+    " -- '" message "'")))
 
 ;;; logger.scm ends here

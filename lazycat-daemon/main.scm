@@ -1,6 +1,6 @@
 ;;; main.scm -- Entry point of the program.
 
-;; Copyright (C) 2012 Artyom Poptsov <poptsov.artyom@gmail.com>
+;; Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
 ;; This file is part of LazyCat.
 ;;
@@ -29,13 +29,13 @@
 
 ;;; Code:
 
-(define-module (lazycat server main)
+(define-module (lazycat lazycat-daemon main)
   #:use-module (oop goops)
-  #:use-module (lazycat server lazycatd)
+  #:use-module (lazycat lazycat-daemon lazycatd)
   #:export (main))
 
 (define (main args)
   (let ((lazycatd (make <lazycatd>)))
-    (run lazycatd)))
+        (run lazycatd)))
 
 ;;; main.scm ends here.

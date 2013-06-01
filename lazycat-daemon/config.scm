@@ -41,7 +41,7 @@
 
 ;;; Code:
 
-(define-module (lazycat server config)
+(define-module (lazycat lazycat-daemon config)
   #:use-module (oop goops)
   #:export     (<config> config-load-list config-save-list))
 

@@ -44,14 +44,14 @@
 
 ;;; Code:
 
-(define-module (lazycat server host-list)
+(define-module (lazycat lazycat-daemon host-list)
   #:use-module (oop goops)
   #:use-module (ice-9 common-list)
   #:use-module (ice-9 optargs)
   ;; LazyCat modules:
-  #:use-module (lazycat server config)
-  #:use-module (lazycat server host)
-  #:use-module (lazycat server utils)
+  #:use-module (lazycat utils)
+  #:use-module (lazycat lazycat-daemon config)
+  #:use-module (lazycat lazycat-daemon host)
   #:export (<host-list> host-list-load
                         host-list-save
                         host-list-empty?
@@ -77,19 +77,28 @@
 ;;; Main class
 
 (define-class <host-list> ()
-  (lazycat-home     #:accessor     lazycat-home
-                    #:init-value   *default-lazycat-home*
-                    #:init-keyword #:lazycat-home)
+  (lazycat-home
+   #:accessor     lazycat-home
+   #:init-value   *default-lazycat-home*
+   #:init-keyword #:lazycat-home)
 
-  (config-file-name #:accessor     config-file-name
-                    #:init-value   *default-file-name*
-                    #:init-keyword #:config-file-name)
+  (config-file-name
+   #:accessor     config-file-name
+   #:init-value   *default-file-name*
+   #:init-keyword #:config-file-name)
 
-  (host-list        #:accessor host-list
-                    #:init-value '())
+  (host-list
+   #:accessor host-list
+   #:init-value '())
 
-  (config           #:accessor config
-                    #:init-value #f))
+  (last-host-id
+   #:setter set-last-host-id!
+   #:getter get-last-host-id
+   #:init-value 0)
+
+  (config
+   #:accessor config
+   #:init-value #f))
 
 ;; Host list initialization
 (define-method (initialize (obj <host-list>) args)
@@ -110,12 +119,24 @@
 
       (define (load-group group)
         (for-each (lambda (host-attributes)
-                    (host-list-add-host obj
-                                        #:group       (car group)
-                                        #:name        (list-ref host-attributes 0)
-                                        #:proxy       (list-ref host-attributes 1)
-                                        #:address     (list-ref host-attributes 2)
-                                        #:description (list-ref host-attributes 3)))
+                    (let ((group-name (car group))
+                          (id         (list-ref host-attributes 0))
+                          (name       (list-ref host-attributes 1))
+                          (proxy-list (list-ref host-attributes 2))
+                          (addr       (list-ref host-attributes 3))
+                          (desc       (list-ref host-attributes 4)))
+
+                      (add-host obj
+                                #:group       group-name
+                                #:id          id
+                                #:name        name
+                                #:proxy-list  proxy-list
+                                #:address     addr
+                                #:description desc)
+
+                      (if (< (get-last-host-id obj) id)
+                          (set-last-host-id! obj id))))
+
                   (cdr group)))
 
       (let ((list (config-load-list (config obj) *default-list-name*)))
@@ -130,35 +151,34 @@
                             (load-group h)
 
                             ;; Host is not a member of a group
-                            (host-list-add-host obj 
-                                                #:name        (list-ref host-attributes 0)
-                                                #:proxy       (list-ref host-attributes 1)
-                                                #:address     (list-ref host-attributes 2)
-                                                #:description (list-ref host-attributes 3)))))
+                            (let ((id         (list-ref host-attributes 0))
+                                  (name       (list-ref host-attributes 1))
+                                  (proxy-list (list-ref host-attributes 2))
+                                  (addr       (list-ref host-attributes 3))
+                                  (desc       (list-ref host-attributes 4)))
+
+                              (host-list-add-host obj
+                                                  #:id          id
+                                                  #:name        name
+                                                  #:proxy-list  proxy-list
+                                                  #:address     addr
+                                                  #:description desc)
+
+                              (if (< (get-last-host-id obj) id)
+                                  (set-last-host-id! obj id))))))
                   list)))
 
 ;; Make a list from host attributes
 (define (unroll-host host)
-  (list (host-get-name        host)
-        (host-get-proxy       host)
-        (host-get-address     host)
-        (host-get-description host)))
-
-;; FIXME: Temporary solution.
-(define (unroll-host-with-id host)
   (list (host-get-id          host)
         (host-get-name        host)
-        (host-get-proxy       host)
+        (host-get-proxy-list  host)
         (host-get-address     host)
         (host-get-description host)))
 
 ;; Get members of a group GROUP as a list.
 (define (unroll-group group)
   (append (list (car group)) (map unroll-host (cdr group))))
-
-;; FIXME: Temporary solution.
-(define (unroll-group-with-id group)
-  (append (list (car group)) (map unroll-host-with-id (cdr group))))
 
 ;; Save host list to a file
 (define-method (host-list-save (obj <host-list>))
@@ -186,6 +206,28 @@
     (set! (host-list obj) (remove-if (lambda (element)
                                        (eq? (car element) group-name)) (host-list obj))))
 
+;; Add a new host with host id.
+(define-method* (add-host (obj <host-list>)
+                          (id          #f)
+                          (group       #f)
+                          (name        #f)
+                          (proxy-list  #f)
+                          (address     #f)
+                          (description #f))
+  (let ((host (make <host>
+                #:id          id
+                #:name        name
+                #:proxy-list  proxy-list
+                #:address     address
+                #:description description))
+        (group-list (assoc group (host-list obj))))
+
+    (if (not (eq? group-list #f))
+        (set-cdr! group-list (append (cdr group-list) (list host)))
+        (set! (host-list obj) (append (host-list obj) (list (cons group (list host))))))
+
+    id))
+
 ;; Add a new host to the host list, and place it to a group.  The
 ;; group will be created if it doesn't exist.
 ;;
@@ -196,21 +238,17 @@
 (define-method* (host-list-add-host (obj <host-list>)
                                     (group       #f)
                                     (name        #f)
-                                    (proxy       #f)
+                                    (proxy-list  #f)
                                     (address     #f)
                                     (description #f))
-  (let ((host (make <host>
-          #:name        name
-          #:proxy       proxy
-          #:address     address
-          #:description description))
-        (group-list (assoc group (host-list obj))))
-
-    (if (not (eq? group-list #f))
-        (set-cdr! group-list (append (cdr group-list) (list host)))
-        (set! (host-list obj) (append (host-list obj) (list (cons group (list host))))))
-
-    (host-get-id host)))
+  (let ((id (1+ (get-last-host-id obj))))
+    (add-host obj
+              #:group       group
+              #:id          id
+              #:name        name
+              #:proxy-list  proxy-list
+              #:address     address
+              #:description description)))
 
 ;; Remove a host from the list
 ;;
@@ -220,10 +258,7 @@
         (group   (get-group-by-host-id obj host-id)))
 
     ;; Remove the host from the list
-    (set-cdr! group (remove-if (lambda (element) (eq? element host)) (cdr group)))
-
-    ;; Remove the host
-    (host-remove host)))
+    (set-cdr! group (remove-if (lambda (element) (eq? element host)) (cdr group)))))
 
 ;; This function returns host by its ID.
 (define-method (host-list-get-host-by-id (obj <host-list>) (id <number>))
@@ -268,6 +303,6 @@
     plain-list))
 
 (define-method (host-list-get-unrolled-list (obj <host-list>))
-  (map unroll-group-with-id (host-list obj)))
+  (map unroll-group (host-list obj)))
   
 ;;; host-list.scm ends here

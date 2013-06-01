@@ -17,8 +17,15 @@
 ## You should have received a copy of the GNU General Public License
 ## along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
-dist_doc_DATA = README NEWS COPYING AUTHORS ChangeLog TODO
+AM_CFLAGS = @GUILE_CFLAGS@ `pkg-config --cflags guile-1.8`
+AM_CFLAGS += -DGUILE_LOAD_PATH=\"$(datadir)\"
+AM_LDFLAGS=`pkg-config --libs guile-1.8`
 
-SUBDIRS = lazycat-daemon ui proxies host common
+INCLUDES = -I$(top_srcdir)/common
 
+bin_PROGRAMS = lctcpd
 
+lctcpd_SOURCES = lctcpd.c
+
+lazycat_hostdir		= $(pkgdatadir)/host
+lazycat_host_DATA	= lctcpd.scm

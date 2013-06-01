@@ -53,7 +53,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 format)
   #:use-module (lazycat ui cli pretty-format)
-  #:use-module (lazycat server protocol)
+  #:use-module (lazycat protocol)
   #:export (<lc> main))
 
 
@@ -146,8 +146,8 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
       (print-help)
 
-      (let ((host-id (car args))
-            (result (send-message obj *cmd-rem-host* host-id)))
+      (let* ((host-id (string->number (car args)))
+             (result  (send-message obj *cmd-rem-host* host-id)))
         (if (eq? (car result) #f)
             (let ((error-message (string-append "ERROR: " (cadr result) "\n")))
               (display error-message))))))
@@ -198,6 +198,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 ;; Execute a command CMD on a host with the given HOST-ID.
 (define-method (lazycat-exec (obj <lc>) (host-id <number>) (cmd <string>))
+  ;; <message> ::= ( <type> ( <host-id> <cmd> ) )
   (let* ((result (send-message obj *cmd-exec* (list host-id cmd)))
          (status (car result)))
     (if status
@@ -231,14 +232,17 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
     
    ((or (string=? (car args) "--get-pattern") (string=? (car args) "-g"))
     (let* ((command (string-join (cdr args) " "))
+           ;; <message> ::= ( <type> ( <action> <command> ) )
            (result  (send-message obj *cmd-diff* (list 'get-pattern command))))
       (format-output (cadr result))))
 
    ((or (string=? (car args) "--continue") (string=? (car args) "-c"))
+    ;; <message> ::= ( <type> ( <action> ) )
     (let ((result (send-message obj *cmd-diff* (list 'continue))))
       (format-diff result)))
 
    ((or (string=? (car args) "--abort") (string=? (car args) "-a"))
+    ;; <message> ::= ( <type> ( <action> ) )
     (send-message obj *cmd-diff* (list 'abort)))
 
    (#t

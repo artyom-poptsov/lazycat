@@ -1,3 +1,15 @@
+2013-06-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Rewrite LazyCat daemon, proxies and host processes in Scheme.
+
+	* Rewrite most parts of LazyCat in Scheme.
+	* Use Guile-SSH for ssh-proxy.
+	* Update protocol, add protocol description.
+	* Improve lazycat-daemon.
+	* Remove extra files.
+	* Improve directory structure of the repository.
+	* Improve automake and autoconf files.
+
 2013-05-26  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* README: Update.

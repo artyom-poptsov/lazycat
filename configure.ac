@@ -54,6 +54,11 @@ AC_TYPE_SIZE_T
 
 AC_CONFIG_FILES([
 	Makefile
+        lazycat-daemon/Makefile
+        ui/Makefile
+        proxies/Makefile
+        host/Makefile
+        common/Makefile
 ])
 
 # Generate a Makefile, based on the results.

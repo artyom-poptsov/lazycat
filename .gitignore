@@ -7,11 +7,10 @@
 *.o
 
 # Binary files
-lazycat
-lctcpd
-lazycat-daemon
-lazycat-gtk
-lc
+host/lctcpd
+lazycat-daemon/lazycat-daemon
+ui/lazycat-gtk
+ui/lc
 
 # Auto-generated Makefile
 Makefile

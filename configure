@@ -4408,8 +4408,8 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssh_channel_new" >&5
 $as_echo "$ac_cv_lib_ssh_channel_new" >&6; }
 if test "x$ac_cv_lib_ssh_channel_new" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: Old libssh 0.4 API is found." >&5
-$as_echo "$as_me: Old libssh 0.4 API is found." >&6;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: Old libssh 0.4.x API is found." >&5
+$as_echo "$as_me: Old libssh 0.4.x API is found." >&6;}
 
 $as_echo "#define LIBSSH_0_4 1" >>confdefs.h
 
@@ -4735,7 +4735,7 @@ _ACEOF
 fi
 
 
-ac_config_files="$ac_config_files Makefile"
+ac_config_files="$ac_config_files Makefile lazycat-daemon/Makefile ui/Makefile proxies/Makefile host/Makefile common/Makefile"
 
 
 # Generate a Makefile, based on the results.
@@ -5482,6 +5482,11 @@ do
   case $ac_config_target in
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "lazycat-daemon/Makefile") CONFIG_FILES="$CONFIG_FILES lazycat-daemon/Makefile" ;;
+    "ui/Makefile") CONFIG_FILES="$CONFIG_FILES ui/Makefile" ;;
+    "proxies/Makefile") CONFIG_FILES="$CONFIG_FILES proxies/Makefile" ;;
+    "host/Makefile") CONFIG_FILES="$CONFIG_FILES host/Makefile" ;;
+    "common/Makefile") CONFIG_FILES="$CONFIG_FILES common/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

@@ -29,15 +29,16 @@
 
 ;;; Code:
 
-(define-module (lazycat server lazycatd)
+(define-module (lazycat lazycat-daemon lazycatd)
   #:use-module (oop goops)
   #:use-module (ice-9 rdelim)
-  #:use-module (lazycat server builtins)
-  #:use-module (lazycat server logger)
-  #:use-module (lazycat server protocol)
-  #:use-module (lazycat server host)
-  #:use-module (lazycat server host-list)
-  #:use-module (lazycat server diff)
+  #:use-module (lazycat proxy)
+  #:use-module (lazycat protocol)
+  #:use-module (lazycat logger)
+  #:use-module (lazycat lazycat-daemon host)
+  #:use-module (lazycat lazycat-daemon host-list)
+  #:use-module (lazycat lazycat-daemon proxy-list)
+  #:use-module (lazycat lazycat-daemon diff)
   #:export (<lazycatd> run))
 
 
@@ -49,28 +50,28 @@
 (define *object-types* '(hosts options))
 
 ;; Accessible options
-(define *options* '(master mode))
+(define *options* '(master log-verbosity))
 
 
 ;;; Main class
 (define-class <lazycatd> ()
 
   (lazycat-home
-   #:setter set-home
+   #:setter set-home!
    #:getter get-home)
 
   (tmp-dir
-   #:setter set-tmp-dir
+   #:setter set-tmp-dir!
    #:getter get-tmp-dir
    #:init-value "/tmp/lazycat/")
   
   (socket-path
-   #:setter set-socket-path
+   #:setter set-socket-path!
    #:getter get-socket-path
    #:init-value "/tmp/lazycat/server")
 
   (lazycatd-socket
-   #:setter set-socket
+   #:setter set-socket!
    #:getter get-socket)
 
   (logger
@@ -84,22 +85,35 @@
    #:init-value (make-hash-table))
 
   (host-list
-   #:setter set-host-list
+   #:setter set-host-list!
    #:getter get-host-list)
 
+  (proxy-list
+   #:setter set-proxy-list!
+   #:getter get-proxy-list)
+
   (pattern-output
-   #:setter set-pattern
+   #:setter set-pattern!
    #:getter get-pattern
    #:init-value #f))
 
 (define-method (initialize (obj <lazycatd>) args)
   (next-method)
 
-  (set-home obj (string-append (getenv "HOME") "/.lazycat"))
+  (set-home! obj (string-append (getenv "HOME") "/.lazycat"))
+
+  (if (not (file-exists? (get-tmp-dir obj)))
+      (mkdir (get-tmp-dir obj)))
   
-  (set-host-list obj (make <host-list> #:lazycat-home (get-home obj)))
+  (set-host-list! obj (make <host-list> #:lazycat-home (get-home obj)))
+  (set-proxy-list! obj (make <proxy-list> #:tmp-dir (get-tmp-dir obj)))
 
   (host-list-load (get-host-list obj))
+
+  ;; Load options
+  (let ((options (get-options obj)))
+    (hash-set! options 'master        #f)
+    (hash-set! options 'log-verbosity "1"))
 
   (let ((host-list (get-host-list obj)))
     (if (not (host-list-empty? host-list))
@@ -112,28 +126,23 @@
         (logger-message (get-logger obj) 'info "Host list is empty"))))
 
 
-;; Run the daemon.
-(define-method (daemonize (obj <lazycatd>))
-  (let ((pid (primitive-fork)))
-    (if (zero? pid)
-        (begin
-          (close-port (current-input-port))
-          (close-port (current-output-port))
-          (close-port (current-error-port))
+;;; Helper procedures
 
-          (setsid)
+;; Throw an exception
+(define-method (lazycat-throw msg . info)
+  (apply throw 'lazycat-exception msg info))
 
-          (open-socket   obj)
-          (main-loop     obj))
-        (begin
-          ;; FIXME: Fix it.
-          ;; (create-pid-file obj pid)
-          (quit)))))
+;; Log debug message.
+(define-method (log-debug (obj <lazycatd>) (message <string>))
+  (if (>= (string->number (hash-ref (get-options obj) 'log-verbosity)) 4)
+      (logger-message (get-logger obj) 'debug message)))
+
+;;;
 
 
 ;; Open a socket and start listening it.
 (define-method (open-socket (obj <lazycatd>))
-  (set-socket obj (socket PF_UNIX SOCK_STREAM 0))
+  (set-socket! obj (socket PF_UNIX SOCK_STREAM 0))
   (let ((path            (get-socket-path obj))
         (lazycatd-socket (get-socket obj)))
 
@@ -162,14 +171,11 @@
   (write message port)
   (newline port))
 
-;; Throw an exception
-(define-method (lazycat-throw msg . info)
-  (apply throw 'lazycat-exception msg info))
-
 
 ;; Stop the lazycat daemon.
 (define-method (lazycat-stop (obj <lazycatd>) (port <port>))
   (host-list-save (get-host-list obj))
+  (proxy-list-stop-all (get-proxy-list obj))
 
   (send-message obj (list #t) port)
 
@@ -184,14 +190,18 @@
          (group           (car args))
          (host-attributes (cdr args))
          (host-list       (get-host-list obj)))
-    (logger-message (get-logger obj) 'debug (object->string args))
-    (host-list-add-host host-list
-                        #:group       group
-                        #:name        (list-ref host-attributes 0)
-                        #:proxy       (list-ref host-attributes 1)
-                        #:address     (list-ref host-attributes 2)
-                        #:description (list-ref host-attributes 3))
-    (send-message obj (list #t) client)))
+
+    (let* ((proxy-list (list-ref host-attributes 1))
+           ;; FIXME: Workaround
+           (proxy-list (if (list? proxy-list) proxy-list (list proxy-list))))
+
+      (host-list-add-host host-list
+                          #:group       group
+                          #:name        (list-ref host-attributes 0)
+                          #:proxy-list  proxy-list
+                          #:address     (list-ref host-attributes 2)
+                          #:description (list-ref host-attributes 3))
+      (send-message obj (list #t) client))))
 
 ;; Remove the host with given HOST-ID from the host list.
 (define-method (lazycat-rem (obj <lazycatd>) args (client <port>))
@@ -214,8 +224,7 @@
     (if (eqv? (member type *object-types*) #f)
         (lazycat-throw "Wrong object type" type))
 
-    (logger-message (get-logger obj) 'debug
-                    (string-append "lazycat-list: type: " (symbol->string type)))
+    (log-debug obj (string-append "lazycat-list: type: " (symbol->string type)))
 
     (cond
 
@@ -260,12 +269,14 @@
         (send-message obj (list #t) client)
         (send-message obj (list #f) client))))
 
+
 (define-generic lazycat-exec)
 
 ;; Execute a command and send output to the CLIENT.
 (define-method (lazycat-exec (obj <lazycatd>) args (client <port>))
   (if (null? args)
       (lazycat-throw "Malformed message" args))
+
   (let ((result (lazycat-exec obj (car args))))
     (send-message obj (list #t result) client)))
 
@@ -282,19 +293,25 @@
 ;;   <output> ::= <string>
 ;;
 (define-method (lazycat-exec (obj <lazycatd>) (args <list>))
-  (let* ((host-list (get-host-list obj))
-         (host-id   (car args))
-         (host      (host-list-get-host-by-id host-list host-id))
-         (cmd       (cadr args)))
+  (let* ((host-id      (car args))
+         (cmd          (cadr args))
+         (host-list    (get-host-list obj))
+         (proxy-list   (get-proxy-list obj))
+         (host         (host-list-get-host-by-id host-list host-id))
+         (host-addr    (host-get-address host))
+         (host-proxies (host-get-proxy-list host))
+         ;; FIXME: We use first proxy from the list for now.
+         (proxy        (proxy-list-get proxy-list (car host-proxies))))
 
-    (list host-id (host-send-message host cmd))))
+    (let ((response (proxy-send-message proxy host-addr cmd)))
+      (list host-id response))))
 
 ;; Execute the command COMMAND on all accessible hosts.
 ;;
 ;; Return a list in the following format:
 ;;
 ;;   <result> ::= (<status> <response>)
-;;   <response>    ::= ((<host-id> <host-result>) ...) | <error-message>
+;;   <response>    ::= ((<host-id> <host-result>) ...) | ( <error-message> )
 ;;   <host-id>     ::= <number>
 ;;   <host-result> ::= (<status> <output>)
 ;;   <output>      ::= <string>
@@ -302,8 +319,7 @@
 ;;
 (define-method (lazycat-exec (obj <lazycatd>) (command <string>))
 
-  (logger-message (get-logger obj) 'debug
-                    (string-append "lazycat-exec: " command))
+  (log-debug obj (string-append "lazycat-exec: " command))
 
   (let* ((host-list  (get-host-list obj))
          (plain-list (host-list-get-plain-list host-list))
@@ -312,9 +328,9 @@
     (for-each
 
      (lambda (host)
-       (let ((host-id  (host-get-id host))
-             (response (host-send-message host command)))
-         (set! result (cons (list host-id response) result))))
+       (let* ((host-id  (host-get-id host))
+              (response (lazycat-exec obj (list host-id command))))
+         (set! result (cons response result))))
 
      plain-list)
 
@@ -324,15 +340,28 @@
 ;; Return diffs.  Throw lazycat-diff-error on error.
 (define-method (lazycat-diff (obj <lazycatd>) args (client <port>))
 
+  ;; Return:
+  ;;   <result> ::= ( <host-id> ( <status> <output> ) )
+  ;;   <status> ::= 'similar | 'different | 'error
   (define (fetch-and-analyse host pattern message)
-    (let ((output (host-send-message host message)))
-      (if (eq? (car output) #t)
-          (let ((diff (make-string-diff (get-tmp-dir obj) pattern (cadr output)))
-                (host-id (host-get-id host)))
+    (let* ((host-id  (host-get-id host))
+
+           ;; <result> ::= ( <host-id> ( <status> <output> ) )
+           (result   (lazycat-exec obj (list host-id message)))
+
+           (result   (cadr result))
+           (success? (car result))
+           (output   (cadr result)))
+
+      (if success?
+
+          (let ((diff (make-string-diff (get-tmp-dir obj) pattern output)))
             (if (diff-empty? diff)
-                (list host-id 'similar)
+                (list host-id 'similar #f )
                 (list host-id 'different (diff-get diff))))
-          (list host-id 'error (cadr output)))))
+
+          (list host-id (list 'error (cadr output))))))
+
 
   (if (null? args)
       (lazycat-throw "Malformed message" args))
@@ -340,13 +369,16 @@
   (let* ((args   (car args))
          (action (car args)))
     (cond
-     
+
      ((eq? action 'get-pattern)
       (let* ((command (cadr args))
              (master (string->number (hash-ref (get-options obj) 'master)))
-             (result (lazycat-exec obj (list master command))))
-        (set-pattern obj (list command (cadr (cadr result))))
-        (send-message obj (list #t result) client)))
+             (result (cadr (lazycat-exec obj (list master command)))))
+
+        (set-pattern! obj (list command (cadr result)))
+
+        ;; <message> ::= ( #t ( ( <master-host-id> ( <status> <output> ) ) ) )
+        (send-message obj (list #t (list master result)) client)))
 
      ((eq? action 'continue)
       (if (not (eq? (get-pattern obj) #f))
@@ -369,8 +401,8 @@
 
      ((eq? action 'abort)
       (begin
-        (set-pattern obj #f)
-        (send-message obj (list #t) client)))
+        (set-pattern! obj #f)
+        (send-message obj (list #t '()) client)))
 
      (#t
       (lazycat-throw "Wrong action" action)))))
@@ -385,7 +417,7 @@
         (accept socket))
       (lambda (key . args)
         (logger-message (get-logger obj) 'err "accept() call was interrupted."))))
-  
+
   (let ((lazycatd-socket (get-socket obj)))
 
     (while #t
@@ -401,8 +433,9 @@
                (message-type   (car message)))
 
           ;; Debug
-          (logger-message (get-logger obj) 'debug (string-append
-                                                   "Message: " (number->string message-type)))
+          (log-debug obj (string-append
+                          "main-loop: message type: "
+                          (number->string message-type)))
 
           (catch 'lazycat-exception
 
@@ -410,35 +443,35 @@
               (cond
 
                ;; Get protocol version
-               ((eq? message-type *cmd-get-protocol-version*)
+               ((= message-type *cmd-get-protocol-version*)
                 (send-message obj (list #t *protocol-version*) client))
 
                ;; List objects
-               ((eq? message-type *cmd-list*)
+               ((= message-type *cmd-list*)
                 (lazycat-list obj (cdr message) client))
 
                ;; Add a new host
-               ((eq? message-type *cmd-add-host*)
+               ((= message-type *cmd-add-host*)
                 (lazycat-add obj (cdr message) client))
 
                ;; Remote a host
-               ((eq? message-type *cmd-rem-host*)
+               ((= message-type *cmd-rem-host*)
                 (lazycat-rem obj (cdr message) client))
 
                ;; Get an option value
-               ((eq? message-type *cmd-get*)
+               ((= message-type *cmd-get*)
                 (lazycat-get obj (cdr message) client))
 
                ;; Set an option
-               ((eq? message-type *cmd-set*)
+               ((= message-type *cmd-set*)
                 (lazycat-set obj (cdr message) client))
 
                ;; Execute a command
-               ((eq? message-type *cmd-exec*)
+               ((= message-type *cmd-exec*)
                 (lazycat-exec obj (cdr message) client))
 
                ;; Get a diff
-               ((eq? message-type *cmd-diff*)
+               ((= message-type *cmd-diff*)
                 (lazycat-diff obj (cdr message) client))
 
                ;; Stop the daemon
@@ -454,7 +487,27 @@
 
           (close client)))))
 
+
 (define-method (run (obj <lazycatd>))
-  (daemonize obj))
+  (let ((pid (primitive-fork)))
+    (if (zero? pid)
+        (begin
+          (close-port (current-input-port))
+          (close-port (current-output-port))
+          (close-port (current-error-port))
+
+          (setsid)
+
+          ;; This call is here because we want to get a nice process
+          ;; hierarhy in process manager such as htop.  So all proxy
+          ;; processes will be descendants of lazycat-daemon.
+          (proxy-list-load (get-proxy-list obj))
+          
+          (open-socket   obj)
+          (main-loop     obj))
+        (begin
+          ;; FIXME: Fix it.
+          ;; (create-pid-file obj pid)
+          (quit)))))
 
 ;;; lazycatd.scm ends here.

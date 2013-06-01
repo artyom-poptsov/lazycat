@@ -17,8 +17,5 @@
 ## You should have received a copy of the GNU General Public License
 ## along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
-dist_doc_DATA = README NEWS COPYING AUTHORS ChangeLog TODO
-
-SUBDIRS = lazycat-daemon ui proxies host common
-
-
+lazycat_proxiesdir	= $(pkgdatadir)/proxies
+lazycat_proxies_DATA	= ssh-proxy/*.scm tcp-proxy/*.scm

@@ -17,8 +17,19 @@
 ## You should have received a copy of the GNU General Public License
 ## along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
-dist_doc_DATA = README NEWS COPYING AUTHORS ChangeLog TODO
+lazycat_ui_gtkdir	= $(pkgdatadir)/ui/gtk
+lazycat_ui_clidir	= $(pkgdatadir)/ui/cli
+lazycat_ui_gtk_DATA	= gtk/*
+lazycat_ui_cli_DATA	= cli/*
 
-SUBDIRS = lazycat-daemon ui proxies host common
+bin_SCRIPTS = lc lazycat-gtk
 
+lc: lc.scm
+	sed -e 's|__DATA_DIR__|$(datadir)|g' $< > $@
+	chmod +x $@
 
+lazycat-gtk: lazycat-gtk.scm
+	sed -e 's|__DATA_DIR__|$(datadir)|g' $< > $@
+	chmod +x $@
+
+CLEANFILES	= lc lazycat-gtk

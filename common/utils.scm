@@ -29,7 +29,7 @@
 
 ;;; Code:
 
-(define-module (lazycat server utils)
+(define-module (lazycat utils)
   #:use-module (oop goops)
   #:use-module (ice-9 syncase)
   #:use-module (ice-9 optargs)
