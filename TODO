@@ -1,10 +1,18 @@
 -*- Mode: Outline -*-
 
-* Rewrite the server in Scheme.
-  It seems that the most of the code that written in C is not needed
-  and adds extra complexity.  Server part should be rewritten in
-  Scheme, and C should be used only when it is obvious that it is
-  unavoidable and/or adds significant benefits.
+* Add signal handling
+  Implement signal handling for processes.
+
+* Periodical ping
+  lazycat-daemon should check periodically if the hosts are accessible
+  and store statues.  There already is a basic implementation of the
+  ping in proxies.
+
+  Of course, UI should show host statuses to the user.
+
+* Use Glade for lazy-gtk-cat
+  Replace hand-written interface in the code with Glade XML-based
+  interface description.
 
 * Proxy configuration.
   There is a potential issue with configuration of proxies.  It seems
@@ -15,8 +23,6 @@
   It'll be interesting to have a proxy that will allow us to
   communicate with hosts through the XMPP (Jabber) protocol.
 
-* Make use wchar for messages.
-
-* Add authentification mechanisms for TCP proxy and host process.
+* Add authentication mechanisms for TCP proxy and host process.
   This is a low-priority task, because ssh-proxy seems more suitable
   for real tasks than tcp-proxy.
