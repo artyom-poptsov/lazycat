@@ -32,6 +32,9 @@ GUILE_FLAGS
 export GUILE=`which guile-gnome-2`
 GUILE_MODULE_REQUIRED(gnome gtk)
 
+# Check for Guile-SSH
+GUILE_MODULE_REQUIRED(ssh session)
+
 AC_CHECK_FUNCS([mkdir socket])
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/socket.h syslog.h unistd.h])
 

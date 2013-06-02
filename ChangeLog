@@ -1,5 +1,8 @@
 2013-06-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* configure.ac: Add the check for Guile-SSH
+	* configure: Update.
+
 	* TODO: Update.
 
 	Rewrite LazyCat daemon, proxies and host processes in Scheme.

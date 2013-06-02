@@ -3853,6 +3853,23 @@ $as_echo "$ac_guile_module_required" >&6; }
           fi
 
 
+# Check for Guile-SSH
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if (ssh session) is available" >&5
+$as_echo_n "checking if (ssh session) is available... " >&6; }
+
+  $GUILE -c "(use-modules (ssh session)) (exit ((lambda () 0)))" > /dev/null 2>&1
+  ac_guile_module_required=$?
+
+	  if test "$ac_guile_module_required" = "0" ; then ac_guile_module_required=yes ; else ac_guile_module_required=no ; fi
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_guile_module_required" >&5
+$as_echo "$ac_guile_module_required" >&6; }
+
+
+          if test "$ac_guile_module_required" = "no" ; then
+              as_fn_error $? "required guile module not found: (ssh session)" "$LINENO" 5
+          fi
+
+
 
 for ac_func in mkdir socket
 do :
