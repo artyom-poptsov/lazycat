@@ -1,3 +1,10 @@
+2013-06-03  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat-daemon/lazycatd.scm: Add debug mode.
+	(run): Add no-detach mode.
+	* lazycat-daemon/main.scm (main): Handle command line options.
+	(print-help): New procedure.
+
 2013-06-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* configure.ac: Add the check for Guile-SSH

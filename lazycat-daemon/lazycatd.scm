@@ -56,6 +56,16 @@
 ;;; Main class
 (define-class <lazycatd> ()
 
+  (no-detach-mode
+   #:init-keyword #:no-detach-mode
+   #:getter       no-detach?
+   #:init-value   #t)
+
+  (debug-mode
+   #:init-keyword #:debug-mode
+   #:getter       debug?
+   #:init-value   #f)
+
   (lazycat-home
    #:setter set-home!
    #:getter get-home)
@@ -113,7 +123,7 @@
   ;; Load options
   (let ((options (get-options obj)))
     (hash-set! options 'master        #f)
-    (hash-set! options 'log-verbosity "1"))
+    (hash-set! options 'log-verbosity (if (debug? obj) "4" "1")))
 
   (let ((host-list (get-host-list obj)))
     (if (not (host-list-empty? host-list))
@@ -489,25 +499,38 @@
 
 
 (define-method (run (obj <lazycatd>))
-  (let ((pid (primitive-fork)))
-    (if (zero? pid)
-        (begin
-          (close-port (current-input-port))
-          (close-port (current-output-port))
-          (close-port (current-error-port))
+  (if (no-detach? obj)
 
-          (setsid)
+      ;; No-detach mode.  Don't detach from a terminal, and don't
+      ;; become a daemon.
+      (begin
+        (proxy-list-load (get-proxy-list obj))
+        (open-socket obj)
+        (main-loop   obj))
 
-          ;; This call is here because we want to get a nice process
-          ;; hierarhy in process manager such as htop.  So all proxy
-          ;; processes will be descendants of lazycat-daemon.
-          (proxy-list-load (get-proxy-list obj))
-          
-          (open-socket   obj)
-          (main-loop     obj))
-        (begin
-          ;; FIXME: Fix it.
-          ;; (create-pid-file obj pid)
-          (quit)))))
+      ;; Regular mode.
+      (let ((pid (primitive-fork)))
+        (if (zero? pid)
+
+            (begin
+              (close-port (current-input-port))
+              (close-port (current-output-port))
+              (close-port (current-error-port))
+
+              (setsid)
+
+              ;; This call is here because we want to get a nice
+              ;; process hierarhy in process manager such as htop.
+              ;; So all proxy processes will be descendants of
+              ;; lazycat-daemon.
+              (proxy-list-load (get-proxy-list obj))
+              
+              (open-socket   obj)
+              (main-loop     obj))
+
+            (begin
+              ;; FIXME: Fix it.
+              ;; (create-pid-file obj pid)
+              (quit))))))
 
 ;;; lazycatd.scm ends here.

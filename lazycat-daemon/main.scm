@@ -31,11 +31,44 @@
 
 (define-module (lazycat lazycat-daemon main)
   #:use-module (oop goops)
+  #:use-module (ice-9 getopt-long)
   #:use-module (lazycat lazycat-daemon lazycatd)
   #:export (main))
 
+;; Command line options specification
+(define *option-spec*
+  '((debug     (single-char #\d) (value #f))
+    (no-detach (single-char #\D) (value #f))
+    (help      (single-char #\h) (value #f))))
+
+;; Print the help message
+(define (print-help)
+  (display
+   (string-append
+    "Usage: lazycat-daemon [ -dDh ]\n"
+    "\n"
+    "Options:\n"
+    "\t" "-d, --debug        Debug mode.\n"
+    "\t" "-D, --no-detach    Don't detach from a terminal and don't become a\n"
+    "\t" "                   daemon.  Useful for debugging.\n"
+    "\t" "-h, --help         Print this message and exit.\n")))
+
+
+;; Entry point of the program
 (define (main args)
-  (let ((lazycatd (make <lazycatd>)))
-        (run lazycatd)))
+  (let* ((options       (getopt-long args *option-spec*))
+         (debug-needed? (option-ref options 'debug     #f))
+         (no-detach?    (option-ref options 'no-detach #f))
+         (help-needed?  (option-ref options 'help      #f)))
+
+    (if help-needed?
+        (begin
+          (print-help)
+          (quit)))
+
+    (let ((lazycatd (make <lazycatd>
+                      #:debug-mode      debug-needed?
+                      #:no-detach-mode  no-detach?)))
+      (run lazycatd))))
 
 ;;; main.scm ends here.
