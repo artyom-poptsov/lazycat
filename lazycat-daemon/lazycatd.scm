@@ -346,7 +346,7 @@
 
      (lambda (host)
        (let* ((host-id  (host-get-id host))
-              (response (lazycat-exec obj (list host-id command))))
+              (response (lazycat-exec obj host-id command)))
          (set! result (cons response result))))
 
      plain-list)
