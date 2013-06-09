@@ -28,6 +28,7 @@
   #:use-module (ice-9 format)
   #:export (format-host-list
             format-options-list
+            format-error
             format-output
             format-output-list
             format-diff))
@@ -65,6 +66,12 @@
   (newline))
 
 
+;; Display an error message
+(define (format-error error)
+  (define *fmt* "~a: ~a\n")
+  (format #t *fmt* (car error) (cdr error)))
+
+
 ;; Display options list LIST as a table.
 (define (format-options-list list)
 
@@ -93,8 +100,16 @@
   (let ((host-id  (car output))
         (status   (car (cadr output)))
         (response (cadr (cadr output))))
-    (format #t *header-fmt* host-id (if status "OK" "ERROR"))
-    (format #t *output-fmt* response)))
+
+    (if status
+
+        (begin
+          (format #t *header-fmt* host-id "OK")
+          (format #t *output-fmt* response))
+
+        (begin
+          (format #t *header-fmt* host-id "ERROR")
+          (format-error response)))))
 
 (define (format-output-list list)
   (let ((status (car list)))

@@ -1,5 +1,9 @@
 2013-06-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/cli/pretty-format.scm (format-output): Improve error
+	printing.
+	(format-error): New procedure.
+
 	* proxies/ssh-proxy/ssh-proxy.scm (parse-address): Add the check
 	for sanity of the address.
 	(handle-send-message): Likewise.
