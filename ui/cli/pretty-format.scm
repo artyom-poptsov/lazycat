@@ -99,7 +99,7 @@
 (define (format-output-list list)
   (let ((status (car list)))
     (if status
-        (for-each format-output (cdr list))
+        (for-each format-output (cadr list))
         (format #t "ERROR: ~a\n" (cadr list)))))
 
 (define (format-diff diff)

@@ -189,12 +189,8 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 ;; Execute a command CMD on the every accessible host.
 (define-method (lazycat-exec (obj <lc>) (cmd <string>))
-  (let* ((result (send-message obj *cmd-exec* cmd))
-         (status (car result)))
-    (if status
-        (format-output-list (cadr result))
-        (let ((error-message (string-append "ERROR: "(cadr result) "\n")))
-          (display error-message)))))
+  (let ((result (send-message obj *cmd-exec* cmd)))
+    (format-output-list result)))
 
 ;; Execute a command CMD on a host with the given HOST-ID.
 (define-method (lazycat-exec (obj <lc>) (host-id <number>) (cmd <string>))

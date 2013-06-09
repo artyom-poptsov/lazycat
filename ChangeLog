@@ -1,3 +1,8 @@
+2013-06-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* ui/lc.scm (lazycat-exec): Fix a bug with displaying the output.
+	* ui/cli/pretty-format.scm (format-output-list): Likewise.
+
 2013-06-03  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* lazycat-daemon/lazycatd.scm: Add debug mode.
