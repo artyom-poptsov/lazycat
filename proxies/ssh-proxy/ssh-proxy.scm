@@ -76,11 +76,16 @@
 ;;   '(username hostname port)
 ;;
 (define (parse-address address)
-  (let* ((s        (string-match "^(.*)@(.*):([0-9]+)" address))
-         (username (match:substring s 1))
-         (hostname (match:substring s 2))
-         (port     (match:substring s 3)))
-    (list username hostname port)))
+  (let ((s (string-match "^(.*)@(.*):([0-9]+)" address)))
+
+    (if (regexp-match? s)
+
+        (let ((username (match:substring s 1))
+              (hostname (match:substring s 2))
+              (port     (match:substring s 3)))
+          (list username hostname port))
+
+        #f)))
 
 ;; Poll a channel CHANNEL for data and read available data.
 ;; Return obtained data.
@@ -111,84 +116,91 @@
 (define-method (handle-send-message (obj     <ssh-proxy>)
                                     (address <string>)
                                     (message <string>))
-  (let* ((connection-data (parse-address address))
-         (username        (car connection-data))
-         (hostname        (cadr connection-data))
-         (port            (string->number (caddr connection-data)))
-         (session (ssh:make-session)))
 
-    (log-debug obj "Set SSH session options.")
+  (log-debug obj (string-append "Parse the address: " address))
 
-    (if (not (ssh:session-set! session 'user username))
-        (begin
-          (log-error obj session)
-          (proxy-error (ssh:get-error session) username)))
+  (let ((connection-data (parse-address address)))
 
-    (if (not (ssh:session-set! session 'host hostname))
-        (begin
-          (log-error obj session)
-          (proxy-error (ssh:get-error session) hostname)))
+    (if (not connection-data)
+        (proxy-error "Wrong address" address))
 
-    (if (not (ssh:session-set! session 'port port))
-        (begin
-          (log-error obj session)
-          (proxy-error (ssh:get-error session) port)))
-        
-    (if (not (ssh:session-set! session 'log-verbosity
-                               (if (proxy-debug? obj) 4 0)))
-        (begin
-          (log-error obj session)
-          (proxy-error (ssh:get-error session))))
+    (let ((username (car connection-data))
+          (hostname (cadr connection-data))
+          (port     (string->number (caddr connection-data)))
+          (session  (ssh:make-session)))
 
-    (log-debug obj "Connect to a host.")
+      (log-debug obj "Set SSH session options.")
 
-    (let ((res (ssh:connect! session))) 
-      (if (eqv? res 'error)
+      (if (not (ssh:session-set! session 'user username))
           (begin
             (log-error obj session)
-            (proxy-error (ssh:get-error session) res))))
+            (proxy-error (ssh:get-error session) username)))
 
-    ;; TODO: Authenticate server
-;    (ssh:authenticate-server session)
+      (if (not (ssh:session-set! session 'host hostname))
+          (begin
+            (log-error obj session)
+            (proxy-error (ssh:get-error session) hostname)))
 
-    (log-debug obj "Get private and public keys.")
-
-    (let* ((pkey-file   (hash-ref (get-options obj) 'private-key))
-           (private-key (ssh:private-key-from-file session pkey-file)))
-
-      (if (not private-key)
+      (if (not (ssh:session-set! session 'port port))
+          (begin
+            (log-error obj session)
+            (proxy-error (ssh:get-error session) port)))
+      
+      (if (not (ssh:session-set! session 'log-verbosity
+                                 (if (proxy-debug? obj) 4 0)))
           (begin
             (log-error obj session)
             (proxy-error (ssh:get-error session))))
 
-      (let ((public-key (ssh:public-key->string
-                         (ssh:private-key->public-key private-key))))
+      (log-debug obj "Connect to a host.")
 
-        (log-debug obj "Authenticate user with a public key.")
+      (let ((res (ssh:connect! session))) 
+        (if (eqv? res 'error)
+            (begin
+              (log-error obj session)
+              (proxy-error (ssh:get-error session) res))))
 
-        (let ((res (ssh:userauth-pubkey! session #f public-key private-key)))
-          (if (eqv? res 'error)
-              (begin
-                (log-error obj session)
-                (proxy-error (ssh:get-error session) res))))
+      ;; TODO: Authenticate server
+                                        ;    (ssh:authenticate-server session)
 
-        (log-debug obj "Make a new SSH channel")
-            
-        (let ((channel (ssh:make-channel session)))
+      (log-debug obj "Get private and public keys.")
 
-          (if (not channel)
-              (begin
-                (log-error obj session)
-                (proxy-error (ssh:get-error session))))
+      (let* ((pkey-file   (hash-ref (get-options obj) 'private-key))
+             (private-key (ssh:private-key-from-file session pkey-file)))
 
-          (if (not (ssh:channel-open-session channel))
-              (begin
-                (log-error obj session)
-                (proxy-error (ssh:get-error session))))
+        (if (not private-key)
+            (begin
+              (log-error obj session)
+              (proxy-error (ssh:get-error session))))
 
-          (ssh:channel-request-exec channel message)
+        (let ((public-key (ssh:public-key->string
+                           (ssh:private-key->public-key private-key))))
 
-          (poll-channel channel))))))
+          (log-debug obj "Authenticate user with a public key.")
+
+          (let ((res (ssh:userauth-pubkey! session #f public-key private-key)))
+            (if (eqv? res 'error)
+                (begin
+                  (log-error obj session)
+                  (proxy-error (ssh:get-error session) res))))
+
+          (log-debug obj "Make a new SSH channel")
+          
+          (let ((channel (ssh:make-channel session)))
+
+            (if (not channel)
+                (begin
+                  (log-error obj session)
+                  (proxy-error (ssh:get-error session))))
+
+            (if (not (ssh:channel-open-session channel))
+                (begin
+                  (log-error obj session)
+                  (proxy-error (ssh:get-error session))))
+
+            (ssh:channel-request-exec channel message)
+
+            (poll-channel channel)))))))
 
 
 ;; Get options list

@@ -1,5 +1,9 @@
 2013-06-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* proxies/ssh-proxy/ssh-proxy.scm (parse-address): Add the check
+	for sanity of the address.
+	(handle-send-message): Likewise.
+
 	* common/proxy.scm (proxy-stop): Wait for the termination of the
 	child process.
 	(main-loop): Improve handling of the "stop" command.
