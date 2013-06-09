@@ -238,7 +238,8 @@
 
 ;; Stop the proxy
 (define-method (proxy-stop (obj <proxy>))
-  (send-request obj *cmd-proxy-stop* '()))
+  (send-request obj *cmd-proxy-stop* '())
+  (waitpid (get-pid obj)))
 
 
 ;;; Proxy process implementation
