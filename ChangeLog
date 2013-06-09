@@ -3,6 +3,8 @@
 	* proxies/ssh-proxy/ssh-proxy.scm (parse-address): Add the check
 	for sanity of the address.
 	(handle-send-message): Likewise.
+	* proxies/tcp-proxy/tcp-proxy.scm (parse-address)
+	(handle-send-message): Likewise.
 
 	* common/proxy.scm (proxy-stop): Wait for the termination of the
 	child process.

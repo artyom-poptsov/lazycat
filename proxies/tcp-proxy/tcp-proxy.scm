@@ -60,10 +60,15 @@
 ;;   '(hostname port)
 ;;
 (define (parse-address address)
-  (let* ((s        (string-match "^(.*):([0-9]+)" address))
-         (hostname (match:substring s 1))
-         (port     (match:substring s 2)))
-    (list hostname port)))
+  (let ((s (string-match "^(.*):([0-9]+)" address)))
+
+    (if (regexp-match? s)
+
+        (let ((hostname (match:substring s 1))
+              (port     (match:substring s 2)))
+          (list hostname port))
+
+        #f)))
 
 
 ;;; Interface implementation
@@ -71,21 +76,25 @@
 (define-method (handle-send-message (obj     <tcp-proxy>)
                                     (address <string>)
                                     (message <string>))
-  (let* ((connection-data (parse-address address))
-         (hostname (car connection-data))
-         (port     (string->number (cadr connection-data)))
-         (s        (socket PF_INET SOCK_STREAM 0))
-         (host      (gethost hostname))
-         (inet-addr (car (hostent:addr-list host))))
+  (let ((connection-data (parse-address address)))
 
-    (connect s AF_INET inet-addr port)
+    (if (not connection-data)
+        (proxy-error "Wrong address" address))
 
-    (display message s)
-    (newline s)
+    (let* ((hostname  (car connection-data))
+           (port      (string->number (cadr connection-data)))
+           (s         (socket PF_INET SOCK_STREAM 0))
+           (host      (gethost hostname))
+           (inet-addr (car (hostent:addr-list host))))
 
-    (let ((response (read-line s)))
-      (close s)
-      response)))
+      (connect s AF_INET inet-addr port)
+
+      (display message s)
+      (newline s)
+
+      (let ((response (read-line s)))
+        (close s)
+        response))))
 
 
 ;; Get options list
