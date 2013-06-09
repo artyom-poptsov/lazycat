@@ -1,5 +1,14 @@
 2013-06-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/config.scm (config-save-list): Fix a bug: use
+	call-with-output-file instead of with-output-to-file.  The problem
+	with with-output-to-file is that the daemon closes all the default
+	ports including stdout on start, but call-with-output-file seems
+	to fail because it tries to restore the default output port after
+	a thunk is done.  It means that the lazycat-daemon fails when it
+	tries to save the host list to a file -- and we can't stop proxy
+	processes.  What an annoying bug.
+
 	* lazycat-daemon/lazycatd.scm (lazycat-exec): Improve.  Add error
 	handling.
 

@@ -73,45 +73,46 @@
 
   (define *basic-indent* 4)
 
-  (define (make-indent value)
+  (define (make-indent value port)
     "Make indentation"
     (if (> value 0)
         (begin
-          (display " ")
-          (make-indent (- value 1)))))
+          (display " " port)
+          (make-indent (- value 1) port))))
 
-  (define (save-list-with-indent indent list)
+  (define (save-list-with-indent indent list port)
     (for-each (lambda (l)
                 (begin
                   ;; Check for an inherited list
                   (if (and (not (null? (cdr l))) ; Check for an empty list
                            (list? (cadr l)))
                       (begin
-                        (display "(")
-                        (write (car l))
-                        (newline)
+                        (display "(" port)
+                        (write (car l) port)
+                        (newline port)
 
-                        (make-indent (+ indent 1))
+                        (make-indent (+ indent 1) port)
 
-                        (save-list-with-indent (+ indent 1) (cdr l))
-                        (display ")"))
+                        (save-list-with-indent (+ indent 1) (cdr l) port)
+                        (display ")" port))
 
-                      (write l))
+                      (write l port))
 
                   ;; Print the new line if this element is not the last
                   ;; element in the list.
                   (if (not (eq? l (car (reverse list))))
                       (begin
-                        (newline)
-                        (make-indent indent)))))
+                        (newline port)
+                        (make-indent indent port)))))
               list))
 
-  (with-output-to-file (file obj)
-    (lambda ()
-      (display ";; -*- mode: scheme -*-\n\n")
-      (display (string-append "(define " list-name "\n"))
-      (display "  '(")
-      (save-list-with-indent *basic-indent* list)
-      (display "))\n"))))
+  (call-with-output-file (file obj)
+    (lambda (port)
+      (begin
+        (display ";; -*- mode: scheme -*-\n\n" port)
+        (display (string-append "(define " list-name "\n") port)
+        (display "  '(" port)
+        (save-list-with-indent *basic-indent* list port)
+        (display "))\n" port)))))
 
 ;;; config.scm ends here
