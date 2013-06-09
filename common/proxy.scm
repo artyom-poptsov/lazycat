@@ -346,12 +346,20 @@
                   (send-response obj '(#t ()) client)
                   (close client)
                   (handle-stop obj)
-                  (quit)))))
+                  (break)))))
 
             (lambda (key . parameters)
-              (send-response obj (list #f parameters) client))))
+              (begin
+                (send-response obj (list #f parameters) client)
+                (if (= message-type *cmd-proxy-stop*)
+                    (begin
+                      (close client)
+                      (break)))))))
 
-        (close client)))))
+        (close client)))
+
+    (close proxy-socket)
+    (quit)))
       
 
           ;; TODO: Add error handling here.

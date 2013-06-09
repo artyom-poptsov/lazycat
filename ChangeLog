@@ -2,6 +2,7 @@
 
 	* common/proxy.scm (proxy-stop): Wait for the termination of the
 	child process.
+	(main-loop): Improve handling of the "stop" command.
 
 	* lazycat-daemon/config.scm (config-save-list): Fix a bug: use
 	call-with-output-file instead of with-output-to-file.  The problem
