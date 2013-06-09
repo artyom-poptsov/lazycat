@@ -287,34 +287,41 @@
   (if (null? args)
       (lazycat-throw "Malformed message" args))
 
-  (let ((result (lazycat-exec obj (car args))))
-    (send-message obj (list #t result) client)))
+  (if (list? (car args))
 
-;; Execute a command on a host.
-;;
-;; Takes arguments ARGS in the following format:
-;;   <args> ::= (<host-id> <command>)
-;;   <host-id> ::= <number>
-;;   <command> ::= <string>
+      (let* ((host-id (caar args))
+             (command (cadar args))
+             (result  (lazycat-exec obj host-id command)))
+        (send-message obj (list #t result) client))
+
+      (let* ((command (car args))
+             (result (lazycat-exec obj command)))
+        (send-message obj (list #t result) client))))
+
+;; Execute a command COMMAND on a host with given HOST-ID.
 ;;
 ;; Return:
 ;;   <result> ::= (<host-id> (<status> <output>))
 ;;   <status> ::= <boolean>
 ;;   <output> ::= <string>
 ;;
-(define-method (lazycat-exec (obj <lazycatd>) (args <list>))
-  (let* ((host-id      (car args))
-         (cmd          (cadr args))
-         (host-list    (get-host-list obj))
+(define-method (lazycat-exec (obj     <lazycatd>)
+                             (host-id <number>)
+                             (command <string>))
+  (let* ((host-list    (get-host-list obj))
          (proxy-list   (get-proxy-list obj))
-         (host         (host-list-get-host-by-id host-list host-id))
-         (host-addr    (host-get-address host))
-         (host-proxies (host-get-proxy-list host))
-         ;; FIXME: We use first proxy from the list for now.
-         (proxy        (proxy-list-get proxy-list (car host-proxies))))
+         (host         (host-list-get-host-by-id host-list host-id)))
 
-    (let ((response (proxy-send-message proxy host-addr cmd)))
-      (list host-id response))))
+    (if (not host)
+        (lazycat-throw "Couldn't find the host with the given ID" host-id))
+
+    (let* ((host-addr    (host-get-address host))
+           (host-proxies (host-get-proxy-list host))
+           ;; FIXME: We use first proxy from the list for now.
+           (proxy        (proxy-list-get proxy-list (car host-proxies))))
+
+      (let ((response (proxy-send-message proxy host-addr command)))
+        (list host-id response)))))
 
 ;; Execute the command COMMAND on all accessible hosts.
 ;;

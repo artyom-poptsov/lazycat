@@ -1,5 +1,8 @@
 2013-06-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/lazycatd.scm (lazycat-exec): Improve.  Add error
+	handling.
+
 	* ui/lc.scm (lazycat-exec): Fix a bug with displaying the output.
 	* ui/cli/pretty-format.scm (format-output-list): Likewise.
 
