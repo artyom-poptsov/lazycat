@@ -3,12 +3,15 @@
 * Add signal handling
   Implement signal handling for processes.
 
-* Periodical ping
-  lazycat-daemon should check periodically if the hosts are accessible
-  and store statues.  There already is a basic implementation of the
-  ping in proxies.
+* Fix a problem with ssh-proxy
+  The proxy crashes if the periodical ping is enabled.  It seems that
+  it depends on the traffic activity -- the more active traffic goes
+  through the proxy, the sooner it crashes.
 
-  Of course, UI should show host statuses to the user.
+  Problem can be reproduced by enabling the periodical ping and
+  setting ping-interval to small value (i.e. 5 seconds or less).
+
+* Show host statuses in lazy-gtk-cat
 
 * Use Glade for lazy-gtk-cat
   Replace hand-written interface in the code with Glade XML-based

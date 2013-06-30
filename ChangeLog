@@ -1,5 +1,7 @@
 2013-06-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* README, TODO: Update.
+
 	Implement periodical ping.  This functionality is quite unstable
 	yet, so it is disabled by default.  To enable the periodical ping
 	set "ping-interval" option to a value greater than zero.

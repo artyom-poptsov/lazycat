@@ -9,10 +9,11 @@ your option) any later version. See COPYING for details.
 For information about open issues and ideas about development of the
 project see TODO file.
 
-	ARCHITECTURE
+
+	OVERVIEW
 
 LazyCat consists of the four main parts: UI, daemon, proxies and
-optional clients that are running on hosts (see figure 1.1 below).
+optional clients that are running on hosts.
 
 Currently there are two user interfaces:
  - lazycat-gtk (GTK)
@@ -20,31 +21,6 @@ Currently there are two user interfaces:
 
 Proxies are processes which are used by the lazycat-daemon to send
 messages through computer network.
-
-	+--------------------------------------------+
-	| UI                                         |
-        +--------------------------------------------+
-                               ^
-                               |  Unix socket
-                               v
-	+--------------------------------------------+
-	| lazycat-daemon                             |
-	+--------------------------------------------+
-	          ^                        ^
-	          |      Unix sockets      |
-	          v                        v
-	+-------------------+    +-------------------+
-	| proxy             |    | proxy             |
-	+-------------------+    +-------------------+
-	          ^                        ^
-	..........|.........Network........|..........
-	          v                        v
-	+-------------------+    +-------------------+
-	| host              |    | host              |
-	+-------------------+    +-------------------+
-
-	figure 1.1: LazyCat architecture
-
 
 Currently LazyCat shipped with TCP and SSH proxy. It is not
 recommended to use TCP proxy in the real tasks because it hasn't got
@@ -57,6 +33,24 @@ you must have SSH daemon running on the every host.
 The private/public key names are hardcoded for now: they are
 ~/.ssh/lazycat and ~/.ssh/lazycat.pub respectively.
 
+
+	DEPENDENCIES
+
+LazyCat has got the following dependences:
+
+ - GNU Guile 1.8 (probably will work with 2.0, not tested)
+   <https://www.gnu.org/software/guile/>
+
+ - Guile-SSH 0.2 -- Needed for ssh-proxy
+   <https://github.com/artyom-poptsov/libguile-ssh>
+
+ - libssh 0.5.4 -- Needed for Guile-SSH
+   <http://www.libssh.org/>
+
+ - GNU Diffutils -- Needed for the diff-mode
+   <https://www.gnu.org/software/diffutils/>
+
+
 	USAGE EXAMPLE
 
 First of all, you have to start the daemon:
@@ -76,12 +70,12 @@ Hosts are addressed by their IDs.  For example, to send command to a
 concrete host, you can pass its ID to the "exec" command.  Say you
 want to send "uname -a" to the host with ID 2 :
 
-  $ lc exec -n 2 "uname -a"
+  $ lc exec -n 2 uname -a
 
 If you don't specify a host ID, a command will be sent to all the
 accessible hosts:
 
-  $ lc exec "uname -a"
+  $ lc exec uname -a
 
 It's possible to compare outputs from hosts with output from the
 master host.  In other words, you'll get only diff between different
@@ -108,3 +102,38 @@ key to get help:
 
   $ lc -h
   $ lc exec -h
+
+
+	HACKING
+
+There are few ways to get useful information about the program.  The
+first is to use standard Guile tool display-commentary to get
+information about files.
+
+Second, lazycat sources are well documented.  I.e. you can find
+commentaries for almost all procedures.  Protocol description can be
+found in common/protocol.scm file.  Augmented Bacus-Naur Form (ABNF)
+is used for description of the protocol.  See RFC5234 for descripton
+of the ABNF notation.  ABNF/BNF is used to describe some procedures'
+parameters and return values as well.
+
+If you planning to develop a new proxy for the lazycat, commentaries
+in common/proxy.scm should be useful.  This file contains the class
+<proxy> that must be the accessor for all proxies (although, of
+course, theoreticaly you can implement your own proxy from scratch).
+
+To implement a new UI for the lazycat, you should use the protocol and
+<message> class described in common/message.scm file.
+
+lazycat-daemon can be run in the debug mode by passing '-d' as a
+command line argument.  '-D' can be used to run the program in
+'no-detach' mode -- that is, the daemon won't close standard ports and
+detach from the console.  This mode is useful for debugging.
+
+The daemon also uses syslog interface.  Check the log for records
+tagged with 'lazycatd'.  You can control verbosity of the log by
+setting 'log-verbosity' parameter (see 'lc l options').
+
+
+
+
