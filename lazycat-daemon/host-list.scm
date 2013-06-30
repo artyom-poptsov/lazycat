@@ -60,7 +60,7 @@
                         host-list-rem-host
                         host-list-rem-group
                         host-list-get-plain-list
-                        host-list-get-unrolled-list
+                        host-list-get-serialized-list
                         host-list-get-host-by-id
                         host-list-get-group-name-by-host-id))
 
@@ -143,22 +143,35 @@
       (let ((list (config-load-list (config obj) *default-list-name*)))
         (for-each load-group list)))
 
-;; Make a list from host attributes
-(define (unroll-host host)
+;; Make a list from host HOST
+(define (serialize-host host)
   (list (cons 'id          (host-get-id          host))
         (cons 'name        (host-get-name        host))
         (cons 'proxy-list  (host-get-proxy-list  host))
         (cons 'address     (host-get-address     host))
         (cons 'description (host-get-description host))))
 
+;; Make an alist from the host HOST including the current internal
+;; state of the host.
+(define (serialize-host/state host)
+  (list (cons 'id          (host-get-id          host))
+        (cons 'name        (host-get-name        host))
+        (cons 'proxy-list  (host-get-proxy-list  host))
+        (cons 'address     (host-get-address     host))
+        (cons 'description (host-get-description host))
+        (cons 'status      (host-get-status      host))))
+
 ;; Get members of a group GROUP as a list.
-(define (unroll-group group)
-  (cons (car group) (map unroll-host (cdr group))))
+(define (serialize-group group)
+  (cons (car group) (map serialize-host (cdr group))))
+
+(define (serialize-group/state group)
+  (cons (car group) (map serialize-host/state (cdr group))))
 
 ;; Save host list to a file
 (define-method (host-list-save (obj <host-list>))
-  (let ((unrolled-list (map unroll-group (host-list obj))))
-    (config-save-list (config obj) *default-list-name* unrolled-list)))
+  (let ((serialized-list (map serialize-group (host-list obj))))
+    (config-save-list (config obj) *default-list-name* serialized-list)))
 
 ;; This method is used for creating a new empty group in the list.
 (define-method (host-list-add-group (obj <host-list>) group-name)
@@ -277,7 +290,7 @@
               (map (lambda (l) (cdr l)) (host-list obj)))
     plain-list))
 
-(define-method (host-list-get-unrolled-list (obj <host-list>))
-  (map unroll-group (host-list obj)))
+(define-method (host-list-get-serialized-list (obj <host-list>))
+  (map serialize-group/state (host-list obj)))
   
 ;;; host-list.scm ends here

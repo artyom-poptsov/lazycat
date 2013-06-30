@@ -32,6 +32,7 @@
 (define-module (lazycat lazycat-daemon lazycatd)
   #:use-module (oop goops)
   #:use-module (ice-9 rdelim)
+  #:use-module (ice-9 threads)
   #:use-module (lazycat proxy)
   #:use-module (lazycat protocol)
   #:use-module (lazycat message)
@@ -51,7 +52,7 @@
 (define *object-types* '(host option))
 
 ;; Accessible options
-(define *options* '(master log-verbosity))
+(define *options* '(master log-verbosity ping-interval))
 
 
 ;;; Main class
@@ -124,7 +125,8 @@
   ;; Load options
   (let ((options (get-options obj)))
     (hash-set! options 'master        #f)
-    (hash-set! options 'log-verbosity (if (debug? obj) "4" "1")))
+    (hash-set! options 'log-verbosity (if (debug? obj) "4" "1"))
+    (hash-set! options 'ping-interval "0")) ;FIXME: Ping is disabled by default
 
   (let ((host-list (get-host-list obj)))
     (if (not (host-list-empty? host-list))
@@ -251,7 +253,7 @@
 
      ((eq? object-type 'host)
       (let* ((host-list   (get-host-list obj))
-             (object-list (host-list-get-unrolled-list host-list))
+             (object-list (host-list-get-serialized-list host-list))
              (msg-rsp     (make <message> #:type *cmd-list*)))
         (message-field-set! msg-rsp 'object-list object-list)
         (message-send msg-rsp client)))
@@ -465,6 +467,38 @@
       (lazycat-throw "Wrong action" action)))))
 
 
+;; Ping hosts periodically and update their statuses.
+(define-method (periodical-ping (obj <lazycatd>))
+  (let ((proxy-list (get-proxy-list obj)))
+    (while #t
+      (let ((host-list (host-list-get-plain-list (get-host-list obj)))
+            (period    (string->number
+                        (hash-ref (get-options obj) 'ping-interval))))
+
+        ;; Zero interval means disabled ping.
+        (if (zero? period)
+            (begin
+              (yield)
+              (sleep 5)
+              (continue)))
+
+        (for-each
+         (lambda (host)
+           (let* ((address      (host-get-address host))
+                  (host-proxies (host-get-proxy-list host))
+                  (proxy        (proxy-list-get proxy-list (car host-proxies)))
+                  (msg-rsp      (proxy-ping proxy address)))
+
+             (if (not (message-error? msg-rsp))
+                 (if (message-field-ref msg-rsp 'status)
+                     (host-set-status! host 'online)
+                     (host-set-status! host 'offline)))))
+
+         host-list)
+
+        (sleep period)))))
+
+
 (define-method (main-loop (obj <lazycatd>))
 
   ;; Wrapper for accept() that catch errors.
@@ -559,6 +593,7 @@
       (begin
         (proxy-list-load (get-proxy-list obj))
         (open-socket obj)
+        (make-thread (periodical-ping obj))
         (main-loop   obj))
 
       ;; Regular mode.
@@ -579,6 +614,7 @@
               (proxy-list-load (get-proxy-list obj))
               
               (open-socket   obj)
+              (make-thread (periodical-ping obj))
               (main-loop     obj))
 
             (begin

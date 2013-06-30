@@ -37,12 +37,12 @@
 ;; Display the host list LIST as a table
 (define (format-host-list list)
 
-  (define *header-fmt* "~15a ~5@a ~15a ~10a ~20a ~a\n")
-  (define *table-fmt*  "~15a ~5d ~15a ~10a ~20a ~a\n")
+  (define *header-fmt* "~15a ~5@a ~8a ~15a ~10a ~20a~a\n")
+  (define *table-fmt*  "~15a ~5d ~8a ~15a ~10a ~20a~a\n")
 
   ;; Print header
-  (format #t *header-fmt* "Group" "ID" "Name" "Proxy" "Address" "Description")
-  (format #t *header-fmt* "-----" "--" "----" "-----" "-------" "-----------")
+  (format #t *header-fmt* "Group" "ID" "Status" "Name" "Proxy" "Address" "Description")
+  (format #t *header-fmt* "-----" "--" "------" "----" "-----" "-------" "-----------")
 
   (for-each
 
@@ -55,6 +55,7 @@
                       group-name
                       " ")
                   (assoc-ref host 'id)
+                  (assoc-ref host 'status)
                   (assoc-ref host 'name)
                   (assoc-ref host 'proxy-list)
                   (assoc-ref host 'address)

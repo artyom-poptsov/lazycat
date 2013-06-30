@@ -30,6 +30,8 @@
 ;;   host-get-proxy-list
 ;;   host-get-address
 ;;   host-get-description
+;;   host-set-status!
+;;   host-get-status
 
 ;;; Code:
 
@@ -40,7 +42,7 @@
   #:use-module (oop goops)
   #:export (<host>
             host-get-id host-get-name host-get-proxy-list host-get-address
-            host-get-description))
+            host-get-description host-get-status host-set-status!))
 
 
 ;;; Main class
@@ -72,7 +74,12 @@
    #:setter set-description!
    #:getter get-description
    #:init-value #f
-   #:init-keyword #:description))
+   #:init-keyword #:description)
+
+  (status
+   #:setter host-set-status!
+   #:getter host-get-status
+   #:init-value 'offline))
 
 ;; Host initialization
 (define-method (initialize (obj <host>) args)

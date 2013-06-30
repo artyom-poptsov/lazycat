@@ -1,8 +1,24 @@
 2013-06-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	Implement periodical ping.  This functionality is quite unstable
+	yet, so it is disabled by default.  To enable the periodical ping
+	set "ping-interval" option to a value greater than zero.
+	* lazycat-daemon/host-list.scm (unroll-host): Rename to
+	serialize-host.  All callers updated.
+	(host-list-get-unrolled-list): Rename to
+	host-list-get-serialized-list.  All callers updated.
+	(unroll-group): Rename to serialize-group.  All callers updated.
+	(serialize-group/state, serialize-host/state): New public methods.
+	* lazycat-daemon/host.scm: Add the status field.
+	* lazycat-daemon/lazycatd.scm: Add ping-interval option.
+	(periodical-ping): New method.
+	* ui/cli/pretty-format.scm (format-host-list): Show hosts
+	statuses.
+
 	* lazycat-daemon/host-list.scm (host-list-load): Use an
 	association list to store host attributes.
 	(unroll-host, unroll-group): Likewise.
+
 	* ui/cli/pretty-format.scm (format-host-list): Likewise.
 	* ui/gtk/host-tree.scm (host-tree-add-host): Likewise.
 	* ui/gtk/lazy-gtk-cat.scm (handle-add-host): Likewise.
