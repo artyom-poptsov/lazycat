@@ -241,14 +241,14 @@
                                     (proxy-list  #f)
                                     (address     #f)
                                     (description #f))
-  (let ((id (1+ (get-last-host-id obj))))
-    (add-host obj
-              #:group       group
-              #:id          id
-              #:name        name
-              #:proxy-list  proxy-list
-              #:address     address
-              #:description description)))
+  (set-last-host-id! obj (1+ (get-last-host-id obj)))
+  (add-host obj
+            #:group       group
+            #:id          (get-last-host-id obj)
+            #:name        name
+            #:proxy-list  proxy-list
+            #:address     address
+            #:description description))
 
 ;; Remove a host from the list
 ;;

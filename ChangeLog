@@ -1,5 +1,8 @@
 2013-06-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/host-list.scm (host-list-add-host): Fix a bug:
+	increment host ID.
+
 	Improve the protocol.  Standartize message exchange procedures,
 	add the <message> class.
 	* common/message.scm: New file.
