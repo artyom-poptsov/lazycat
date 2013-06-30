@@ -344,8 +344,9 @@
                   (message-send msg-rsp client)))
 
                ((= message-type *cmd-proxy-ping*)
-                (let ((status  (handle-ping obj (car payload)))
-                      (msg-rsp (make <message> #:type message-type)))
+                (let* ((address (message-field-ref msg-req 'address))
+                       (status  (handle-ping obj address))
+                       (msg-rsp (make <message> #:type message-type)))
                   (message-field-set! msg-rsp 'status status)
                   (message-send msg-rsp client)))
 

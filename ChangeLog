@@ -1,5 +1,7 @@
 2013-06-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* common/proxy.scm (main-loop): Fix handling of the ping command.
+
 	* lazycat-daemon/host-list.scm (host-list-add-host): Fix a bug:
 	increment host ID.
 
