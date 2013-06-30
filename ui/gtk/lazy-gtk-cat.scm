@@ -402,7 +402,7 @@
                        (cons 'group (let ((group (get-group dialog)))
                                       (if (not (string-null? group)) group #f)))
                        (cons 'name        (get-host-name dialog))
-                       (cons 'proxy       (get-proxy-name dialog))
+                       (cons 'proxy-list  (list (get-proxy-name dialog)))
                        (cons 'address     (get-address dialog))
                        (cons 'description (get-host-description dialog)))))
             (lazycat-add-host obj attr)))
@@ -471,16 +471,10 @@
 
       (for-each
        (lambda (group)
-         (for-each
-          (lambda (host)
-            (let ((group-name (car group))
-                  (host-attributes (list (list-ref host 0)    ; ID
-                                         (list-ref host 1)    ; Name
-                                         (list-ref host 2)    ; Proxy
-                                         (list-ref host 3)    ; Address
-                                         (list-ref host 4)))) ; Description
-              (host-tree-add-host host-tree group-name host-attributes)))
-          (cdr group)))
+         (let ((group-name (car group)))
+           (for-each
+            (lambda (host) (host-tree-add-host host-tree group-name host))
+            (cdr group))))
        group-list)
 
       (lazycat-get-master-host obj))))

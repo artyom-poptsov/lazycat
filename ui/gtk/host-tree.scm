@@ -132,12 +132,12 @@
 ;; TODO: Add check that the new host is not exist in the host tree.
 (define-method (host-tree-add-host (obj <host-tree>)
                                           group-name
-                                          (host-attributes <list>))
-  (let* ((id          (list-ref host-attributes 0))
-         (name        (list-ref host-attributes 1))
-         (proxy       (list-ref host-attributes 2))
-         (address     (list-ref host-attributes 3))
-         (description (list-ref host-attributes 4))
+                                          (host-attr <list>))
+  (let* ((id          (assoc-ref host-attr 'id))
+         (name        (assoc-ref host-attr 'name))
+         (proxy       (assoc-ref host-attr 'proxy-list))
+         (address     (assoc-ref host-attr 'address))
+         (description (assoc-ref host-attr 'description))
 
          (model      (get-model obj))
          (top-level  (if (eq? group-name #f) (gtk-tree-store-append model #f) #f)))

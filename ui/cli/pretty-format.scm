@@ -54,11 +54,11 @@
                   (if (not (eq? group-name #f))
                       group-name
                       " ")
-                  (list-ref host 0)
-                  (list-ref host 1)
-                  (list-ref host 2)
-                  (list-ref host 3)
-                  (list-ref host 4)))
+                  (assoc-ref host 'id)
+                  (assoc-ref host 'name)
+                  (assoc-ref host 'proxy-list)
+                  (assoc-ref host 'address)
+                  (assoc-ref host 'description)))
         (cdr group))))
 
    list)

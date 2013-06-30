@@ -118,67 +118,42 @@
 (define-method (host-list-load (obj <host-list>))
 
       (define (load-group group)
-        (for-each (lambda (host-attributes)
-                    (let ((group-name (car group))
-                          (id         (list-ref host-attributes 0))
-                          (name       (list-ref host-attributes 1))
-                          (proxy-list (list-ref host-attributes 2))
-                          (addr       (list-ref host-attributes 3))
-                          (desc       (list-ref host-attributes 4)))
+        (let ((group-name (car group)))
+          (for-each
+           (lambda (host-attr)
+             (let ((id         (assoc-ref host-attr 'id))
+                   (name       (assoc-ref host-attr 'name))
+                   (proxy-list (assoc-ref host-attr 'proxy-list))
+                   (addr       (assoc-ref host-attr 'address))
+                   (desc       (assoc-ref host-attr 'description)))
 
-                      (add-host obj
-                                #:group       group-name
-                                #:id          id
-                                #:name        name
-                                #:proxy-list  proxy-list
-                                #:address     addr
-                                #:description desc)
+               (add-host obj
+                         #:group       group-name
+                         #:id          id
+                         #:name        name
+                         #:proxy-list  proxy-list
+                         #:address     addr
+                         #:description desc)
 
-                      (if (< (get-last-host-id obj) id)
-                          (set-last-host-id! obj id))))
+               (if (< (get-last-host-id obj) id)
+                   (set-last-host-id! obj id))))
 
-                  (cdr group)))
+           (cdr group))))
 
       (let ((list (config-load-list (config obj) *default-list-name*)))
-        (for-each (lambda (h)
-                    ;; Check for an empty group
-                    ;;
-                    ;; TODO: Empty groups shouldn't be missed.
-                    (if (not (null? (cdr h)))
-                        (if (list? (cadr h))
-
-                            ;; Host is a member of a group
-                            (load-group h)
-
-                            ;; Host is not a member of a group
-                            (let ((id         (list-ref host-attributes 0))
-                                  (name       (list-ref host-attributes 1))
-                                  (proxy-list (list-ref host-attributes 2))
-                                  (addr       (list-ref host-attributes 3))
-                                  (desc       (list-ref host-attributes 4)))
-
-                              (host-list-add-host obj
-                                                  #:id          id
-                                                  #:name        name
-                                                  #:proxy-list  proxy-list
-                                                  #:address     addr
-                                                  #:description desc)
-
-                              (if (< (get-last-host-id obj) id)
-                                  (set-last-host-id! obj id))))))
-                  list)))
+        (for-each load-group list)))
 
 ;; Make a list from host attributes
 (define (unroll-host host)
-  (list (host-get-id          host)
-        (host-get-name        host)
-        (host-get-proxy-list  host)
-        (host-get-address     host)
-        (host-get-description host)))
+  (list (cons 'id          (host-get-id          host))
+        (cons 'name        (host-get-name        host))
+        (cons 'proxy-list  (host-get-proxy-list  host))
+        (cons 'address     (host-get-address     host))
+        (cons 'description (host-get-description host))))
 
 ;; Get members of a group GROUP as a list.
 (define (unroll-group group)
-  (append (list (car group)) (map unroll-host (cdr group))))
+  (cons (car group) (map unroll-host (cdr group))))
 
 ;; Save host list to a file
 (define-method (host-list-save (obj <host-list>))
