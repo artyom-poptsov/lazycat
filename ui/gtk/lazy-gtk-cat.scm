@@ -45,6 +45,7 @@
   #:use-module (lazycat ui gtk output-view)
   #:use-module (lazycat ui gtk host-tree)
   #:use-module (lazycat protocol)
+  #:use-module (lazycat message)
   #:use-module (lazycat logger)
   #:export (<lazy-gtk-cat> run))
 
@@ -397,18 +398,15 @@
     (define (handle-dialog-response rsp)
       (if (= rsp 1)
           ;; Get attributes for a new host from dialog
-          (let* ((group      (get-group            dialog))
-                 (name       (get-host-name        dialog))
-                 (proxy      (get-proxy-name       dialog))
-                 (address    (get-address          dialog))
-                 (descripion (get-host-description dialog))
-                 (host-attributes (list name proxy address descripion)))
-            ;; Add the host
-            ;;
-            ;; TODO: Should we do the check for an empty string passed
-            ;;       as a group name here -- or somewhere else?
-            (lazycat-add-host obj (if (eq? (string-length group) 0) #f group)
-                              host-attributes)))
+          (let ((attr (list
+                       (cons 'group (let ((group (get-group dialog)))
+                                      (if (not (string-null? group)) group #f)))
+                       (cons 'name        (get-host-name dialog))
+                       (cons 'proxy       (get-proxy-name dialog))
+                       (cons 'address     (get-address dialog))
+                       (cons 'description (get-host-description dialog)))))
+            (lazycat-add-host obj attr)))
+
       (gsignal-handler-disconnect dialog handler-id))
 
     (set! handler-id
@@ -453,74 +451,77 @@
 ;;; Methods that do most of the hard work.
 
 ;; Send message to the server
-(define-method (send-message (obj <lazy-gtk-cat>) (type <number>) message)
+(define-method (send-message (obj <lazy-gtk-cat>) (msg-req <message>))
   (set-server-socket obj (socket PF_UNIX SOCK_STREAM 0))
   (connect (get-server-socket obj) AF_UNIX (get-server-socket-path obj))
-  (let ((message     (list type message))
-        (server-socket (get-server-socket obj)))
-
-    ;; Send the message
-    (write message server-socket)
-    (newline server-socket)
-
-    ;; Receive a response
-    (let ((output (let r ((output "")
-                          (line   ""))
-                    (if (not (eof-object? line))
-                        (r (string-append output line "\n")
-                           (read-line server-socket 'trim))
-                        output))))
-      (close-port server-socket)
-      (read (open-input-string output)))))
+  (let ((server-socket (get-server-socket obj)))
+    (message-send msg-req server-socket)
+    (message-recv server-socket)))
 
 ;; Refresh list of hosts
 (define-method (refresh-host-list (obj <lazy-gtk-cat>))
-  (let ((group-list (cadr (send-message obj *cmd-list* 'hosts)))
-        (host-tree  (get-host-tree obj)))
+  (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t)))
+    (message-field-set! msg-req 'object-type 'host)
 
-    (host-tree-clear host-tree)
+    (let* ((msg-rsp    (send-message obj msg-req))
+           (group-list (message-field-ref msg-rsp 'object-list))
+           (host-tree  (get-host-tree obj)))
 
-    (for-each
-     (lambda (group)
-       (for-each
-        (lambda (host)
-          (let ((group-name (car group))
-                (host-attributes (list (list-ref host 0)    ; ID
-                                       (list-ref host 1)    ; Name
-                                       (list-ref host 2)    ; Proxy
-                                       (list-ref host 3)    ; Address
-                                       (list-ref host 4)))) ; Description
-            (host-tree-add-host host-tree group-name host-attributes)))
-        (cdr group)))
-     group-list)
+      (host-tree-clear host-tree)
 
-    (lazycat-get-master-host obj)))
+      (for-each
+       (lambda (group)
+         (for-each
+          (lambda (host)
+            (let ((group-name (car group))
+                  (host-attributes (list (list-ref host 0)    ; ID
+                                         (list-ref host 1)    ; Name
+                                         (list-ref host 2)    ; Proxy
+                                         (list-ref host 3)    ; Address
+                                         (list-ref host 4)))) ; Description
+              (host-tree-add-host host-tree group-name host-attributes)))
+          (cdr group)))
+       group-list)
+
+      (lazycat-get-master-host obj))))
 
 ;; Add host to the GTK host three and to the host list
 ;;
 ;; This function takes host attributes as the following list:
 ;;   '(name proxy address description)
-(define-method (lazycat-add-host (obj <lazy-gtk-cat>) group (host-attributes <list>))
-  (send-message obj *cmd-add-host* (cons group host-attributes))
-  (refresh-host-list obj))
+(define-method (lazycat-add-host (obj <lazy-gtk-cat>) (host-attr <list>))
+  (let ((msg-req (make <message> #:type *cmd-add-host*)))
+    (for-each (lambda (pair)
+                (message-field-set! msg-req (car pair) (cdr pair)))
+              host-attr)
+  (send-message obj msg-req)
+  (refresh-host-list obj)))
 
 ;; Remove host
 (define-method (lazycat-remove-host (obj <lazy-gtk-cat>) (host-id <number>))
-  (let ((host-tree (get-host-tree obj)))
+  (let ((host-tree (get-host-tree obj))
+        (msg-req   (make <message> #:type *cmd-rem-host* #:request-flag #t)))
+    (message-field-set! msg-req 'host-id host-id)
+    (send-message obj msg-req)
     (host-tree-rem-host host-tree host-id)
-    (send-message obj *cmd-rem-host* host-id)))
+    (refresh-host-list obj)))
 
 ;; Set host with HOST-ID as a master host.
 (define-method (lazycat-set-master-host (obj <lazy-gtk-cat>) (host-id <number>))
-  (send-message obj *cmd-set* (list 'master (number->string host-id)))
-  (set-master-host-id obj host-id)
-  (host-tree-set-master-host (get-host-tree obj) host-id))
-
-(define-method (lazycat-get-master-host (obj <lazy-gtk-cat>))
-  (let* ((result  (send-message obj *cmd-get* 'master))
-         (host-id (string->number (cadr result))))
+  (let ((msg-req (make <message> #:type *cmd-set* #:request-flag #t)))
+    (message-field-set! msg-req 'option 'master)
+    (message-field-set! msg-req 'value  (number->string host-id))
+    (send-message obj msg-req)
     (set-master-host-id obj host-id)
     (host-tree-set-master-host (get-host-tree obj) host-id)))
+
+(define-method (lazycat-get-master-host (obj <lazy-gtk-cat>))
+  (let ((msg-req  (make <message> #:type *cmd-get* #:request-flag #t)))
+    (message-field-set! msg-req 'option 'master)
+    (let* ((msg-rsp (send-message obj msg-req))
+           (host-id (string->number (message-field-ref msg-rsp 'value))))
+      (set-master-host-id obj host-id)
+      (host-tree-set-master-host (get-host-tree obj) host-id))))
 
 ;; Send a message
 (define-method (lazycat-send-message (obj <lazy-gtk-cat>) (message <string>))
@@ -536,10 +537,14 @@
              (gdk-threads-leave)
 
              (let ((output-view (get-output-view obj))
-                   (result      (send-message obj *cmd-exec* message)))
-               (gdk-threads-enter)
-               (output-view-format-list output-view (cadr result))
-               (gdk-threads-leave))
+                   (msg-req     (make <message> #:type *cmd-exec* #:request-flag #t)))
+               (message-field-set! msg-req 'command message)
+               (let* ((msg-rsp (send-message obj msg-req))
+                      (output  (message-field-ref msg-rsp 'output)))
+
+                 (gdk-threads-enter)
+                 (output-view-format-list output-view output)
+                 (gdk-threads-leave)))
 
              (gdk-threads-enter)
              (gtk-widget-set-sensitive (gtk-entry obj) #t)
@@ -563,11 +568,16 @@
                      (gdk-threads-leave)
 
                      (let ((output-view (get-output-view obj))
-                           (result      (send-message obj *cmd-diff*
-                                                      (list 'continue))))
-                       (gdk-threads-enter)
-                       (output-view-format-diff output-view result)
-                       (gdk-threads-leave))
+                           (msg-req     (make <message>
+                                          #:type         *cmd-diff*
+                                          #:request-flag #t)))
+                       (message-field-set! msg-req 'action 'continue)
+                       (let* ((msg-rsp (send-message obj msg-req))
+                              (output  (message-field-ref msg-rsp 'output)))
+
+                         (gdk-threads-enter)
+                         (output-view-format-diff output-view output)
+                         (gdk-threads-leave)))
 
                      (gdk-threads-enter)
                      (gtk-widget-set-sensitive (gtk-entry obj) #t)
@@ -575,8 +585,12 @@
                      (gdk-threads-leave))))
 
                 ;; Cancel
-                (let ((output-view (get-output-view obj)))
-                  (send-message obj *cmd-diff* (list 'abort))
+                (let ((output-view (get-output-view obj))
+                      (msg-req     (make <message>
+                                     #:type         *cmd-diff*
+                                     #:request-flag #t)))
+                  (message-field-set! msg-req 'action 'abort)
+                  (send-message obj msg-req)
                   (output-view-append output-view "Canceled by user." "")))
             ;; Disconnect the connected handler
             (gsignal-handler-disconnect output-preview-dialog handler-id))
@@ -588,10 +602,17 @@
                                                (lambda (w rsp)
                                                  (handle-dialog-response rsp))))
           ;; Show an output preview
-          (let* ((message (list 'get-pattern message))
-                 (result  (send-message obj *cmd-diff* message))
-                 (pattern (cadr (cadadr result)))) ; Abra'cadadr'a!
-            (show-output output-preview-dialog pattern))))
+          (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
+            (message-field-set! msg-req 'action  'get-pattern)
+            (message-field-set! msg-req 'command message)
+            (let* ((msg-rsp (send-message obj msg-req))
+                   (output  (message-field-ref msg-rsp 'output)))
+
+              ;; (1 (#f (No route to host (error))))
+              (let ((output (cadadr output)))
+                (if (list? output)
+                    (show-output output-preview-dialog (car output))
+                    (show-output output-preview-dialog output)))))))
 
     ;; Clean up a previous content of the command line
     (gtk-entry-set-text (gtk-entry obj) "")))

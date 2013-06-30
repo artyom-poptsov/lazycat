@@ -10,6 +10,9 @@
 	to describe the protocol.
 	* lazycat-daemon/lazycatd.scm: Improve.  Use <message> class.
 	* ui/lc.scm: Likewise.
+	* ui/gtk/lazy-gtk-cat.scm: Likewise.
+	* ui/gtk/output-view.scm (output-view-format-list)
+	(output-view-format-diff): Remove extra status checks.  Improve.
 	* ui/cli/pretty-format.scm (format-output-list): Remove the extra
 	status check.
 	(format-diff): Likewise.  Improve.

@@ -98,19 +98,14 @@
         (let ((header (with-output-to-string
                        (lambda ()
                          (format #t *header-fmt* host-id "ERROR")))))
-          (output-view-append-error obj header response)))))
+          (output-view-append-error obj header (car response))))))
 
 ;; Format the list of outputs LIST from hosts.
 (define-method (output-view-format-list (obj <output-view>) (list <list>))
-  (let ((status (car list)))
-    (if status
-        (for-each
-         (lambda (output)
-           (output-view-format obj output))
-         (cdr list))
-
-        (let ((header "*** ERROR\n"))
-          (output-view-append-error obj header (cadr list))))))
+  (for-each
+   (lambda (output)
+     (output-view-format obj output))
+   list))
 
 ;; Format a diff.
 (define-method (output-view-format-diff (obj <output-view>) (diff <list>))
@@ -118,23 +113,18 @@
   (define *header-fmt* "<<< ~5d ~5a\n")
   (define *output-fmt* "~a\n")
 
-  (let ((status (car diff)))
-    (if status
-        (for-each
-         (lambda (diff-result)
-           (let* ((host-id (car diff-result))
-                  (result  (cadr diff-result))
-                  (header  (with-output-to-string
-                            (lambda ()
-                              (format #t *header-fmt* host-id result)))))
+  (for-each
+   (lambda (diff-result)
+     (let* ((host-id (car diff-result))
+            (result  (cadr diff-result))
+            (header  (with-output-to-string
+                      (lambda ()
+                        (format #t *header-fmt* host-id result)))))
 
-             (if (or (eq? result 'different) (eq? result 'error))
-                 (output-view-append-error obj header (caddr diff-result))
-                 (output-view-append obj header ""))))
-         (cadr diff))
-
-        (let ((header "*** ERROR"))
-          (output-view-append-error obj header (cadr diff))))))
+       (if (or (eq? result 'different) (eq? result 'error))
+           (output-view-append-error obj header (caaddr diff-result))
+           (output-view-append obj header ""))))
+   diff))
 
 ;; Append a message to the output view.
 (define-method (output-view-append (obj     <output-view>)
