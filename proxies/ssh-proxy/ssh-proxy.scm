@@ -220,20 +220,15 @@
 
 
 ;; Set option value
-;; 
-;; Return:
-;;   <payload> ::= ( )
 (define-method (handle-set-option! (obj <ssh-proxy>) (option <symbol>) value)
-  (hash-set! (get-options obj) option value)
-  '())
+  (hash-set! (get-options obj) option value))
 
 
 ;; Check if remote side with address ADDRESS is accessible.
 ;;
-;; Return:
-;;   <payload> ::= ( #t )
+;; Return #t if the address is accessible, #f otherwise.
 (define-method (handle-ping (obj <ssh-proxy>) (address <string>))
   (handle-send-message obj address "uname")
-  '(#t))
+  #t)
 
 ;;; ssh-proxy.scm ends here

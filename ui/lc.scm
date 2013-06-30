@@ -54,6 +54,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
   #:use-module (ice-9 format)
   #:use-module (lazycat ui cli pretty-format)
   #:use-module (lazycat protocol)
+  #:use-module (lazycat message)
   #:export (<lc> main))
 
 
@@ -90,23 +91,10 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
   (close (get-server-port obj)))
 
 ;; Send a MESSAGE of TYPE to the server.
-(define-method (send-message (obj <lc>) (type <number>) message)
-  (let ((message (list type message))
-        (server-port (get-server-port obj)))
-
-    ;; Send the message
-    (write message server-port)
-    (newline server-port)
-
-    ;; Receive a response
-    (let ((output (let r ((output "")
-                          (line   ""))
-                    (if (not (eof-object? line))
-                        (r (string-append output line "\n")
-                           (read-line server-port 'trim))
-                        output))))
-
-      (read (open-input-string output)))))
+(define-method (send-message (obj <lc>) (msg-req <message>))
+  (let ((server-port (get-server-port obj)))
+    (message-send msg-req server-port)
+    (message-recv server-port)))
 
 
 ;; Add a new host.
@@ -125,10 +113,21 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
       (print-help)
 
-      (let ((result (send-message obj *cmd-add-host* args)))
-        (if (eq? (car result) #f)
-            (let ((error-message (string-append "ERROR: " (cadr result) "\n")))
-              (display error-message))))))
+      (let ((msg-req (make <message> #:type *cmd-add-host* #:request-flag #t)))
+
+        (message-field-set! msg-req 'group       (list-ref args 0))
+        (message-field-set! msg-req 'name        (list-ref args 1))
+
+        ;; FIXME: Temporary solution
+        (message-field-set! msg-req 'proxy-list  (list (list-ref args 2)))
+
+        (message-field-set! msg-req 'address     (list-ref args 3))
+        (message-field-set! msg-req 'description (list-ref args 4))
+
+        (let ((msg-rsp (send-message obj msg-req)))
+          (if (message-error? msg-rsp)
+              (let ((error-message (message-field-ref 'error)))
+                (display (string-append "ERROR: " error-message "\n"))))))))
 
 ;; Remove a host.
 (define-method (lazycat-rem (obj <lc>) (args <list>))
@@ -146,11 +145,15 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
       (print-help)
 
-      (let* ((host-id (string->number (car args)))
-             (result  (send-message obj *cmd-rem-host* host-id)))
-        (if (eq? (car result) #f)
-            (let ((error-message (string-append "ERROR: " (cadr result) "\n")))
-              (display error-message))))))
+      (let ((msg-req (make <message> #:type *cmd-rem-host* #:request-flag #t)))
+        (message-field-set! msg-req 'host-id (string->number (car args)))
+
+        (message-format msg-req)    ;DEBUG
+
+        (let ((msg-rsp (send-message obj msg-req)))
+          (if (message-error? msg-rsp)
+              (let ((error-message (message-field-ref 'error)))
+                (display (string-append "ERROR: " error-message "\n"))))))))
 
 ;; A function that handles command line for 'exec' command.
 (define-method (lazycat-generic-exec (obj <lc>) (args <list>))
@@ -188,19 +191,24 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 (define-generic lazycat-exec)
 
 ;; Execute a command CMD on the every accessible host.
-(define-method (lazycat-exec (obj <lc>) (cmd <string>))
-  (let ((result (send-message obj *cmd-exec* cmd)))
-    (format-output-list result)))
+(define-method (lazycat-exec (obj <lc>) (command <string>))
+  (let ((msg-req (make <message> #:type *cmd-exec* #:request-flag #t)))
+    (message-field-set! msg-req 'command command)
+    (let ((msg-rsp (send-message obj msg-req)))
+      (if (not (message-error? msg-rsp))
+          (format-output-list (message-field-ref msg-rsp 'output))))))
 
 ;; Execute a command CMD on a host with the given HOST-ID.
-(define-method (lazycat-exec (obj <lc>) (host-id <number>) (cmd <string>))
-  ;; <message> ::= ( <type> ( <host-id> <cmd> ) )
-  (let* ((result (send-message obj *cmd-exec* (list host-id cmd)))
-         (status (car result)))
-    (if status
-        (format-output (cadr result))
-        (let ((error-message (string-append "ERROR: "(cadr result) "\n")))
-          (display error-message)))))
+(define-method (lazycat-exec (obj <lc>) (host-id <number>) (command <string>))
+  (let ((msg-req (make <message> #:type *cmd-exec* #:request-flag #t)))
+    (message-field-set! msg-req 'host-id host-id)
+    (message-field-set! msg-req 'command command)
+
+    (let ((msg-rsp (send-message obj msg-req)))
+      (if (not (message-error? msg-rsp))
+          (format-output-list (message-field-ref msg-rsp 'output))
+          (let ((error-message (message-field-ref 'error)))
+            (display (string-append "ERROR: " error-message "\n")))))))
 
 ;; Compare outputs between master host and other hosts.
 (define-method (lazycat-diff (obj <lc>) (args <list>))
@@ -227,19 +235,35 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
     (print-help))
     
    ((or (string=? (car args) "--get-pattern") (string=? (car args) "-g"))
-    (let* ((command (string-join (cdr args) " "))
-           ;; <message> ::= ( <type> ( <action> <command> ) )
-           (result  (send-message obj *cmd-diff* (list 'get-pattern command))))
-      (format-output (cadr result))))
+    (let* ((command (string-join (cdr args) " ")))
+      (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
+        (message-field-set! msg-req 'action  'get-pattern)
+        (message-field-set! msg-req 'command command)
+
+        (let ((msg-rsp (send-message obj msg-req)))
+          (if (not (message-error? msg-rsp))
+              (format-output (message-field-ref msg-rsp 'output))
+              (display (string-append
+                        "ERROR: " (message-field-ref msg-rsp 'error) "\n")))))))
 
    ((or (string=? (car args) "--continue") (string=? (car args) "-c"))
-    ;; <message> ::= ( <type> ( <action> ) )
-    (let ((result (send-message obj *cmd-diff* (list 'continue))))
-      (format-diff result)))
+    (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
+      (message-field-set! msg-req 'action 'continue)
+
+      (let ((msg-rsp (send-message obj msg-req)))
+        (if (not (message-error? msg-rsp))
+            (format-diff (message-field-ref msg-rsp 'output))
+            (display (string-append
+                      "ERROR: " (message-field-ref msg-rsp 'error) "\n"))))))
 
    ((or (string=? (car args) "--abort") (string=? (car args) "-a"))
-    ;; <message> ::= ( <type> ( <action> ) )
-    (send-message obj *cmd-diff* (list 'abort)))
+    (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
+      (message-field-set! msg-req 'action 'abort)
+
+      (let ((msg-rsp (send-message obj msg-req)))
+        (if (message-error? msg-rsp)
+            (display (string-append
+                      "ERROR: " (message-field-ref msg-rsp 'error) "\n"))))))
 
    (#t
     (display (string-append "ERROR: Wrong action: "
@@ -261,12 +285,16 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
       (print-help)
 
-      (let* ((option (string->symbol (car args)))
-             (value  (cadr args))
-             (result (send-message obj *cmd-set* (list option value))))
-        (if (eq? (car result) #f)
-            (let ((error-message (string-append "ERROR: " (cadr result) "\n")))
-              (display error-message))))))
+      (let ((option (string->symbol (car args)))
+            (value  (cadr args))
+            (msg-req (make <message> #:type *cmd-set* #:request-flag #t)))
+
+        (message-field-set! msg-req 'option option)
+        (message-field-set! msg-req 'value  value)
+        (let ((msg-rsp (send-message obj msg-req)))
+          (if (message-error? msg-rsp)
+              (let ((error-message (message-field-ref msg-rsp 'error)))
+                (display (string-append "ERROR: " error-message "\n"))))))))
 
 ;; Get the value of an option.
 (define-method (lazycat-get (obj <lc>) (args <list>))
@@ -284,14 +312,16 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
       (print-help)
   
-      (let* ((option (string->symbol (car args)))
-             (result (send-message obj *cmd-get* option)))
-        (if (eq? (car result) #t)
-            (begin
-              (display (cadr result))
-              (newline))
-            (let ((error-message (string-append "ERROR: "(cadr result) "\n")))
-              (display error-message))))))
+      (let ((option (string->symbol (car args)))
+            (msg-req (make <message> #:type *cmd-get* #:request-flag #t)))
+        (message-field-set! msg-req 'option option)
+        (let ((msg-rsp (send-message obj msg-req)))
+          (if (not (message-error? msg-rsp))
+              (begin
+                (display (message-field-ref msg-rsp 'value))
+                (newline))
+              (let ((error-message (message-field-ref msg-rsp 'error)))
+                (display (string-append "ERROR: " error-message "\n"))))))))
 
 ;; Show a list of objects of the specific type.
 (define-method (lazycat-list (obj <lc>) (args <list>))
@@ -310,25 +340,33 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
    ((or (null? args)
         (string=? (car args) "--help") (string=? (car args) "-h"))
     (print-help))
-   
+
    ((string=? (car args) "hosts")
-    (let ((result (send-message obj *cmd-list* (string->symbol (car args)))))
-      (if (eq? (car result) #t)
-          (format-host-list (cadr result))
-          (display (string-append "ERROR: " (cadr result) "\n")))))
+    (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t)))
+      (message-field-set! msg-req 'object-type 'host)
+
+      (let ((msg-rsp (send-message obj msg-req)))
+        (if (not (message-error? msg-rsp))
+            (format-host-list (message-field-ref msg-rsp 'object-list))
+            (display (string-append
+                      "ERROR: " (message-field-ref msg-rsp 'error) "\n"))))))
 
    ((string=? (car args) "options")
-    (let ((result (send-message obj *cmd-list* (string->symbol (car args)))))
-      (if (eq? (car result) #t)
-          (format-options-list (cadr result))
-          (display (string-append "ERROR: " (cadr result) "\n")))))
+    (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t)))
+      (message-field-set! msg-req 'object-type 'option)
+      (let ((msg-rsp (send-message obj msg-req)))
+        (if (not (message-error? msg-rsp))
+            (format-options-list (message-field-ref msg-rsp 'object-list))
+            (display (string-append
+                      "ERROR: " (message-field-ref msg-rsp 'error) "\n"))))))
 
    (#t
     (display "ERROR: Unknown command."))))
 
 ;; Stop lazycat daemon
 (define-method (lazycat-stop (obj <lc>))
-  (send-message obj *cmd-stop* ""))
+  (let ((msg-req (make <message> #:type *cmd-stop* #:request-flag #t)))
+    (send-message obj msg-req)))
 
 ;; Get information about current version
 (define-method (print-version (obj <lc>))

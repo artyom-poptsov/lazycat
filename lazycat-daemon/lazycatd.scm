@@ -34,6 +34,7 @@
   #:use-module (ice-9 rdelim)
   #:use-module (lazycat proxy)
   #:use-module (lazycat protocol)
+  #:use-module (lazycat message)
   #:use-module (lazycat logger)
   #:use-module (lazycat lazycat-daemon host)
   #:use-module (lazycat lazycat-daemon host-list)
@@ -47,7 +48,7 @@
 (define *syslog-tag* "lazycatd")
 
 ;; Possible object types
-(define *object-types* '(hosts options))
+(define *object-types* '(host option))
 
 ;; Accessible options
 (define *options* '(master log-verbosity))
@@ -187,123 +188,155 @@
   (host-list-save (get-host-list obj))
   (proxy-list-stop-all (get-proxy-list obj))
 
-  (send-message obj (list #t) port)
+  (let ((msg-rsp (make <message> #:type *cmd-stop*)))
+    (message-send msg-rsp port))
 
   (close (get-socket obj)))
 
 ;; Add a new host to the host list.
-(define-method (lazycat-add (obj <lazycatd>) args (client <port>))
-  (if (null? args)
-      (lazycat-throw "Malformed message" args))
+(define-method (lazycat-add (obj     <lazycatd>)
+                            (msg-req <message>)
+                            (client  <port>))
 
-  (let* ((args            (car args))
-         (group           (car args))
-         (host-attributes (cdr args))
-         (host-list       (get-host-list obj)))
+  (let ((group       (message-field-ref msg-req 'group))
+        (name        (message-field-ref msg-req 'name))
+        (proxy-list  (message-field-ref msg-req 'proxy-list))
+        (address     (message-field-ref msg-req 'address))
+        (description (message-field-ref msg-req 'description))
+        (host-list   (get-host-list obj)))
 
-    (let* ((proxy-list (list-ref host-attributes 1))
-           ;; FIXME: Workaround
-           (proxy-list (if (list? proxy-list) proxy-list (list proxy-list))))
+    (host-list-add-host host-list
+                        #:group       group
+                        #:name        name
+                        #:proxy-list  proxy-list
+                        #:address     address
+                        #:description description)
 
-      (host-list-add-host host-list
-                          #:group       group
-                          #:name        (list-ref host-attributes 0)
-                          #:proxy-list  proxy-list
-                          #:address     (list-ref host-attributes 2)
-                          #:description (list-ref host-attributes 3))
-      (send-message obj (list #t) client))))
+    (let ((msg-rsp (make <message> #:type *cmd-add-host*)))
+      (message-send msg-rsp client))))
 
 ;; Remove the host with given HOST-ID from the host list.
-(define-method (lazycat-rem (obj <lazycatd>) args (client <port>))
-  (if (null? args)
-      (lazycat-throw "Malformed message" args))
-
+(define-method (lazycat-rem (obj     <lazycatd>)
+                            (msg-req <message>)
+                            (client  <port>))
   (let ((host-list (get-host-list obj))
-        (host-id   (car args)))
+        (host-id   (message-field-ref msg-req 'host-id)))
+
+    (if (or (not host-id) (null? host-id))
+        (lazycat-throw "Malformed message"))
+
     (host-list-rem-host host-list host-id)
-    (send-message obj (list #t) client)))
+    (let ((msg-rsp (make <message> #:type *cmd-rem-host*)))
+      (message-send msg-rsp client))))
 
 ;; Get list of objects with the given type TYPE.
 ;;
 ;; Throws lazycat-exception on error.
-(define-method (lazycat-list (obj <lazycatd>) args (client <port>))
-  (if (null? args)
-      (lazycat-throw "Malformed message" args))
+(define-method (lazycat-list (obj     <lazycatd>)
+                             (msg-req <message>)
+                             (client  <port>))
 
-  (let ((type (car args)))
-    (if (eqv? (member type *object-types*) #f)
-        (lazycat-throw "Wrong object type" type))
+  (let ((object-type (message-field-ref msg-req 'object-type)))
 
-    (log-debug obj (string-append "lazycat-list: type: " (symbol->string type)))
+    (if (not object-type)
+        (lazycat-throw "Malformed message"))
+
+    (if (eqv? (member object-type *object-types*) #f)
+        (lazycat-throw "Wrong object type" object-type))
+
+    (log-debug obj (string-append "lazycat-list: type: "
+                                  (symbol->string object-type)))
 
     (cond
 
-     ((eq? type 'hosts)
-      (let* ((host-list (get-host-list obj))
-             (response  (list #t (host-list-get-unrolled-list host-list))))
-        (send-message obj response client)))
+     ((eq? object-type 'host)
+      (let* ((host-list   (get-host-list obj))
+             (object-list (host-list-get-unrolled-list host-list))
+             (msg-rsp     (make <message> #:type *cmd-list*)))
+        (message-field-set! msg-rsp 'object-list object-list)
+        (message-send msg-rsp client)))
 
-     ((eq? type 'options)
-      (let* ((options  (get-options obj))
-             (response (list #t (hash-map->list cons options))))
-        (send-message obj response client))))))
+     ((eq? object-type 'option)
+      (let* ((options     (get-options obj))
+             (object-list (hash-map->list cons options))
+             (msg-rsp     (make <message> #:type *cmd-list*)))
+        (message-field-set! msg-rsp 'object-list object-list)
+        (message-send msg-rsp client))))))
 
 ;; Get value of an option OPTION
-(define-method (lazycat-get (obj <lazycatd>) args (client <port>))
-  (if (null? args)
-      (lazycat-throw "Malformed message" args))
+(define-method (lazycat-get (obj     <lazycatd>)
+                            (msg-req <message>)
+                            (client  <port>))
+  (let ((option (message-field-ref msg-req 'option)))
 
-  (let ((option (car args)))
+    (if (or (not option) (null? option))
+        (lazycat-throw "Malformed message"))
 
     (if (eqv? (member option *options*) #f)
         (lazycat-throw "No such option" option))
 
-    (let ((value (hash-ref (get-options obj) option)))
-      (send-message obj (list #t value) client))))
+    (let ((value   (hash-ref (get-options obj) option))
+          (msg-rsp (make <message> #:type *cmd-get*)))
+      (message-field-set! msg-rsp 'option option)
+      (message-field-set! msg-rsp 'value value)
+      (message-send msg-rsp client))))
 
 ;; Set a VALUE for the OPTION.
 ;;
 ;; Throws lazycat-exception on error.
-(define-method (lazycat-set (obj <lazycatd>) args (client <port>))
-  (if (null? args)
-      (lazycat-throw "Malformed message" args))
+(define-method (lazycat-set (obj     <lazycatd>)
+                            (msg-req <message>)
+                            (client  <port>))
+  (let ((option (message-field-ref msg-req 'option))
+        (value  (message-field-ref msg-req 'value)))
 
-  (let* ((args   (car args))
-         (option (car args))
-         (value  (cadr args)))
+    (if (or (not option) (null? option))
+        (lazycat-throw "Malformed message"))
 
     (if (eqv? (member option *options*) #f)
         (lazycat-throw "No such option" option))
 
-    (if (hash-set! (get-options obj) option value)
-        (send-message obj (list #t) client)
-        (send-message obj (list #f) client))))
+    (let ((msg-rsp (make <message> #:type *cmd-set*)))
+      (if (hash-set! (get-options obj) option value)
+          (message-send msg-rsp client)
+          (begin
+            (message-set-error-flag! msg-rsp #t)
+            (message-field-set!      msg-rsp 'error "Couldn't set option")
+            (message-send msg-rsp client))))))
 
 
 (define-generic lazycat-exec)
 
 ;; Execute a command and send output to the CLIENT.
-(define-method (lazycat-exec (obj <lazycatd>) args (client <port>))
-  (if (null? args)
-      (lazycat-throw "Malformed message" args))
+(define-method (lazycat-exec (obj     <lazycatd>)
+                             (msg-req <message>)
+                             (client  <port>))
 
-  (if (list? (car args))
+  (let ((host-id (message-field-ref msg-req 'host-id))
+        (command (message-field-ref msg-req 'command)))
 
-      (let* ((host-id (caar args))
-             (command (cadar args))
-             (result  (lazycat-exec obj host-id command)))
-        (send-message obj (list #t result) client))
+    (if (or (not command) (null? command))
+        (lazycat-throw "Malformed message" args))
 
-      (let* ((command (car args))
-             (result (lazycat-exec obj command)))
-        (send-message obj (list #t result) client))))
+    (if (and host-id (not (null? host-id)))
+
+      (let ((output  (lazycat-exec obj host-id command))
+            (msg-rsp (make <message> #:type *cmd-exec*)))
+        (message-field-set! msg-rsp 'output (list output))
+        (message-send msg-rsp client))
+
+      (let ((output  (lazycat-exec obj command))
+            (msg-rsp (make <message> #:type *cmd-exec*)))
+        (message-field-set! msg-rsp 'output output)
+        (message-send msg-rsp client)))))
 
 ;; Execute a command COMMAND on a host with given HOST-ID.
 ;;
 ;; Return:
-;;   <result> ::= (<host-id> (<status> <output>))
-;;   <status> ::= <boolean>
-;;   <output> ::= <string>
+;;   <result>       = "(" <host-id> "(" <status> <WSP> <output> "))"
+;;   <host-id>      = <scheme-number>
+;;   <status>       = <scheme-boolean>
+;;   <output>       = <scheme-string>
 ;;
 (define-method (lazycat-exec (obj     <lazycatd>)
                              (host-id <number>)
@@ -320,19 +353,21 @@
            ;; FIXME: We use first proxy from the list for now.
            (proxy        (proxy-list-get proxy-list (car host-proxies))))
 
-      (let ((response (proxy-send-message proxy host-addr command)))
-        (list host-id response)))))
+      (let ((msg-proxy-rsp (proxy-send-message proxy host-addr command)))
+        (if (not (message-error? msg-proxy-rsp))
+            (let ((response (message-field-ref msg-proxy-rsp 'response)))
+              (list host-id (list #t response)))
+            (let ((error-message (message-field-ref msg-proxy-rsp 'error)))
+              (list host-id (list #f error-message))))))))
 
 ;; Execute the command COMMAND on all accessible hosts.
 ;;
 ;; Return a list in the following format:
 ;;
-;;   <result> ::= (<status> <response>)
-;;   <response>    ::= ((<host-id> <host-result>) ...) | ( <error-message> )
-;;   <host-id>     ::= <number>
-;;   <host-result> ::= (<status> <output>)
-;;   <output>      ::= <string>
-;;   <status>      ::= <boolean>
+;;   <result> = "(" 1*( "(" <host-id> "(" <status> <WSP> <output> "))" ) ")"
+;;   <host-id>      = <scheme-number>
+;;   <status>       = <scheme-boolean>
+;;   <output>       = <scheme-string>
 ;;
 (define-method (lazycat-exec (obj <lazycatd>) (command <string>))
 
@@ -355,16 +390,18 @@
 
 ;; Compare output from hosts with an output from the master host.
 ;; Return diffs.  Throw lazycat-diff-error on error.
-(define-method (lazycat-diff (obj <lazycatd>) args (client <port>))
+(define-method (lazycat-diff (obj     <lazycatd>)
+                             (msg-req <message>)
+                             (client  <port>))
 
   ;; Return:
   ;;   <result> ::= ( <host-id> ( <status> <output> ) )
   ;;   <status> ::= 'similar | 'different | 'error
-  (define (fetch-and-analyse host pattern message)
+  (define (fetch-and-analyse host pattern command)
     (let* ((host-id  (host-get-id host))
 
            ;; <result> ::= ( <host-id> ( <status> <output> ) )
-           (result   (lazycat-exec obj (list host-id message)))
+           (result   (lazycat-exec obj host-id command))
 
            (result   (cadr result))
            (success? (car result))
@@ -374,28 +411,29 @@
 
           (let ((diff (make-string-diff (get-tmp-dir obj) pattern output)))
             (if (diff-empty? diff)
-                (list host-id 'similar #f )
+                (list host-id 'similar)
                 (list host-id 'different (diff-get diff))))
 
-          (list host-id (list 'error (cadr output))))))
+          (list host-id 'error output))))
 
 
-  (if (null? args)
-      (lazycat-throw "Malformed message" args))
+  (let ((action (message-field-ref msg-req 'action)))
 
-  (let* ((args   (car args))
-         (action (car args)))
+    (if (or (not action) (null? action))
+        (lazycat-throw "Malformed message" args))
+
     (cond
 
      ((eq? action 'get-pattern)
-      (let* ((command (cadr args))
+      (let* ((command (message-field-ref msg-req 'command))
              (master (string->number (hash-ref (get-options obj) 'master)))
-             (result (cadr (lazycat-exec obj (list master command)))))
+             (result (cadr (lazycat-exec obj master command))))
 
         (set-pattern! obj (list command (cadr result)))
 
-        ;; <message> ::= ( #t ( ( <master-host-id> ( <status> <output> ) ) ) )
-        (send-message obj (list #t (list master result)) client)))
+        (let ((msg-rsp (make <message> #:type *cmd-diff*)))
+          (message-field-set! msg-rsp 'output (list master result))
+          (message-send msg-rsp client))))
 
      ((eq? action 'continue)
       (if (not (eq? (get-pattern obj) #f))
@@ -412,14 +450,16 @@
                  (set! result (cons output result))))
              plain-list)
 
-            (send-message obj (list #t result) client))
+            (let ((msg-rsp (make <message> #:type *cmd-diff*)))
+              (message-field-set! msg-rsp 'output result)
+              (message-send msg-rsp client)))
 
           (lazycat-throw "No pattern found")))
 
      ((eq? action 'abort)
-      (begin
+      (let ((msg-rsp (make <message> #:type *cmd-diff*)))
         (set-pattern! obj #f)
-        (send-message obj (list #t '()) client)))
+        (message-send msg-rsp client)))
 
      (#t
       (lazycat-throw "Wrong action" action)))))
@@ -441,13 +481,13 @@
 
       (let* ((client-connection (accept-and-catch lazycatd-socket))
              (client            (car client-connection))
-             (raw-message       (read-line client 'trim)))
+             (msg-req           (message-recv client)))
 
-        (if (eof-object? raw-message)
+        ;; EOF is received
+        (if (not msg-req)
             (continue))
 
-        (let* ((message        (read (open-input-string raw-message)))
-               (message-type   (car message)))
+        (let ((message-type (message-get-type msg-req)))
 
           ;; Debug
           (log-debug obj (string-append
@@ -461,35 +501,36 @@
 
                ;; Get protocol version
                ((= message-type *cmd-get-protocol-version*)
-                (send-message obj (list #t *protocol-version*) client))
+                (let ((msg-rsp (make <message> #:type *protocol-version*)))
+                  (message-send msg-rsp client)))
 
                ;; List objects
                ((= message-type *cmd-list*)
-                (lazycat-list obj (cdr message) client))
+                (lazycat-list obj msg-req client))
 
                ;; Add a new host
                ((= message-type *cmd-add-host*)
-                (lazycat-add obj (cdr message) client))
+                (lazycat-add obj msg-req client))
 
                ;; Remote a host
                ((= message-type *cmd-rem-host*)
-                (lazycat-rem obj (cdr message) client))
+                (lazycat-rem obj msg-req client))
 
                ;; Get an option value
                ((= message-type *cmd-get*)
-                (lazycat-get obj (cdr message) client))
+                (lazycat-get obj msg-req client))
 
                ;; Set an option
                ((= message-type *cmd-set*)
-                (lazycat-set obj (cdr message) client))
+                (lazycat-set obj msg-req client))
 
                ;; Execute a command
                ((= message-type *cmd-exec*)
-                (lazycat-exec obj (cdr message) client))
+                (lazycat-exec obj msg-req client))
 
                ;; Get a diff
                ((= message-type *cmd-diff*)
-                (lazycat-diff obj (cdr message) client))
+                (lazycat-diff obj msg-req client))
 
                ;; Stop the daemon
                ((eq? message-type *cmd-stop*)
@@ -498,9 +539,14 @@
                   (break)))))
 
             (lambda (key . args)
-              (let ((error-message (car args)))
+              (let ((error-message (car args))
+                    (msg-rsp       (make <message>
+                                     #:type        message-type
+                                     #:answer-flag #t
+                                     #:error-flag  #t)))
                 (logger-message (get-logger obj) 'warning error-message)
-                (send-message obj (list #f error-message) client)))))
+                (message-field-set! msg-rsp 'error error-message)
+                (message-send msg-rsp client)))))
 
           (close client)))))
 

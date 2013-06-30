@@ -1,3 +1,18 @@
+2013-06-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Improve the protocol.  Standartize message exchange procedures,
+	add the <message> class.
+	* common/message.scm: New file.
+	* common/protocol.scm: Improve.  Use ABNF notation instead of BNF
+	to describe the protocol.
+	* lazycat-daemon/lazycatd.scm: Improve.  Use <message> class.
+	* ui/lc.scm: Likewise.
+	* ui/cli/pretty-format.scm (format-output-list): Remove the extra
+	status check.
+	(format-diff): Likewise.  Improve.
+	* proxies/ssh-proxy/ssh-proxy.scm (handle-set-option!)
+	(handle-ping): Change return value.
+
 2013-06-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/cli/pretty-format.scm (format-output): Improve error

@@ -34,6 +34,7 @@
   #:use-module (ice-9 rdelim)
   #:use-module (lazycat logger)
   #:use-module (lazycat protocol)
+  #:use-module (lazycat message)
   #:export (<proxy> proxy-send-message
                     proxy-set-option!
                     proxy-get-option
@@ -195,20 +196,33 @@
 (define-method (proxy-send-message (obj     <proxy>)
                                    (address <string>)
                                    (message <string>))
-  (send-request obj *cmd-proxy-send* (list address message)))
+  (let ((msg-req (make <message> #:type *cmd-proxy-send* #:request-flag #t)))
+    (message-field-set! msg-req 'address address)
+    (message-field-set! msg-req 'message message)
+    (send-request obj msg-req)))
 
 (define-method (proxy-set-option! (obj <proxy>) (option <symbol>) value)
-  (send-request obj *cmd-proxy-set* (list option value)))
+  (let ((msg-req (make <message> #:type *cmd-proxy-set* #:request-flag #t)))
+    (message-field-set! msg-req 'option option)
+    (message-field-set! msg-req 'value  value)
+    (send-request obj msg-req)))
 
 (define-method (proxy-get-option (obj <proxy>) (option <symbol>))
-  (send-request obj *cmd-proxy-get* (list option)))
+  (let ((msg-req (make <message> #:type *cmd-proxy-get* #:request-flag #t)))
+    (message-field-set! msg-req 'option option)
+    (send-request obj msg-req)))
 
 (define-method (proxy-list-options (obj <proxy>))
-  (send-request obj *cmd-proxy-list-options* '()))
+  (let ((msg-req (make <message>
+                   #:type *cmd-proxy-list-options*
+                   #:request-flag #t)))
+    (send-request obj msg-req)))
 
 (define-method (proxy-ping (obj     <proxy>)
                            (address <string>))
-  (send-request obj *cmd-proxy-ping* (list address)))
+  (let ((msg-req (make <message> #:type *cmd-proxy-ping* #:request-flag #t)))
+    (message-field-set! msg-req 'address address)
+    (send-request obj msg-req)))
 
 
 ;; Start the proxy
@@ -238,8 +252,9 @@
 
 ;; Stop the proxy
 (define-method (proxy-stop (obj <proxy>))
-  (send-request obj *cmd-proxy-stop* '())
-  (waitpid (get-pid obj)))
+  (let ((msg-req (make <message> #:type *cmd-proxy-stop* #:request-flag #t)))
+    (send-request obj msg-req)
+    (waitpid (get-pid obj))))
 
 
 ;;; Proxy process implementation
@@ -256,34 +271,13 @@
     (bind proxy-socket AF_UNIX path)
     (listen proxy-socket 1)))
 
-
-(define-method (send-response (obj <proxy>) response (port <port>))
-  (write response port)
-  (newline port))
-
 ;; Send message to the real proxy
-(define-method (send-request (obj <proxy>) (type <number>) message)
+(define-method (send-request (obj <proxy>) (msg-req <message>))
   (set-client-socket! obj (socket PF_UNIX SOCK_STREAM 0))
   (connect (get-client-socket obj) AF_UNIX (get-socket-file obj))
-
-  (let ((message (list type message))
-        (proxy-port (get-client-socket obj)))
-
-    ;; Send the message
-    (write message proxy-port)
-    (newline proxy-port)
-
-    ;; Receive a response
-    (let ((output (let r ((output "")
-                          (line   ""))
-                    (if (not (eof-object? line))
-                        (r (string-append output line "\n")
-                           (read-line proxy-port 'trim))
-                        output))))
-
-      (close (get-client-socket obj))
-
-      (read (open-input-string output)))))
+  (let ((proxy-port (get-client-socket obj)))
+    (message-send msg-req proxy-port)
+    (message-recv proxy-port)))
 
 
 ;; Main loop of the proxy process.
@@ -305,14 +299,13 @@
 
       (let* ((client-connection (accept-and-catch proxy-socket))
              (client            (car client-connection))
-             (raw-message (read-line client 'trim)))
+             (msg-req           (message-recv client)))
 
-        (if (eof-object? raw-message)
+        ;; EOF is received
+        (if (not msg-req)
             (continue))
 
-        (let* ((message        (read (open-input-string raw-message)))
-               (message-type   (car message))
-               (payload        (cadr message)))
+        (let ((message-type (message-get-type msg-req)))
 
           (log-debug obj (string-append
                           "Message type: " (number->string message-type)))
@@ -322,35 +315,54 @@
             (lambda ()
               (cond
                ((= message-type *cmd-proxy-send*)
-                (let ((res (handle-send-message obj (car payload) (cadr payload))))
-                  (send-response obj (list #t res) client)))
+                (let* ((address (message-field-ref msg-req 'address))
+                       (message (message-field-ref msg-req 'message))
+                       (res     (handle-send-message obj address message)))
+                  (let ((msg-rsp (make <message> #:type message-type)))
+                    (message-field-set! msg-rsp 'response res)
+                    (message-send msg-rsp client))))
 
                ((= message-type *cmd-proxy-set*)
-                (let ((res (handle-set-option! obj (car payload) (cadr payload))))
-                  (send-response obj (list #t res) client)))
+                (let ((option (message-field-ref msg-req 'option))
+                      (value  (message-field-ref msg-req 'value)))
+                  (handle-set-option! obj option value)
+                  (let ((msg-rsp (make <message> #:type message-type)))
+                    (message-send msg-rsp client))))
 
                ((= message-type *cmd-proxy-get*)
-                (let ((res (handle-get-option obj (car payload))))
-                  (send-response obj (list #t res) client)))
+                (let* ((option (message-field-ref msg-req 'option))
+                       (value  (handle-get-option obj option)))
+                  (let ((msg-rsp (make <message> #:type message-type)))
+                    (message-field-set! 'option option)
+                    (message-field-set! 'value  value)
+                    (message-send msg-rsp client))))
 
                ((= message-type *cmd-proxy-list-options*)
-                (let ((res (handle-list-options obj)))
-                  (send-response obj (list #t res) client)))
+                (let ((object-list (handle-list-options obj))
+                      (msg-rsp     (make <message> #:type message-type)))
+                  (message-field-set! msg-rsp 'object-list object-list)
+                  (message-send msg-rsp client)))
 
                ((= message-type *cmd-proxy-ping*)
-                (let ((res (handle-ping obj (car payload))))
-                  (send-response obj (list #t res) client)))
+                (let ((status  (handle-ping obj (car payload)))
+                      (msg-rsp (make <message> #:type message-type)))
+                  (message-field-set! msg-rsp 'status status)
+                  (message-send msg-rsp client)))
 
                ((= message-type *cmd-proxy-stop*)
-                (begin
-                  (send-response obj '(#t ()) client)
+                (let ((msg-rsp (make <message> #:type message-type)))
+                  (message-send msg-rsp client)
                   (close client)
                   (handle-stop obj)
                   (break)))))
 
             (lambda (key . parameters)
-              (begin
-                (send-response obj (list #f parameters) client)
+              (let ((msg-rsp (make <message>
+                               #:type       message-type
+                               #:error-flag #t)))
+                (message-field-set! msg-rsp 'error parameters)
+                (message-send msg-rsp client)
+
                 (if (= message-type *cmd-proxy-stop*)
                     (begin
                       (close client)

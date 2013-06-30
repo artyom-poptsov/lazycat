@@ -112,29 +112,22 @@
           (format-error response)))))
 
 (define (format-output-list list)
-  (let ((status (car list)))
-    (if status
-        (for-each format-output (cadr list))
-        (format #t "ERROR: ~a\n" (cadr list)))))
+  (for-each format-output list))
 
 (define (format-diff diff)
 
   (define *header-fmt* "<<< ~5d ~5a\n")
   (define *output-fmt* "~a\n")
 
-  (let ((status (car diff)))
-    (if status
-        (for-each
-         (lambda (diff-result)
-           (let ((host-id (car diff-result))
-                 (result  (cadr diff-result)))
+  (for-each
+   (lambda (diff-result)
+     (let ((host-id (car diff-result))
+           (result  (cadr diff-result)))
 
-             (format #t *header-fmt* host-id result)
+       (format #t *header-fmt* host-id result)
 
-             (if (or (eq? result 'different) (eq? result 'error))
-                 (format #t *output-fmt* (caddr diff-result)))))
-         (cadr diff))
-
-        (format #t "ERROR: ~a\n" (cadr diff)))))
+       (if (or (eq? result 'different) (eq? result 'error))
+           (format #t *output-fmt* (caddr diff-result)))))
+   diff))
 
 ;;; pretty-format.scm ends here.
