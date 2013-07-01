@@ -100,6 +100,9 @@
   (let ((port (open-input-pipe
                (string-append "diff " (file1 obj) " " (file2 obj))))
         (diff (diff-result obj)))
+
+    (waitpid -1)
+
     (let read-next-line ((line (read-line port 'concat)))
       (if (not (eof-object? line))
           (begin

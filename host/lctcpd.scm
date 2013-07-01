@@ -81,6 +81,8 @@
              (port (open-input-pipe command))
              (result ""))
 
+        (waitpid -1)
+
         (let read-next-line ((line (read-line port 'concat)))
           (if (not (eof-object? line))
               (begin

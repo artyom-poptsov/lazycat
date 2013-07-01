@@ -1,3 +1,9 @@
+2013-07-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* host/lctcpd.scm (main-loop): Wait for termination of the child
+	process that executes a command.
+	* lazycat-daemon/diff.scm (calculate-diff): Likewise.
+
 2013-06-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* README, TODO: Update.
