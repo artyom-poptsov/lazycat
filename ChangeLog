@@ -1,5 +1,11 @@
 2013-07-13  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* README: Add Guile-SSH 0.3 to dependencies.
+
+	* proxies/ssh-proxy/ssh-proxy.scm (poll-channel): Improve.
+	(handle-send-message): Make it work with Guile-SSH 0.3.  Add
+	additional traces.
+
 	* lazycat-daemon/lazycatd.scm (initialize): Implement proxy
 	debugging.
 	(periodical-ping): Add message check to prevent calling

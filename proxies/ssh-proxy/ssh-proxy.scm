@@ -90,12 +90,12 @@
 ;; Poll a channel CHANNEL for data and read available data.
 ;; Return obtained data.
 (define (poll-channel channel)
-  (let poll ((count #f))
-    (if (or (not count) (zero? count))
-        (poll (ssh:channel-poll channel #f))
-        (let ((result (ssh:channel-read channel count #f)))
-          (if (not result)
-              #f
+  (let poll ((count (ssh:channel-poll channel #f)))
+    (if (not count)
+        #f
+        (if (zero? count)
+            (poll (ssh:channel-poll channel #f))
+            (let ((result (ssh:channel-read channel count #f)))
               result)))))
 
 
@@ -173,8 +173,7 @@
               (log-error obj session)
               (proxy-error (ssh:get-error session))))
 
-        (let ((public-key (ssh:public-key->string
-                           (ssh:private-key->public-key private-key))))
+        (let ((public-key (ssh:private-key->public-key private-key)))
 
           (log-debug obj "Authenticate user with a public key.")
 
@@ -193,14 +192,22 @@
                   (log-error obj session)
                   (proxy-error (ssh:get-error session))))
 
+            (log-debug obj "Open SSH session")
+
             (if (not (ssh:channel-open-session channel))
                 (begin
                   (log-error obj session)
                   (proxy-error (ssh:get-error session))))
 
+            (log-debug obj "Request exec")
+
             (ssh:channel-request-exec channel message)
 
-            (poll-channel channel)))))))
+            (log-debug obj "Poll SSH channel")
+
+            (let ((res (poll-channel channel)))
+              (log-debug obj "Data received")
+              res)))))))
 
 
 ;; Get options list
