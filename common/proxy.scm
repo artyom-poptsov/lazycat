@@ -274,10 +274,16 @@
 ;; Send message to the real proxy
 (define-method (send-request (obj <proxy>) (msg-req <message>))
   (set-client-socket! obj (socket PF_UNIX SOCK_STREAM 0))
-  (connect (get-client-socket obj) AF_UNIX (get-socket-file obj))
-  (let ((proxy-port (get-client-socket obj)))
-    (message-send msg-req proxy-port)
-    (message-recv proxy-port)))
+  (catch 'system-error
+    (lambda ()
+      (connect (get-client-socket obj) AF_UNIX (get-socket-file obj))
+      (let ((proxy-port (get-client-socket obj)))
+        (message-send msg-req proxy-port)
+        (message-recv proxy-port)))
+    (lambda (key . args)
+      (log-error obj (string-append
+                      (symbol->string key) ": " (object->string args)))
+      #f)))
 
 
 ;; Main loop of the proxy process.
