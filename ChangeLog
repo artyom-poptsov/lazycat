@@ -1,5 +1,9 @@
 2013-07-13  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/lazycatd.scm (initialize): Implement proxy
+	debugging.
+	* lazycat-daemon/proxy-list.scm (proxy-list-load): Likewise.
+
 	* common/proxy.scm (send-request): Catch system errors.
 
 2013-07-01  Artyom Poptsov  <poptsov.artyom@gmail.com>

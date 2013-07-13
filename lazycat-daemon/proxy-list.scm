@@ -50,12 +50,22 @@
 
   (htable
    #:init-value (make-hash-table)
-   #:getter get-htable))
+   #:getter get-htable)
+
+  (debug-mode?
+   #:init-keyword #:debug-mode
+   #:getter       debug-mode?
+   #:init-value #f))
 
 ;; Load all proxies
 (define-method (proxy-list-load (obj <proxy-list>))
   (let ((ssh-proxy (make <ssh-proxy> #:socket-dir (get-tmp-dir obj)))
         (tcp-proxy (make <tcp-proxy> #:socket-dir (get-tmp-dir obj))))
+
+    (if (debug-mode? obj)
+        (begin
+          (proxy-debug! ssh-proxy #t)
+          (proxy-debug! tcp-proxy #t)))
 
     (proxy-start ssh-proxy)
     (proxy-start tcp-proxy)

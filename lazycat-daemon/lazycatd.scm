@@ -118,7 +118,9 @@
       (mkdir (get-tmp-dir obj)))
   
   (set-host-list! obj (make <host-list> #:lazycat-home (get-home obj)))
-  (set-proxy-list! obj (make <proxy-list> #:tmp-dir (get-tmp-dir obj)))
+  (set-proxy-list! obj (make <proxy-list>
+                         #:tmp-dir    (get-tmp-dir obj)
+                         #:debug-mode (debug? obj)))
 
   (host-list-load (get-host-list obj))
 
