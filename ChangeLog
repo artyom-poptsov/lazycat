@@ -2,6 +2,9 @@
 
 	* lazycat-daemon/lazycatd.scm (initialize): Implement proxy
 	debugging.
+	(periodical-ping): Add message check to prevent calling
+	message-error? method on #f.
+
 	* lazycat-daemon/proxy-list.scm (proxy-list-load): Likewise.
 
 	* common/proxy.scm (send-request): Catch system errors.
