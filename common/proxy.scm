@@ -107,6 +107,10 @@
    #:setter proxy-debug!
    #:init-value #f)
 
+  (mtx
+   #:getter get-mutex
+   #:init-value (make-mutex))
+
   ;; Process ID of the proxy
   (pid
    #:getter get-pid
@@ -196,33 +200,48 @@
 (define-method (proxy-send-message (obj     <proxy>)
                                    (address <string>)
                                    (message <string>))
-  (let ((msg-req (make <message> #:type *cmd-proxy-send* #:request-flag #t)))
-    (message-field-set! msg-req 'address address)
-    (message-field-set! msg-req 'message message)
-    (send-request obj msg-req)))
+ (lock-mutex (get-mutex obj))
+ (let ((msg-req (make <message> #:type *cmd-proxy-send* #:request-flag #t)))
+   (message-field-set! msg-req 'address address)
+   (message-field-set! msg-req 'message message)
+   (let ((res (send-request obj msg-req)))
+     (unlock-mutex (get-mutex obj))
+     res)))
 
 (define-method (proxy-set-option! (obj <proxy>) (option <symbol>) value)
+  (lock-mutex (get-mutex obj))
   (let ((msg-req (make <message> #:type *cmd-proxy-set* #:request-flag #t)))
     (message-field-set! msg-req 'option option)
     (message-field-set! msg-req 'value  value)
-    (send-request obj msg-req)))
+    (let ((res (send-request obj msg-req)))
+      (unlock-mutex (get-mutex obj))
+      res)))
 
 (define-method (proxy-get-option (obj <proxy>) (option <symbol>))
+  (lock-mutex (get-mutex obj))
   (let ((msg-req (make <message> #:type *cmd-proxy-get* #:request-flag #t)))
     (message-field-set! msg-req 'option option)
-    (send-request obj msg-req)))
+    (let ((res (send-request obj msg-req)))
+      (unlock-mutex (get-mutex obj))
+      res)))
 
 (define-method (proxy-list-options (obj <proxy>))
+  (lock-mutex (get-mutex obj))
   (let ((msg-req (make <message>
                    #:type *cmd-proxy-list-options*
                    #:request-flag #t)))
-    (send-request obj msg-req)))
+    (let ((res (send-request obj msg-req)))
+      (unlock-mutex (get-mutex obj))
+      res)))
 
 (define-method (proxy-ping (obj     <proxy>)
                            (address <string>))
+  (lock-mutex (get-mutex obj))
   (let ((msg-req (make <message> #:type *cmd-proxy-ping* #:request-flag #t)))
     (message-field-set! msg-req 'address address)
-    (send-request obj msg-req)))
+    (let ((res (send-request obj msg-req)))
+      (unlock-mutex (get-mutex obj))
+      res)))
 
 
 ;; Start the proxy
@@ -252,8 +271,10 @@
 
 ;; Stop the proxy
 (define-method (proxy-stop (obj <proxy>))
+  (lock-mutex (get-mutex obj))
   (let ((msg-req (make <message> #:type *cmd-proxy-stop* #:request-flag #t)))
     (send-request obj msg-req)
+    (unlock-mutex (get-mutex obj))
     (waitpid (get-pid obj))))
 
 

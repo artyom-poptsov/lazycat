@@ -1,5 +1,9 @@
 2013-07-14  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* common/proxy.scm (proxy-send-message, proxy-set-option!)
+	(proxy-get-option, proxy-list-options, proxy-ping, proxy-stop):
+	Protect with a mutex.
+
 	* lazycat-daemon/lazycatd.scm (periodical-ping): Set lower
 	priority for the thread.
 
