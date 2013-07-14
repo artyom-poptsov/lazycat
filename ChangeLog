@@ -1,5 +1,7 @@
 2013-07-14  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* README: Update.
+
 	* proxies/ssh-proxy/ssh-proxy.scm (handle-send-message): Cache an
 	SSH session for the each address.
 	(make-new-session): New procedure.

@@ -41,7 +41,7 @@ LazyCat has got the following dependences:
  - GNU Guile 1.8 (probably will work with 2.0, not tested)
    <https://www.gnu.org/software/guile/>
 
- - Guile-SSH 0.3 -- Needed for ssh-proxy
+ - Guile-SSH 0.3.1 -- Needed for ssh-proxy
    <https://github.com/artyom-poptsov/libguile-ssh>
 
  - libssh 0.5.4 -- Needed for Guile-SSH
