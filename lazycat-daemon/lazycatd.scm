@@ -54,6 +54,9 @@
 ;; Accessible options
 (define *options* '(master log-verbosity ping-interval))
 
+;; Priority of the periodical ping thread.
+(define *periodical-ping-thread-prio* 15)
+
 
 ;;; Main class
 (define-class <lazycatd> ()
@@ -471,6 +474,7 @@
 
 ;; Ping hosts periodically and update their statuses.
 (define-method (periodical-ping (obj <lazycatd>))
+  (setpriority PRIO_PROCESS 0 *periodical-ping-thread-prio*)
   (let ((proxy-list (get-proxy-list obj)))
     (while #t
       (let ((host-list (host-list-get-plain-list (get-host-list obj)))

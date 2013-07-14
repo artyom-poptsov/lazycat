@@ -1,3 +1,8 @@
+2013-07-14  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat-daemon/lazycatd.scm (periodical-ping): Set lower
+	priority for the thread.
+
 2013-07-13  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* README: Add Guile-SSH 0.3 to dependencies.
