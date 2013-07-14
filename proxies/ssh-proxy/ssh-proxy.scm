@@ -53,6 +53,10 @@
 
   (options
    #:getter get-options
+   #:init-value (make-hash-table))
+
+  (sessions
+   #:getter get-sessions
    #:init-value (make-hash-table)))
 
 (define-method (initialize (obj <ssh-proxy>) args)
@@ -98,25 +102,8 @@
             (let ((result (ssh:channel-read channel count #f)))
               result)))))
 
-
-;;; Logging
-;; SSH specific logging procedures
-
-(define-method (log-error (obj <ssh-proxy>) (session <ssh:session>))
-  (log-error obj (ssh:get-error session)))
-
-
-;;; Interface implementation
-
-;; Send message MESSAGE to a remote side with address ADDRESS.
-;;
-;; Return:
-;;   <payload> ::= <output>
-;;
-(define-method (handle-send-message (obj     <ssh-proxy>)
-                                    (address <string>)
-                                    (message <string>))
-
+;; Make a SSH session and connect to ADDRESS
+(define-method (make-new-session (obj <ssh-proxy>) (address <string>))
   (log-debug obj (string-append "Parse the address: " address))
 
   (let ((connection-data (parse-address address)))
@@ -147,7 +134,7 @@
             (proxy-error (ssh:get-error session) port)))
       
       (if (not (ssh:session-set! session 'log-verbosity
-                                 (if (proxy-debug? obj) 4 0)))
+                                 (if (proxy-debug? obj) 1 0)))
           (begin
             (log-error obj session)
             (proxy-error (ssh:get-error session))))
@@ -183,31 +170,59 @@
                   (log-error obj session)
                   (proxy-error (ssh:get-error session) res))))
 
-          (log-debug obj "Make a new SSH channel")
-          
-          (let ((channel (ssh:make-channel session)))
+          session)))))
 
-            (if (not channel)
-                (begin
-                  (log-error obj session)
-                  (proxy-error (ssh:get-error session))))
+
+;;; Logging
+;; SSH specific logging procedures
 
-            (log-debug obj "Open SSH session")
+(define-method (log-error (obj <ssh-proxy>) (session <ssh:session>))
+  (log-error obj (ssh:get-error session)))
 
-            (if (not (ssh:channel-open-session channel))
-                (begin
-                  (log-error obj session)
-                  (proxy-error (ssh:get-error session))))
+
+;;; Interface implementation
 
-            (log-debug obj "Request exec")
+;; Send message MESSAGE to a remote side with address ADDRESS.
+;;
+;; Return:
+;;   <payload> ::= <output>
+;;
+(define-method (handle-send-message (obj     <ssh-proxy>)
+                                    (address <string>)
+                                    (message <string>))
+  (let* ((ssh-sessions (get-sessions obj))
+         (session      (hash-ref ssh-sessions address)))
 
-            (ssh:channel-request-exec channel message)
+    (if (not session)
+        (begin
+          (hash-set! ssh-sessions address (make-new-session obj address))
+          (set! session (hash-ref ssh-sessions address))))
 
-            (log-debug obj "Poll SSH channel")
+    (log-debug obj "Make a new SSH channel")
+    (let ((channel (ssh:make-channel session)))
 
-            (let ((res (poll-channel channel)))
-              (log-debug obj "Data received")
-              res)))))))
+      (if (not channel)
+          (begin
+            (log-error obj session)
+            (proxy-error (ssh:get-error session))))
+
+      (log-debug obj "Open SSH session")
+      (if (not (ssh:channel-open-session channel))
+          (begin
+            (log-error obj session)
+            (proxy-error (ssh:get-error session))))
+
+      (if (not (ssh:channel-request-exec channel message))
+          (begin
+            (log-error obj session)
+            (proxy-error (ssh:get-error session))))
+
+      (log-debug obj "Poll SSH channel")
+      (let ((res (poll-channel channel)))
+        (ssh:blocking-flush! session 10)
+        (ssh:free-channel! channel)
+        (log-debug obj "Data received")
+        res))))
 
 
 ;; Get options list

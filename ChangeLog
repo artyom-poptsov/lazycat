@@ -1,5 +1,9 @@
 2013-07-14  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* proxies/ssh-proxy/ssh-proxy.scm (handle-send-message): Cache an
+	SSH session for the each address.
+	(make-new-session): New procedure.
+
 	* common/proxy.scm (proxy-send-message, proxy-set-option!)
 	(proxy-get-option, proxy-list-options, proxy-ping, proxy-stop):
 	Protect with a mutex.
