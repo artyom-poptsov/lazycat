@@ -26,9 +26,12 @@
 
 (define-module (lazycat ui cli pretty-format)
   #:use-module (ice-9 format)
+  #:use-module (oop goops)
+  #:use-module (lazycat message)
   #:export (format-host-list
             format-options-list
             format-error
+            format-error-message
             format-output
             format-output-list
             format-diff))
@@ -69,8 +72,12 @@
 
 ;; Display an error message
 (define (format-error error)
-  (define *fmt* "~a: ~a\n")
-  (format #t *fmt* (car error) (cdr error)))
+  (format #t "ERROR: ~a\n" error))
+
+
+;; Display content of an error message
+(define-method (format-error-message (msg <message>))
+  (format-error (message-field-ref msg 'error)))
 
 
 ;; Display options list LIST as a table.
@@ -97,6 +104,7 @@
 
   (define *header-fmt* "<<< ~5d ~5a\n")
   (define *output-fmt* "~a\n")
+  (define *error-fmt*  "~a: ~a\n")  
 
   (let ((host-id  (car output))
         (status   (car (cadr output)))
@@ -110,7 +118,7 @@
 
         (begin
           (format #t *header-fmt* host-id "ERROR")
-          (format-error response)))))
+          (format #t *error-fmt* (car response) (cdr response))))))
 
 (define (format-output-list list)
   (for-each format-output list))

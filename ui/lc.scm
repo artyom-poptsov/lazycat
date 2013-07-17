@@ -62,6 +62,9 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 (define *version* "0.2")
 
+(define *error-connection-lost*
+  "connection to the server lost\n")
+
 
 ;;; Main class
 
@@ -125,9 +128,10 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
         (message-field-set! msg-req 'description (list-ref args 4))
 
         (let ((msg-rsp (send-message obj msg-req)))
-          (if (message-error? msg-rsp)
-              (let ((error-message (message-field-ref 'error)))
-                (display (string-append "ERROR: " error-message "\n"))))))))
+          (if msg-rsp
+              (if (message-error? msg-rsp)
+                  (format-error-message msg-rsp))
+              (format-error *error-connection-lost*))))))
 
 ;; Remove a host.
 (define-method (lazycat-rem (obj <lc>) (args <list>))
@@ -151,9 +155,10 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
         (message-format msg-req)    ;DEBUG
 
         (let ((msg-rsp (send-message obj msg-req)))
-          (if (message-error? msg-rsp)
-              (let ((error-message (message-field-ref 'error)))
-                (display (string-append "ERROR: " error-message "\n"))))))))
+          (if msg-rsp
+              (if (message-error? msg-rsp)
+                  (format-error-message msg-rsp))
+              (format-error *error-connection-lost*))))))
 
 ;; A function that handles command line for 'exec' command.
 (define-method (lazycat-generic-exec (obj <lc>) (args <list>))
@@ -195,8 +200,11 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
   (let ((msg-req (make <message> #:type *cmd-exec* #:request-flag #t)))
     (message-field-set! msg-req 'command command)
     (let ((msg-rsp (send-message obj msg-req)))
-      (if (not (message-error? msg-rsp))
-          (format-output-list (message-field-ref msg-rsp 'output))))))
+      (if msg-rsp
+          (if (not (message-error? msg-rsp))
+              (format-output-list (message-field-ref msg-rsp 'output))
+              (format-error-message msg-rsp))
+          (format-error *error-connection-lost*)))))
 
 ;; Execute a command CMD on a host with the given HOST-ID.
 (define-method (lazycat-exec (obj <lc>) (host-id <number>) (command <string>))
@@ -205,10 +213,11 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
     (message-field-set! msg-req 'command command)
 
     (let ((msg-rsp (send-message obj msg-req)))
-      (if (not (message-error? msg-rsp))
-          (format-output-list (message-field-ref msg-rsp 'output))
-          (let ((error-message (message-field-ref 'error)))
-            (display (string-append "ERROR: " error-message "\n")))))))
+      (if msg-rsp
+          (if (not (message-error? msg-rsp))
+              (format-output-list (message-field-ref msg-rsp 'output))
+              (format-error-message msg-rsp))
+          (format-error *error-connection-lost*)))))
 
 ;; Compare outputs between master host and other hosts.
 (define-method (lazycat-diff (obj <lc>) (args <list>))
@@ -241,33 +250,36 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
         (message-field-set! msg-req 'command command)
 
         (let ((msg-rsp (send-message obj msg-req)))
-          (if (not (message-error? msg-rsp))
-              (format-output (message-field-ref msg-rsp 'output))
-              (display (string-append
-                        "ERROR: " (message-field-ref msg-rsp 'error) "\n")))))))
+          (if msg-rsp
+              (if (not (message-error? msg-rsp))
+                  (format-output (message-field-ref msg-rsp 'output))
+                  (format-error-message msg-rsp))
+              (format-error *error-connection-lost*))))))
 
    ((or (string=? (car args) "--continue") (string=? (car args) "-c"))
     (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
       (message-field-set! msg-req 'action 'continue)
 
       (let ((msg-rsp (send-message obj msg-req)))
-        (if (not (message-error? msg-rsp))
-            (format-diff (message-field-ref msg-rsp 'output))
-            (display (string-append
-                      "ERROR: " (message-field-ref msg-rsp 'error) "\n"))))))
+        (if msg-rsp
+            (if (not (message-error? msg-rsp))
+                (format-diff (message-field-ref msg-rsp 'output))
+                (format-error-message msg-rsp))
+            (format-error *error-connection-lost*)))))
 
    ((or (string=? (car args) "--abort") (string=? (car args) "-a"))
     (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
       (message-field-set! msg-req 'action 'abort)
 
       (let ((msg-rsp (send-message obj msg-req)))
-        (if (message-error? msg-rsp)
-            (display (string-append
-                      "ERROR: " (message-field-ref msg-rsp 'error) "\n"))))))
+        (if msg-rsp
+            (if (message-error? msg-rsp)
+                (format-error-message msg-rsp))
+            (format-error *error-connection-lost*)))))
 
    (#t
-    (display (string-append "ERROR: Wrong action: "
-                            (symbol->string (car args)))))))
+    (format-error (string-append
+                   "Wrong action: " (symbol->string (car args)))))))
 
 ;; Set a new value to a option.
 (define-method (lazycat-set (obj <lc>) (args <list>))
@@ -292,9 +304,10 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
         (message-field-set! msg-req 'option option)
         (message-field-set! msg-req 'value  value)
         (let ((msg-rsp (send-message obj msg-req)))
-          (if (message-error? msg-rsp)
-              (let ((error-message (message-field-ref msg-rsp 'error)))
-                (display (string-append "ERROR: " error-message "\n"))))))))
+          (if msg-rsp
+              (if (message-error? msg-rsp)
+                  (format-error-message msg-rsp))
+              (format-error *error-connection-lost*))))))
 
 ;; Get the value of an option.
 (define-method (lazycat-get (obj <lc>) (args <list>))
@@ -316,12 +329,13 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
             (msg-req (make <message> #:type *cmd-get* #:request-flag #t)))
         (message-field-set! msg-req 'option option)
         (let ((msg-rsp (send-message obj msg-req)))
-          (if (not (message-error? msg-rsp))
-              (begin
-                (display (message-field-ref msg-rsp 'value))
-                (newline))
-              (let ((error-message (message-field-ref msg-rsp 'error)))
-                (display (string-append "ERROR: " error-message "\n"))))))))
+          (if msg-rsp
+              (if (not (message-error? msg-rsp))
+                  (begin
+                    (display (message-field-ref msg-rsp 'value))
+                    (newline))
+                  (format-error-message msg-rsp))
+              (format-error *error-connection-lost*))))))
 
 ;; Show a list of objects of the specific type.
 (define-method (lazycat-list (obj <lc>) (args <list>))
@@ -346,22 +360,24 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       (message-field-set! msg-req 'object-type 'host)
 
       (let ((msg-rsp (send-message obj msg-req)))
-        (if (not (message-error? msg-rsp))
-            (format-host-list (message-field-ref msg-rsp 'object-list))
-            (display (string-append
-                      "ERROR: " (message-field-ref msg-rsp 'error) "\n"))))))
+        (if msg-rsp
+            (if (not (message-error? msg-rsp))
+                (format-host-list (message-field-ref msg-rsp 'object-list))
+                (format-error-message msg-rsp))
+            (format-error *error-connection-lost*)))))
 
    ((string=? (car args) "options")
     (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t)))
       (message-field-set! msg-req 'object-type 'option)
       (let ((msg-rsp (send-message obj msg-req)))
-        (if (not (message-error? msg-rsp))
-            (format-options-list (message-field-ref msg-rsp 'object-list))
-            (display (string-append
-                      "ERROR: " (message-field-ref msg-rsp 'error) "\n"))))))
+        (if msg-rsp
+            (if (not (message-error? msg-rsp))
+                (format-options-list (message-field-ref msg-rsp 'object-list))
+                (format-error-message msg-rsp))
+            (format-error *error-connection-lost*)))))
 
    (#t
-    (display "ERROR: Unknown command."))))
+    (format-error "Unknown command."))))
 
 ;; Stop lazycat daemon
 (define-method (lazycat-stop (obj <lc>))

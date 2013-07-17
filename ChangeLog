@@ -1,3 +1,13 @@
+2013-07-17  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* ui/lc.scm (lazycat-add, lazycat-rem, lazycat-exec)
+	(lazycat-diff, lazycat-set, lazycat-get, lazycat-list): Improve
+	error handling.  Improve formatting of error messages.
+	* ui/cli/pretty-format.scm (format-error): Improve error
+	formatting.
+	(format-output): Likewise.
+	(format-error-message): New procedure.
+
 2013-07-14  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* README: Update.
