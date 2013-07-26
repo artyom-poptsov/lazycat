@@ -1,3 +1,9 @@
+2013-07-26  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat-daemon/diff.scm (make-string-diff): Fix a bug: don't use
+	with-output-to-file functions to write diffs, because it leads to
+	crash of the process due to closed standard ports.
+
 2013-07-17  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/lc.scm (lazycat-add, lazycat-rem, lazycat-exec)

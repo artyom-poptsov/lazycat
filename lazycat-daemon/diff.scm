@@ -71,13 +71,13 @@
          (tmp-file1 (port-filename tmp-port1))
          (tmp-file2 (port-filename tmp-port2)))
 
+    (write pattern tmp-port1)
+    (newline tmp-port1)
     (close-output-port tmp-port1)
-    (close-output-port tmp-port2)
 
-    (with-output-to-file tmp-file1
-      (lambda () (begin (write pattern) (newline))))
-    (with-output-to-file tmp-file2
-      (lambda () (begin (write output)  (newline))))
+    (write output tmp-port2)
+    (newline tmp-port2)
+    (close-output-port tmp-port2)
 
     (let ((diff (make <diff> #:file1 tmp-file1 #:file2 tmp-file2)))
       (delete-file tmp-file1)
