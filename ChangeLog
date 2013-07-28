@@ -1,3 +1,9 @@
+2013-07-28  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* ui/cli/pretty-format.scm (format-host-list): Improve formatting
+	of the list of hosts -- wrap long lines.
+	* ui/cli/format-table.scm: New file.
+
 2013-07-26  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* lazycat-daemon/diff.scm (make-string-diff): Fix a bug: don't use

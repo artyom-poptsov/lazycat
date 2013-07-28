@@ -27,6 +27,7 @@
 (define-module (lazycat ui cli pretty-format)
   #:use-module (ice-9 format)
   #:use-module (oop goops)
+  #:use-module (lazycat ui cli format-table)
   #:use-module (lazycat message)
   #:export (format-host-list
             format-options-list
@@ -36,14 +37,13 @@
             format-output-list
             format-diff))
 
+(define *header-fmt* "~15a  ~5a  ~8a  ~15a  ~15a  ~20a  ~80a\n")
+(define *table-fmt*  "~15a  ~5a  ~8a  ~15a  ~15a  ~20a  ~80a\n")
+
 
 ;; Display the host list LIST as a table
-(define (format-host-list list)
-
-  (define *header-fmt* "~15a ~5@a ~8a ~15a ~10a ~20a~a\n")
-  (define *table-fmt*  "~15a ~5d ~8a ~15a ~10a ~20a~a\n")
-
-  ;; Print header
+(define (format-host-list lst)
+  ;; Print the header
   (format #t *header-fmt* "Group" "ID" "Status" "Name" "Proxy" "Address" "Description")
   (format #t *header-fmt* "-----" "--" "------" "----" "-----" "-------" "-----------")
 
@@ -53,19 +53,25 @@
      (let ((group-name (car group)))
        (for-each
         (lambda (host)
-          (format #t *table-fmt*
-                  (if (not (eq? group-name #f))
-                      group-name
-                      " ")
-                  (assoc-ref host 'id)
-                  (assoc-ref host 'status)
-                  (assoc-ref host 'name)
-                  (assoc-ref host 'proxy-list)
-                  (assoc-ref host 'address)
-                  (assoc-ref host 'description)))
-        (cdr group))))
+          (let ((group (if (not (eq? group-name #f))
+                           group-name
+                           ""))
+                (id          (number->string (assoc-ref host 'id)))
+                (status      (symbol->string (assoc-ref host 'status)))
+                (name        (assoc-ref host 'name))
+                (proxy-list  (object->string (assoc-ref host 'proxy-list)))
+                (address     (assoc-ref host 'address))
+                (description (assoc-ref host 'description)))
 
-   list)
+            (format-table #t *table-fmt* (list (list group
+                                                     id
+                                                     status
+                                                     name
+                                                     proxy-list
+                                                     address
+                                                     description)))))
+        (cdr group))))
+   lst)
 
   (newline))
 
