@@ -1,5 +1,8 @@
 2013-08-11  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/lc.scm (lazycat-list): Add shortened versions of names of
+	object types.  Improve help for the "list" command.
+
 	* lazycat-daemon/lazycatd.scm (initialize): Enable periodical ping
 	by default (default value is 30 seconds).
 	* TODO: Update.

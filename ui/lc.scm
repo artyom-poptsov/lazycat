@@ -345,7 +345,11 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
      (string-append
       "Usage: lc list <object-type>\n"
       "\n"
-      "Example:\n"
+      "Available object types:\n"
+      "\t" "h, hosts        List hosts\n"
+      "\t" "o, options      List options\n"
+      "\n"
+      "Examples:\n"
       "\t" "$ lc list hosts\n"
       "\t" "$ lc list options\n")))
 
@@ -355,7 +359,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
         (string=? (car args) "--help") (string=? (car args) "-h"))
     (print-help))
 
-   ((string=? (car args) "hosts")
+   ((or (string=? (car args) "hosts") (string=? (car args) "h"))
     (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t)))
       (message-field-set! msg-req 'object-type 'host)
 
@@ -366,7 +370,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
                 (format-error-message msg-rsp))
             (format-error *error-connection-lost*)))))
 
-   ((string=? (car args) "options")
+   ((or (string=? (car args) "options") (string=? (car args) "o"))
     (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t)))
       (message-field-set! msg-req 'object-type 'option)
       (let ((msg-rsp (send-message obj msg-req)))
