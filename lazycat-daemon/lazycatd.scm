@@ -112,6 +112,8 @@
    #:getter get-pattern
    #:init-value #f))
 
+(define *default-ping-interval* 30)     ;Seconds
+
 (define-method (initialize (obj <lazycatd>) args)
   (next-method)
 
@@ -131,7 +133,7 @@
   (let ((options (get-options obj)))
     (hash-set! options 'master        #f)
     (hash-set! options 'log-verbosity (if (debug? obj) "4" "1"))
-    (hash-set! options 'ping-interval "0")) ;FIXME: Ping is disabled by default
+    (hash-set! options 'ping-interval (number->string *default-ping-interval*)))
 
   (let ((host-list (get-host-list obj)))
     (if (not (host-list-empty? host-list))
