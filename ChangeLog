@@ -1,3 +1,10 @@
+2013-08-18  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* ui/lc.scm (lazycat-add, lazycat-diff): Use getopt-long for
+	parsing arguments.  Update the help message.
+	(lazycat-rem, lazycat-exec, lazycat-set, lazycat-get)
+	(lazycat-list, main): Update the help message.
+
 2013-08-11  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/lc.scm (lazycat-list): Add shortened versions of names of

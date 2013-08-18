@@ -52,6 +52,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
   #:use-module (ice-9 getopt-long)
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 format)
+  #:use-module (ice-9 getopt-long)
   #:use-module (lazycat ui cli pretty-format)
   #:use-module (lazycat protocol)
   #:use-module (lazycat message)
@@ -103,35 +104,65 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 ;; Add a new host.
 (define-method (lazycat-add (obj <lc>) (args <list>))
 
-  (define (print-help)
-  (display
-   (string-append
-    "Usage: lc add <group> <name> <proxy> <address> <description>\n"
-    "\n"
-    "Example:\n"
-    "\t" "$ lc add home-network lazy-pc1 ssh-proxy \"avp@pc1:22\" \"A lazy computer\"\n")))
+  (define option-spec
+    '((help        (single-char #\h) (value #f))
+      (group       (single-char #\g) (value #t))
+      (name        (single-char #\n) (value #t))
+      (proxy-list  (single-char #\p) (value #t))
+      (address     (single-char #\a) (value #t))
+      (description (single-char #\d) (value #t))))
 
-  (if (or (null? args)
-          (string=? (car args) "--help") (string=? (car args) "-h"))
+  (define (print-help)
+    (display
+     (string-append
+      "Usage: lc add -g <group> -n <name> -p <proxy1>\n"
+      "              -a <address> -d <description>\n"
+      "Options:\n"
+      "  -g <group>, --group=<group>                    Group for the new host\n"
+      "  -n <name>, --name=<name>                       Host name\n"
+      "  -p <proxy>, --proxy=<proxy>                    Proxy which will be used to reach the host\n"
+      "  -a <address>, --address=<address>              Host address\n"
+      "  -d <description>, --description=<description>  Description of the host\n"
+      "\n"
+      "Example:\n"
+      "  $ lc add -g home-network -n lazy-pc1 -p ssh-proxy \\\n"
+      "           -a \"avp@pc1:22\" -d \"A lazy computer\"\n")))
+
+  (if (null? args)
 
       (print-help)
 
-      (let ((msg-req (make <message> #:type *cmd-add-host* #:request-flag #t)))
+      (let* ((args         (cons "lazycat-add" args))
+             (options      (getopt-long args option-spec))
+             (help-needed? (option-ref options 'help        #f))
+             (group        (option-ref options 'group       #f))
+             (name         (option-ref options 'name        #f))
+             (proxy-list   (option-ref options 'proxy-list  #f))
+             (address      (option-ref options 'address     #f))
+             (description  (option-ref options 'description "")))
 
-        (message-field-set! msg-req 'group       (list-ref args 0))
-        (message-field-set! msg-req 'name        (list-ref args 1))
+        (if help-needed?
 
-        ;; FIXME: Temporary solution
-        (message-field-set! msg-req 'proxy-list  (list (list-ref args 2)))
+            (print-help)
 
-        (message-field-set! msg-req 'address     (list-ref args 3))
-        (message-field-set! msg-req 'description (list-ref args 4))
+            (let ((msg-req (make <message>
+                             #:type         *cmd-add-host*
+                             #:request-flag #t)))
 
-        (let ((msg-rsp (send-message obj msg-req)))
-          (if msg-rsp
-              (if (message-error? msg-rsp)
-                  (format-error-message msg-rsp))
-              (format-error *error-connection-lost*))))))
+              (message-field-set! msg-req 'group       group)
+              (message-field-set! msg-req 'name        name)
+
+              ;; FIXME: Temporary solution
+              (message-field-set! msg-req 'proxy-list  (list proxy-list))
+
+              (message-field-set! msg-req 'address     address)
+              (message-field-set! msg-req 'description description)
+
+              (let ((msg-rsp (send-message obj msg-req)))
+                (if msg-rsp
+                    (if (message-error? msg-rsp)
+                        (format-error-message msg-rsp))
+                    (format-error *error-connection-lost*))))))))
 
 ;; Remove a host.
 (define-method (lazycat-rem (obj <lc>) (args <list>))
@@ -142,7 +173,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       "Usage: lc rem <host-id>\n"
       "\n"
       "Example:\n"
-      "\t" "$ lc rem 5\n")))
+      "  $ lc rem 5\n")))
 
   (if (or (null? args)
           (string=? (car args) "--help") (string=? (car args) "-h"))
@@ -169,8 +200,8 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       "Usage: lc exec [ --host-id <host-id> | -n <host-id> ] <command>\n"
       "\n"
       "Examples:\n"
-      "\t" "$ lc exec uname -a\n"
-      "\t" "$ lc exec --host-id 2 uptime\n")))
+      "  $ lc exec uname -a\n"
+      "  $ lc exec --host-id 2 uptime\n")))
 
   (cond
 
@@ -222,64 +253,79 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 ;; Compare outputs between master host and other hosts.
 (define-method (lazycat-diff (obj <lc>) (args <list>))
 
+  (define option-spec
+    '((help        (single-char #\h) (value #f))
+      (get-pattern (single-char #\g) (value #t))
+      (continue    (single-char #\c) (value #f))
+      (abort       (single-char #\a) (value #f))))
+
   (define (print-help)
     (display
      (string-append
-      "Usage: lc diff [ --get-pattern <command> | -g <command> ]\n"
-      "               [ --continue | -c ] [ --abort | -a ]\n"
+      "Usage: lc diff [ -h ] [ -g | -c | -a ]\n"
       "\n"
       "Parameters:\n"
-      "\t" "--get-pattern, -g    Get pattern from a master host\n"
-      "\t" "--continue, -c       Execute command on the rest of hosts\n"
-      "\t" "--abort, -a          Delete the stored pattern\n"
+      "  -h, --help                             Print this message\n"
+      "  -g <command>, --get-pattern=<command>  Get pattern from a master host\n"
+      "  -c, --continue                         Execute command on the rest of hosts\n"
+      "  -a, --abort                            Delete the stored pattern\n"
       "\n"
       "Examples:\n"
-      "\t" "$ lc diff --get-pattern uname -a\n"
-      "\t" "$ lc diff --continue\n")))
+      "  $ lc diff --get-pattern uname -a\n"
+      "  $ lc diff --continue\n")))
 
-  (cond
+  (if (null? args)
 
-   ((or (null? args)
-        (string=? (car args) "--help") (string=? (car args) "-h"))
-    (print-help))
+      (print-help)
+
+      (let* ((args            (cons "lazycat-diff" args))
+             (options         (getopt-long args option-spec))
+             (help-needed?    (option-ref options 'help #f))
+             (pattern         (option-ref options 'get-pattern #f))
+             (coninue?        (option-ref options 'continue    #f))
+             (abort?          (option-ref options 'abort       #f)))
     
-   ((or (string=? (car args) "--get-pattern") (string=? (car args) "-g"))
-    (let* ((command (string-join (cdr args) " ")))
-      (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
-        (message-field-set! msg-req 'action  'get-pattern)
-        (message-field-set! msg-req 'command command)
+        (cond
 
-        (let ((msg-rsp (send-message obj msg-req)))
-          (if msg-rsp
-              (if (not (message-error? msg-rsp))
-                  (format-output (message-field-ref msg-rsp 'output))
-                  (format-error-message msg-rsp))
-              (format-error *error-connection-lost*))))))
+         (help-needed?
+          (print-help))
 
-   ((or (string=? (car args) "--continue") (string=? (car args) "-c"))
-    (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
-      (message-field-set! msg-req 'action 'continue)
+         (pattern
+          (let* ((command (string-join (cdr args) " ")))
+            (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
+              (message-field-set! msg-req 'action  'get-pattern)
+              (message-field-set! msg-req 'command command)
 
-      (let ((msg-rsp (send-message obj msg-req)))
-        (if msg-rsp
-            (if (not (message-error? msg-rsp))
-                (format-diff (message-field-ref msg-rsp 'output))
-                (format-error-message msg-rsp))
-            (format-error *error-connection-lost*)))))
+              (let ((msg-rsp (send-message obj msg-req)))
+                (if msg-rsp
+                    (if (not (message-error? msg-rsp))
+                        (format-output (message-field-ref msg-rsp 'output))
+                        (format-error-message msg-rsp))
+                    (format-error *error-connection-lost*))))))
 
-   ((or (string=? (car args) "--abort") (string=? (car args) "-a"))
-    (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
-      (message-field-set! msg-req 'action 'abort)
+         (continue?
+          (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
+            (message-field-set! msg-req 'action 'continue)
 
-      (let ((msg-rsp (send-message obj msg-req)))
-        (if msg-rsp
-            (if (message-error? msg-rsp)
-                (format-error-message msg-rsp))
-            (format-error *error-connection-lost*)))))
+            (let ((msg-rsp (send-message obj msg-req)))
+              (if msg-rsp
+                  (if (not (message-error? msg-rsp))
+                      (format-diff (message-field-ref msg-rsp 'output))
+                      (format-error-message msg-rsp))
+                  (format-error *error-connection-lost*)))))
 
-   (#t
-    (format-error (string-append
-                   "Wrong action: " (symbol->string (car args)))))))
+         (abort?
+          (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
+            (message-field-set! msg-req 'action 'abort)
+
+            (let ((msg-rsp (send-message obj msg-req)))
+              (if msg-rsp
+                  (if (message-error? msg-rsp)
+                      (format-error-message msg-rsp))
+                  (format-error *error-connection-lost*)))))
+         (else
+          (format-error (string-append
+                         "Wrong action: " (symbol->string (car args)))))))))
 
 ;; Set a new value to a option.
 (define-method (lazycat-set (obj <lc>) (args <list>))
@@ -290,7 +336,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       "Usage: lc set <option> <value>\n"
       "\n"
       "Example:\n"
-      "\t" "$ lc set master 5\n")))
+      "  $ lc set master 5\n")))
 
   (if (or (null? args)
           (string=? (car args) "--help") (string=? (car args) "-h"))
@@ -318,7 +364,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       "Usage: lc get <option>\n"
       "\n"
       "Example:\n"
-      "\t" "$ lc get master\n")))
+      "  $ lc get master\n")))
 
   (if (or (null? args)
           (string=? (car args) "--help") (string=? (car args) "-h"))
@@ -346,12 +392,12 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       "Usage: lc list <object-type>\n"
       "\n"
       "Available object types:\n"
-      "\t" "h, hosts        List hosts\n"
-      "\t" "o, options      List options\n"
+      "  h, hosts        List hosts\n"
+      "  o, options      List options\n"
       "\n"
       "Examples:\n"
-      "\t" "$ lc list hosts\n"
-      "\t" "$ lc list options\n")))
+      "  $ lc list hosts\n"
+      "  $ lc list options\n")))
 
   (cond
 
@@ -401,15 +447,15 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
     "Usage: lc <command>\n"
     "\n"
     "Possible commands:\n"
-    "\t" "a, add     add a new host\n"
-    "\t" "d, diff    compare outputs from hosts\n"
-    "\t" "e, exec    execute a command\n"
-    "\t" "g, get     get current value of an option\n"
-    "\t" "l, list    list objects\n"
-    "\t" "r, rem     remove host\n"
-    "\t" "s, set     set a new value for an option\n"
-    "\t" "stop       stop LazyCat daemon\n"
-    "\t" "version    print information about current version\n"
+    "  a, add     add a new host\n"
+    "  d, diff    compare outputs from hosts\n"
+    "  e, exec    execute a command\n"
+    "  g, get     get current value of an option\n"
+    "  l, list    list objects\n"
+    "  r, rem     remove host\n"
+    "  s, set     set a new value for an option\n"
+    "  stop       stop LazyCat daemon\n"
+    "  version    print information about current version\n"
     "\n"
     "Enter 'lc <command> -h' to get documentation for the command.\n")))
 
