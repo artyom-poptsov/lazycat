@@ -26,4 +26,4 @@ bin_PROGRAMS = lazycat-daemon
 lazycat_daemondir	= $(pkgdatadir)/lazycat-daemon
 lazycat_daemon_DATA	= *.scm
 
-lazycat_daemon_SOURCES = server.c
+lazycat_daemon_SOURCES = lazycat-daemon.c

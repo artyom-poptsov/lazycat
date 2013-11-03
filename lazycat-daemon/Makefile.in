@@ -63,7 +63,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(lazycat_daemondir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_lazycat_daemon_OBJECTS = server.$(OBJEXT)
+am_lazycat_daemon_OBJECTS = lazycat-daemon.$(OBJEXT)
 lazycat_daemon_OBJECTS = $(am_lazycat_daemon_OBJECTS)
 lazycat_daemon_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@
@@ -208,7 +208,7 @@ AM_CFLAGS = @GUILE_CFLAGS@ `pkg-config --cflags guile-1.8` \
 AM_LDFLAGS = `pkg-config --libs guile-1.8`
 lazycat_daemondir = $(pkgdatadir)/lazycat-daemon
 lazycat_daemon_DATA = *.scm
-lazycat_daemon_SOURCES = server.c
+lazycat_daemon_SOURCES = lazycat-daemon.c
 all: all-am
 
 .SUFFIXES:
@@ -293,7 +293,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lazycat-daemon.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
