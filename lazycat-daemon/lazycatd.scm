@@ -33,10 +33,14 @@
   #:use-module (oop goops)
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 threads)
+  ;; Logging
+  #:use-module (logging logger)
+  #:use-module (logging rotating-log)
+  #:use-module (logging port-log)
+  ;; LazyCat modules
   #:use-module (lazycat proxy)
   #:use-module (lazycat protocol)
   #:use-module (lazycat message)
-  #:use-module (lazycat logger)
   #:use-module (lazycat lazycat-daemon host)
   #:use-module (lazycat lazycat-daemon host-list)
   #:use-module (lazycat lazycat-daemon proxy-list)
@@ -89,12 +93,6 @@
    #:setter set-socket!
    #:getter get-socket)
 
-  (logger
-   #:getter get-logger
-   #:init-value (make <logger>
-                  #:ident    *syslog-tag*
-                  #:facility 'user))
-
   (options
    #:getter get-options
    #:init-value (make-hash-table))
@@ -143,19 +141,40 @@
         (let* ((list (host-list-get-plain-list host-list))
                (master-host-id (host-get-id (car list))))
           (hash-set! (get-options obj) 'master (number->string master-host-id)))
-        (logger-message (get-logger obj) 'info "Host list is empty"))))
+        (log-msg 'INFO "Host list is empty"))))
 
 
 ;;; Helper procedures
 
+(define (setup-logging)
+  (let ((lgr       (make <logger>))
+        (rotating  (make <rotating-log>
+                     #:num-files 1
+                     #:size-limit 10000
+                     #:file-name "/tmp/lazycat/lazycat.log"))
+        (err       (make <port-log> #:port (current-error-port))))
+
+    ;; don't want to see warnings or info on the screen!
+    (disable-log-level! err 'WARN)
+    (disable-log-level! err 'INFO)
+    (disable-log-level! err 'DEBUG)
+    
+    ;; add the handlers to our logger
+    (add-handler! lgr rotating)
+    (add-handler! lgr err)
+    
+    ;; make this the application's default logger
+    (set-default-logger! lgr)
+    (open-log! lgr)))
+
+(define (shutdown-logging)
+  (flush-log)   ;; since no args, it uses the default
+  (close-log!)  ;; since no args, it uses the default
+  (set-default-logger! #f))
+
 ;; Throw an exception
 (define-method (lazycat-throw msg . info)
   (apply throw 'lazycat-exception msg info))
-
-;; Log debug message.
-(define-method (log-debug (obj <lazycatd>) (message <string>))
-  (if (>= (string->number (hash-ref (get-options obj) 'log-verbosity)) 4)
-      (logger-message (get-logger obj) 'debug message)))
 
 ;;;
 
@@ -200,7 +219,8 @@
   (let ((msg-rsp (make <message> #:type *cmd-stop*)))
     (message-send msg-rsp port))
 
-  (close (get-socket obj)))
+  (close (get-socket obj))
+  (shutdown-logging))
 
 ;; Add a new host to the host list.
 (define-method (lazycat-add (obj     <lazycatd>)
@@ -253,8 +273,8 @@
     (if (eqv? (member object-type *object-types*) #f)
         (lazycat-throw "Wrong object type" object-type))
 
-    (log-debug obj (string-append "lazycat-list: type: "
-                                  (symbol->string object-type)))
+    (log-msg 'DEBUG (string-append "lazycat-list: type: "
+                                   (symbol->string object-type)))
 
     (cond
 
@@ -380,7 +400,7 @@
 ;;
 (define-method (lazycat-exec (obj <lazycatd>) (command <string>))
 
-  (log-debug obj (string-append "lazycat-exec: " command))
+  (log-msg 'DEBUG (string-append "lazycat-exec: " command))
 
   (let* ((host-list  (get-host-list obj))
          (plain-list (host-list-get-plain-list host-list))
@@ -515,7 +535,7 @@
       (lambda ()
         (accept socket))
       (lambda (key . args)
-        (logger-message (get-logger obj) 'err "accept() call was interrupted."))))
+        (log-msg 'ERROR "accept() call was interrupted."))))
 
   (let ((lazycatd-socket (get-socket obj)))
 
@@ -532,9 +552,9 @@
         (let ((message-type (message-get-type msg-req)))
 
           ;; Debug
-          (log-debug obj (string-append
-                          "main-loop: message type: "
-                          (number->string message-type)))
+          (log-msg 'DEBUG (string-append
+                           "main-loop: message type: "
+                           (number->string message-type)))
 
           (catch 'lazycat-exception
 
@@ -586,7 +606,7 @@
                                      #:type        message-type
                                      #:answer-flag #t
                                      #:error-flag  #t)))
-                (logger-message (get-logger obj) 'warning error-message)
+                (log-msg 'WARN error-message)
                 (message-field-set! msg-rsp 'error error-message)
                 (message-send msg-rsp client)))))
 
@@ -594,6 +614,9 @@
 
 
 (define-method (run (obj <lazycatd>))
+
+  (setup-logging)
+
   (if (no-detach? obj)
 
       ;; No-detach mode.  Don't detach from a terminal, and don't

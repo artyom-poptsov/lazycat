@@ -30,7 +30,6 @@
   #:use-module (oop goops)
   #:use-module (ice-9 rdelim)
   #:use-module (lazycat proxy)
-  #:use-module (lazycat logger)
   #:re-export  (handle-send-message
                 handle-set-option!
                 handle-get-option

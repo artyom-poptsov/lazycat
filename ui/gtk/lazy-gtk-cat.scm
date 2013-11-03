@@ -46,7 +46,6 @@
   #:use-module (lazycat ui gtk host-tree)
   #:use-module (lazycat protocol)
   #:use-module (lazycat message)
-  #:use-module (lazycat logger)
   #:export (<lazy-gtk-cat> run))
 
 

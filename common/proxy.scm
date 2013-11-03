@@ -32,7 +32,10 @@
 (define-module (lazycat proxy)
   #:use-module (oop goops)
   #:use-module (ice-9 rdelim)
-  #:use-module (lazycat logger)
+
+  ;; Logging
+  #:use-module (logging logger)
+
   #:use-module (lazycat protocol)
   #:use-module (lazycat message)
   #:export (<proxy> proxy-send-message
@@ -55,7 +58,7 @@
                     handle-start
                     handle-stop
 
-                    log-debug log-info log-error
+                    proxy-log-msg
 
                     proxy-debug? proxy-debug!
                     proxy-error))
@@ -85,13 +88,6 @@
   (socket-file
    #:setter set-socket-file!
    #:getter get-socket-file)
-
-  (logger
-   #:accessor logger
-   #:getter get-logger
-   #:init-value (make <logger>
-                  #:ident "lazycatd"
-                  #:facility 'user))
 
   ;; Proxy socket
   (server-socket
@@ -132,21 +128,9 @@
   (string-append
    "[" (proxy-get-name obj) " (" (number->string (getpid)) ")]: " message))
 
-(define-generic log-error)
-(define-method (log-error (obj <proxy>) (message <string>))
-  (let ((logger (get-logger obj)))
-    (logger-message logger 'err (format-log-message obj message))))
-
-(define-generic log-info)
-(define-method (log-info (obj <proxy>) (message <string>))
-  (let ((logger (get-logger obj)))
-    (logger-message logger 'info (format-log-message obj message))))
-
-(define-generic log-debug)
-(define-method (log-debug (obj <proxy>) (message <string>))
-  (if (proxy-debug? obj)
-      (let ((logger (get-logger obj)))
-        (logger-message logger 'debug (format-log-message obj message)))))
+(define-generic proxy-log-msg)
+(define-method (proxy-log-msg (obj <proxy>) (lvl <symbol>) (message <string>))
+  (log-msg lvl (format-log-message obj message)))
 
 
 ;;; Handlers
@@ -186,12 +170,12 @@
 
 (define-generic handle-start)
 (define-method (handle-start (obj <proxy>))
-  (log-info obj "Started.")
+  (proxy-log-msg obj 'INFO "Started.")
   #t)
 
 (define-generic handle-stop)
 (define-method (handle-stop (obj <proxy>))
-  (log-info obj "Stopped.")
+  (proxy-log-msg obj 'INFO "Stopped.")
   #t)
 
 
@@ -302,8 +286,8 @@
         (message-send msg-req proxy-port)
         (message-recv proxy-port)))
     (lambda (key . args)
-      (log-error obj (string-append
-                      (symbol->string key) ": " (object->string args)))
+      (proxy-log-msg obj 'ERROR (string-append
+                                 (symbol->string key) ": " (object->string args)))
       #f)))
 
 
@@ -316,11 +300,11 @@
       (lambda ()
         (accept socket))
       (lambda (key . args)
-        (log-error obj "accept() call was interrupted."))))
+        (proxy-log-msg obj 'ERROR "accept() call was interrupted."))))
 
   (let* ((proxy-socket (get-server-socket obj)))
 
-    (log-info obj "Server connected.")
+    (proxy-log-msg obj 'INFO "Server connected.")
 
     (while #t
 
@@ -334,8 +318,8 @@
 
         (let ((message-type (message-get-type msg-req)))
 
-          (log-debug obj (string-append
-                          "Message type: " (number->string message-type)))
+          (proxy-log-msg obj 'DEBUG (string-append
+                                     "Message type: " (number->string message-type)))
 
           (catch 'proxy-error
 

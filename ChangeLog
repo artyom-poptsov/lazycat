@@ -1,5 +1,15 @@
 2013-11-03  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* common/proxy.scm: Use the standard logger provided by GNU Guile.
+	(log-error, log-info, log-debug): Remove.
+	(proxy-log-msg): New procedure.
+	* lazycat-daemon/lazycatd.scm: Likewise.
+	(log-debug): Remove.
+	(setup-logging, shutdown-logging): New procedures.
+	* proxies/ssh-proxy/ssh-proxy.scm,
+	proxies/tcp-proxy/tcp-proxy.scm, ui/gtk/lazy-gtk-cat.scm:
+	Likewise.
+
 	* proxies/ssh-proxy/ssh-proxy.scm: Make it work with new Guile-SSH
 	API.
 

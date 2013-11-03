@@ -31,7 +31,6 @@
 (define-module (lazycat proxies ssh-proxy)
   #:use-module (ice-9 regex)
   #:use-module (lazycat proxy)
-  #:use-module (lazycat logger)
   #:use-module (oop goops)
   #:use-module (ssh channel)
   #:use-module (ssh session)
@@ -104,7 +103,7 @@
 
 ;; Make a SSH session and connect to ADDRESS
 (define-method (make-new-session (obj <ssh-proxy>) (address <string>))
-  (log-debug obj (string-append "Parse the address: " address))
+  (proxy-log-msg obj 'DEBUG (string-append "Parse the address: " address))
 
   (let ((connection-data (parse-address address)))
 
@@ -116,7 +115,7 @@
            (port     (string->number (caddr connection-data)))
            (session  #f))
 
-      (log-debug obj "Making a new SSH session...")
+      (proxy-log-msg obj 'DEBUG "Making a new SSH session...")
 
       (catch 'guile-ssh-error
         (lambda ()
@@ -127,19 +126,19 @@
         (lambda (key . args)
           (proxy-error (get-error session) args)))
 
-      (log-debug obj "Connect to a host.")
+      (proxy-log-msg obj 'DEBUG "Connect to a host.")
 
       (let ((res (connect! session)))
         (case res
           ((ok)
-           (log-debug obj "Connected."))
+           (proxy-log-msg obj 'DEBUG "Connected."))
           (else
            (proxy-error (get-error session) res))))
 
       ;; TODO: Authenticate server
                                         ;    (ssh:authenticate-server session)
 
-      (log-debug obj "Get private and public keys.")
+      (proxy-log-msg obj 'DEBUG "Get private and public keys.")
 
       (let* ((pkey-file   (hash-ref (get-options obj) 'private-key))
              (private-key (private-key-from-file session pkey-file)))
@@ -151,7 +150,7 @@
 
         (let ((public-key (private-key->public-key private-key)))
 
-          (log-debug obj "Authenticate user with a public key.")
+          (proxy-log-msg obj 'DEBUG "Authenticate user with a public key.")
 
           (let ((res (userauth-pubkey! session #f public-key private-key)))
             (if (eqv? res 'error)
@@ -166,7 +165,7 @@
 ;; SSH specific logging procedures
 
 (define-method (log-error (obj <ssh-proxy>) (session <session>))
-  (log-error obj (get-error session)))
+  (proxy-log-msg obj 'ERROR (get-error session)))
 
 
 ;;; Interface implementation
@@ -187,7 +186,7 @@
           (hash-set! ssh-sessions address (make-new-session obj address))
           (set! session (hash-ref ssh-sessions address))))
 
-    (log-debug obj "Make a new SSH channel")
+    (proxy-log-msg obj 'DEBUG "Make a new SSH channel")
     (let ((channel (make-channel session)))
 
       (if (not channel)
@@ -195,7 +194,7 @@
             (log-error obj session)
             (proxy-error (get-error session))))
 
-      (log-debug obj "Open SSH session")
+      (proxy-log-msg obj 'DEBUG "Open SSH session")
 
       (catch 'guile-ssh-error
         (lambda ()
@@ -207,11 +206,11 @@
             (log-error obj session)
             (proxy-error (get-error session)))))
 
-      (log-debug obj "Poll SSH channel")
+      (proxy-log-msg obj 'DEBUG "Poll SSH channel")
       (let ((res (poll-channel channel)))
         (blocking-flush! session 10)
         (free-channel! channel)
-        (log-debug obj "Data received")
+        (proxy-log-msg obj 'DEBUG "Data received")
         res))))
 
 
