@@ -94,12 +94,12 @@
 ;; Poll a channel CHANNEL for data and read available data.
 ;; Return obtained data.
 (define (poll-channel channel)
-  (let poll ((count (ssh:channel-poll channel #f)))
+  (let poll ((count (channel-poll channel #f)))
     (if (not count)
         #f
         (if (zero? count)
-            (poll (ssh:channel-poll channel #f))
-            (let ((result (ssh:channel-read channel count #f)))
+            (poll (channel-poll channel #f))
+            (let ((result (channel-read channel count #f)))
               result)))))
 
 ;; Make a SSH session and connect to ADDRESS
@@ -111,41 +111,30 @@
     (if (not connection-data)
         (proxy-error "Wrong address" address))
 
-    (let ((username (car connection-data))
-          (hostname (cadr connection-data))
-          (port     (string->number (caddr connection-data)))
-          (session  (ssh:make-session)))
+    (let* ((username (car connection-data))
+           (hostname (cadr connection-data))
+           (port     (string->number (caddr connection-data)))
+           (session  #f))
 
-      (log-debug obj "Set SSH session options.")
+      (log-debug obj "Making a new SSH session...")
 
-      (if (not (ssh:session-set! session 'user username))
-          (begin
-            (log-error obj session)
-            (proxy-error (ssh:get-error session) username)))
-
-      (if (not (ssh:session-set! session 'host hostname))
-          (begin
-            (log-error obj session)
-            (proxy-error (ssh:get-error session) hostname)))
-
-      (if (not (ssh:session-set! session 'port port))
-          (begin
-            (log-error obj session)
-            (proxy-error (ssh:get-error session) port)))
-      
-      (if (not (ssh:session-set! session 'log-verbosity
-                                 (if (proxy-debug? obj) 1 0)))
-          (begin
-            (log-error obj session)
-            (proxy-error (ssh:get-error session))))
+      (catch 'guile-ssh-error
+        (lambda ()
+          (set! session (make-session #:user username
+                                          #:host hostname
+                                          #:port port
+                                          #:log-verbosity (if (proxy-debug? obj) 1 0))))
+        (lambda (key . args)
+          (proxy-error (get-error session) args)))
 
       (log-debug obj "Connect to a host.")
 
-      (let ((res (ssh:connect! session))) 
-        (if (eqv? res 'error)
-            (begin
-              (log-error obj session)
-              (proxy-error (ssh:get-error session) res))))
+      (let ((res (connect! session)))
+        (case res
+          ((ok)
+           (log-debug obj "Connected."))
+          (else
+           (proxy-error (get-error session) res))))
 
       ;; TODO: Authenticate server
                                         ;    (ssh:authenticate-server session)
@@ -153,22 +142,22 @@
       (log-debug obj "Get private and public keys.")
 
       (let* ((pkey-file   (hash-ref (get-options obj) 'private-key))
-             (private-key (ssh:private-key-from-file session pkey-file)))
+             (private-key (private-key-from-file session pkey-file)))
 
         (if (not private-key)
             (begin
               (log-error obj session)
-              (proxy-error (ssh:get-error session))))
+              (proxy-error (get-error session))))
 
-        (let ((public-key (ssh:private-key->public-key private-key)))
+        (let ((public-key (private-key->public-key private-key)))
 
           (log-debug obj "Authenticate user with a public key.")
 
-          (let ((res (ssh:userauth-pubkey! session #f public-key private-key)))
+          (let ((res (userauth-pubkey! session #f public-key private-key)))
             (if (eqv? res 'error)
                 (begin
                   (log-error obj session)
-                  (proxy-error (ssh:get-error session) res))))
+                  (proxy-error (get-error session) res))))
 
           session)))))
 
@@ -176,8 +165,8 @@
 ;;; Logging
 ;; SSH specific logging procedures
 
-(define-method (log-error (obj <ssh-proxy>) (session <ssh:session>))
-  (log-error obj (ssh:get-error session)))
+(define-method (log-error (obj <ssh-proxy>) (session <session>))
+  (log-error obj (get-error session)))
 
 
 ;;; Interface implementation
@@ -199,28 +188,29 @@
           (set! session (hash-ref ssh-sessions address))))
 
     (log-debug obj "Make a new SSH channel")
-    (let ((channel (ssh:make-channel session)))
+    (let ((channel (make-channel session)))
 
       (if (not channel)
           (begin
             (log-error obj session)
-            (proxy-error (ssh:get-error session))))
+            (proxy-error (get-error session))))
 
       (log-debug obj "Open SSH session")
-      (if (not (ssh:channel-open-session channel))
-          (begin
-            (log-error obj session)
-            (proxy-error (ssh:get-error session))))
 
-      (if (not (ssh:channel-request-exec channel message))
+      (catch 'guile-ssh-error
+        (lambda ()
+          (begin 
+            (channel-open-session channel)
+            (channel-request-exec channel message)))
+        (lambda (key . args)
           (begin
             (log-error obj session)
-            (proxy-error (ssh:get-error session))))
+            (proxy-error (get-error session)))))
 
       (log-debug obj "Poll SSH channel")
       (let ((res (poll-channel channel)))
-        (ssh:blocking-flush! session 10)
-        (ssh:free-channel! channel)
+        (blocking-flush! session 10)
+        (free-channel! channel)
         (log-debug obj "Data received")
         res))))
 

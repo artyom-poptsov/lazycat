@@ -1,3 +1,8 @@
+2013-11-03  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* proxies/ssh-proxy/ssh-proxy.scm: Make it work with new Guile-SSH
+	API.
+
 2013-08-18  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/lc.scm (lazycat-add, lazycat-diff): Use getopt-long for
