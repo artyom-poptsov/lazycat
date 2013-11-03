@@ -1,5 +1,11 @@
 2013-11-03  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/lazycatd.scm (setup-logging, run): Fix two bugs:
+	tell the logger don't use stderr if the daemon is running in
+	detached mode.  Open "/dev/null" as stdout and stderr after
+	closing these ports to prevent `with-output-to-string' from
+	restoring closed ports.
+
 	* lazycat-daemon/server.c: Rename to lazycat-daemon.c
 	* lazycat-daemon/Makefile.am (lazycat_daemon_SOURCES): Update.
 	* lazycat-daemon/Makefile.in: Update.

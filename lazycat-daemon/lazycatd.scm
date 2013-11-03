@@ -146,23 +146,26 @@
 
 ;;; Helper procedures
 
-(define (setup-logging)
+(define-method (setup-logging (self <lazycatd>))
+
   (let ((lgr       (make <logger>))
         (rotating  (make <rotating-log>
                      #:num-files 1
                      #:size-limit 10000
-                     #:file-name "/tmp/lazycat/lazycat.log"))
-        (err       (make <port-log> #:port (current-error-port))))
+                     #:file-name "/tmp/lazycat/lazycat.log")))
 
-    ;; don't want to see warnings or info on the screen!
-    (disable-log-level! err 'WARN)
-    (disable-log-level! err 'INFO)
-    (disable-log-level! err 'DEBUG)
-    
+    (if (no-detach? self)
+        (let ((err (make <port-log> #:port (current-error-port))))
+          (if (not (debug? self))
+              (begin
+                ;; don't want to see warnings or info on the screen!
+                (disable-log-level! err 'WARN)
+                (disable-log-level! err 'INFO)
+                (disable-log-level! err 'DEBUG)))
+          (add-handler! lgr err)))
+
     ;; add the handlers to our logger
     (add-handler! lgr rotating)
-    (add-handler! lgr err)
-    
     ;; make this the application's default logger
     (set-default-logger! lgr)
     (open-log! lgr)))
@@ -614,9 +617,7 @@
 
 
 (define-method (run (obj <lazycatd>))
-
-  (setup-logging)
-
+  (setup-logging obj)
   (if (no-detach? obj)
 
       ;; No-detach mode.  Don't detach from a terminal, and don't
@@ -636,6 +637,13 @@
               (close-port (current-output-port))
               (close-port (current-error-port))
 
+              ;; This is the workaround for problem with
+              ;; `with-output-to-string' procedure which tries to
+              ;; restore the default port even if it closed.
+              (let ((p (open-output-file "/dev/null")))
+                (set-current-output-port p)
+                (set-current-error-port  p))
+
               (setsid)
 
               ;; This call is here because we want to get a nice
@@ -643,7 +651,6 @@
               ;; So all proxy processes will be descendants of
               ;; lazycat-daemon.
               (proxy-list-load (get-proxy-list obj))
-              
               (open-socket   obj)
               (make-thread (periodical-ping obj))
               (main-loop     obj))
