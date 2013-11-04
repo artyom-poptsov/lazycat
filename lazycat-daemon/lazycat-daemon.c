@@ -1,4 +1,4 @@
-/* LazyCat server.
+/* lazycat-daemon.c -- LazyCat daemon.
  *
  * Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
  *
@@ -29,7 +29,7 @@ inner_main (void* closure, int argc, char** argv)
   SCM args;
   SCM module;
 
-  module = scm_c_resolve_module ("lazycat lazycat-daemon main");
+  module = scm_c_resolve_module ("lazycat lazycat-daemon lazycatd");
   main   = scm_c_module_lookup (module, "main");
   args   = scm_program_arguments ();
 
@@ -47,4 +47,4 @@ main (int argc, char* argv[])
   return 0;
 }
 
-/* server.c ends here */
+/* lazycat-daemon.c ends here */

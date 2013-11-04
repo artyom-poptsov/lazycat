@@ -33,6 +33,7 @@
   #:use-module (oop goops)
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 threads)
+  #:use-module (ice-9 getopt-long)
   ;; Logging
   #:use-module (logging logger)
   #:use-module (logging rotating-log)
@@ -69,7 +70,7 @@
    #:init-keyword #:no-detach-mode
    #:getter       no-detach?
    #:init-value   #t)
-
+  
   (debug-mode
    #:init-keyword #:debug-mode
    #:getter       debug?
@@ -616,48 +617,86 @@
           (close client)))))
 
 
-(define-method (run (obj <lazycatd>))
-  (setup-logging obj)
-  (if (no-detach? obj)
+;;; Entry point of the program.
 
-      ;; No-detach mode.  Don't detach from a terminal, and don't
-      ;; become a daemon.
-      (begin
-        (proxy-list-load (get-proxy-list obj))
-        (open-socket obj)
-        (make-thread (periodical-ping obj))
-        (main-loop   obj))
+;; Command line options specification
+(define *option-spec*
+  '((debug     (single-char #\d) (value #f))
+    (no-detach (single-char #\D) (value #f))
+    (help      (single-char #\h) (value #f))))
 
-      ;; Regular mode.
-      (let ((pid (primitive-fork)))
-        (if (zero? pid)
+(define (print-help)
+  "Print the help message"
+  (display
+   (string-append
+    "Usage: lazycat-daemon [ -dDh ]\n"
+    "\n"
+    "Options:\n"
+    "\t" "-d, --debug        Debug mode.\n"
+    "\t" "-D, --no-detach    Don't detach from a terminal and don't become a\n"
+    "\t" "                   daemon.  Useful for debugging.\n"
+    "\t" "-h, --help         Print this message and exit.\n")))
 
-            (begin
-              (close-port (current-input-port))
-              (close-port (current-output-port))
-              (close-port (current-error-port))
+(define (main args)
+  "Entry point of the program.  It is called from the C code and
+starts LazyCat daemon."
+  (let* ((options       (getopt-long args *option-spec*))
+         (debug-needed? (option-ref options 'debug     #f))
+         (no-detach?    (option-ref options 'no-detach #f))
+         (help-needed?  (option-ref options 'help      #f)))
 
-              ;; This is the workaround for problem with
-              ;; `with-output-to-string' procedure which tries to
-              ;; restore the default port even if it closed.
-              (let ((p (open-output-file "/dev/null")))
-                (set-current-output-port p)
-                (set-current-error-port  p))
+    (if help-needed?
+        (begin
+          (print-help)
+          (quit)))
 
-              (setsid)
+    (let ((lazycatd (make <lazycatd>
+                      #:no-detach-mode no-detach?
+                      #:debug-mode     debug-needed?)))
 
-              ;; This call is here because we want to get a nice
-              ;; process hierarhy in process manager such as htop.
-              ;; So all proxy processes will be descendants of
-              ;; lazycat-daemon.
-              (proxy-list-load (get-proxy-list obj))
-              (open-socket   obj)
-              (make-thread (periodical-ping obj))
-              (main-loop     obj))
+      (setup-logging lazycatd)
 
-            (begin
-              ;; FIXME: Fix it.
-              ;; (create-pid-file obj pid)
-              (quit))))))
+      (if no-detach?
+
+          ;; No-detach mode.  Don't detach from a terminal, and don't
+          ;; become a daemon.
+          (begin
+            (proxy-list-load (get-proxy-list lazycatd))
+            (open-socket lazycatd)
+            (make-thread (periodical-ping lazycatd))
+            (main-loop   lazycatd))
+
+          ;; Regular mode.
+          (let ((pid (primitive-fork)))
+            (if (zero? pid)
+
+                (begin
+                  (close-port (current-input-port))
+                  (close-port (current-output-port))
+                  (close-port (current-error-port))
+
+                  ;; This is the workaround for problem with
+                  ;; `with-output-to-string' procedure which tries to
+                  ;; restore the default port even if it closed.
+                  (let ((p (open-output-file "/dev/null")))
+                    (set-current-output-port p)
+                    (set-current-error-port  p))
+
+                  (setsid)
+
+                  ;; This call is here because we want to get a nice
+                  ;; process hierarhy in process manager such as htop.
+                  ;; So all proxy processes will be descendants of
+                  ;; lazycat-daemon.
+                  (proxy-list-load (get-proxy-list lazycatd))
+                  
+                  (open-socket lazycatd)
+                  (make-thread (periodical-ping lazycatd))
+                  (main-loop   lazycatd))
+
+                (begin
+                  ;; FIXME: Fix it.
+                  ;; (create-pid-file obj pid)
+                  (quit))))))))
 
 ;;; lazycatd.scm ends here.
