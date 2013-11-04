@@ -558,7 +558,8 @@
           ;; Debug
           (log-msg 'DEBUG (string-append
                            "main-loop: message type: "
-                           (number->string message-type)))
+                           (message-type->string message-type)
+                           " (" (number->string message-type) ")"))
 
           (catch 'lazycat-exception
 

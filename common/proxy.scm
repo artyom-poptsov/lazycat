@@ -319,7 +319,9 @@
         (let ((message-type (message-get-type msg-req)))
 
           (proxy-log-msg obj 'DEBUG (string-append
-                                     "Message type: " (number->string message-type)))
+                                     "Message type: "
+                                     (message-type->string message-type)
+                                     " (" (number->string message-type) ")"))
 
           (catch 'proxy-error
 
