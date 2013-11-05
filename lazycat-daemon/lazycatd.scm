@@ -215,8 +215,10 @@
   (newline port))
 
 
+;;; Request handlers
+
 ;; Stop the lazycat daemon.
-(define-method (lazycat-stop (obj <lazycatd>) (port <port>))
+(define-method (handle-stop-req (obj <lazycatd>) (port <port>))
   (host-list-save (get-host-list obj))
   (proxy-list-stop-all (get-proxy-list obj))
 
@@ -227,9 +229,9 @@
   (shutdown-logging))
 
 ;; Add a new host to the host list.
-(define-method (lazycat-add (obj     <lazycatd>)
-                            (msg-req <message>)
-                            (client  <port>))
+(define-method (handle-add-req (obj     <lazycatd>)
+                               (msg-req <message>)
+                               (client  <port>))
 
   (let ((group       (message-field-ref msg-req 'group))
         (name        (message-field-ref msg-req 'name))
@@ -249,9 +251,9 @@
       (message-send msg-rsp client))))
 
 ;; Remove the host with given HOST-ID from the host list.
-(define-method (lazycat-rem (obj     <lazycatd>)
-                            (msg-req <message>)
-                            (client  <port>))
+(define-method (handle-rem-req (obj     <lazycatd>)
+                               (msg-req <message>)
+                               (client  <port>))
   (let ((host-list (get-host-list obj))
         (host-id   (message-field-ref msg-req 'host-id)))
 
@@ -265,9 +267,9 @@
 ;; Get list of objects with the given type TYPE.
 ;;
 ;; Throws lazycat-exception on error.
-(define-method (lazycat-list (obj     <lazycatd>)
-                             (msg-req <message>)
-                             (client  <port>))
+(define-method (handle-list-req (obj     <lazycatd>)
+                                (msg-req <message>)
+                                (client  <port>))
 
   (let ((object-type (message-field-ref msg-req 'object-type)))
 
@@ -297,9 +299,9 @@
         (message-send msg-rsp client))))))
 
 ;; Get value of an option OPTION
-(define-method (lazycat-get (obj     <lazycatd>)
-                            (msg-req <message>)
-                            (client  <port>))
+(define-method (handle-get-req (obj     <lazycatd>)
+                                (msg-req <message>)
+                                (client  <port>))
   (let ((option (message-field-ref msg-req 'option)))
 
     (if (or (not option) (null? option))
@@ -317,9 +319,9 @@
 ;; Set a VALUE for the OPTION.
 ;;
 ;; Throws lazycat-exception on error.
-(define-method (lazycat-set (obj     <lazycatd>)
-                            (msg-req <message>)
-                            (client  <port>))
+(define-method (handle-set-req (obj     <lazycatd>)
+                               (msg-req <message>)
+                               (client  <port>))
   (let ((option (message-field-ref msg-req 'option))
         (value  (message-field-ref msg-req 'value)))
 
@@ -338,12 +340,12 @@
             (message-send msg-rsp client))))))
 
 
-(define-generic lazycat-exec)
+(define-generic handle-exec-req)
 
 ;; Execute a command and send output to the CLIENT.
-(define-method (lazycat-exec (obj     <lazycatd>)
-                             (msg-req <message>)
-                             (client  <port>))
+(define-method (handle-exec-req (obj     <lazycatd>)
+                                (msg-req <message>)
+                                (client  <port>))
 
   (let ((host-id (message-field-ref msg-req 'host-id))
         (command (message-field-ref msg-req 'command)))
@@ -353,12 +355,12 @@
 
     (if (and host-id (not (null? host-id)))
 
-      (let ((output  (lazycat-exec obj host-id command))
+      (let ((output  (handle-exec-req obj host-id command))
             (msg-rsp (make <message> #:type *cmd-exec*)))
         (message-field-set! msg-rsp 'output (list output))
         (message-send msg-rsp client))
 
-      (let ((output  (lazycat-exec obj command))
+      (let ((output  (handle-exec-req obj command))
             (msg-rsp (make <message> #:type *cmd-exec*)))
         (message-field-set! msg-rsp 'output output)
         (message-send msg-rsp client)))))
@@ -371,9 +373,9 @@
 ;;   <status>       = <scheme-boolean>
 ;;   <output>       = <scheme-string>
 ;;
-(define-method (lazycat-exec (obj     <lazycatd>)
-                             (host-id <number>)
-                             (command <string>))
+(define-method (handle-exec-req (obj     <lazycatd>)
+                                (host-id <number>)
+                                (command <string>))
   (let* ((host-list    (get-host-list obj))
          (proxy-list   (get-proxy-list obj))
          (host         (host-list-get-host-by-id host-list host-id)))
@@ -402,7 +404,7 @@
 ;;   <status>       = <scheme-boolean>
 ;;   <output>       = <scheme-string>
 ;;
-(define-method (lazycat-exec (obj <lazycatd>) (command <string>))
+(define-method (handle-exec-req (obj <lazycatd>) (command <string>))
 
   (log-msg 'DEBUG (string-append "lazycat-exec: " command))
 
@@ -414,7 +416,7 @@
 
      (lambda (host)
        (let* ((host-id  (host-get-id host))
-              (response (lazycat-exec obj host-id command)))
+              (response (handle-exec-req obj host-id command)))
          (set! result (cons response result))))
 
      plain-list)
@@ -423,9 +425,9 @@
 
 ;; Compare output from hosts with an output from the master host.
 ;; Return diffs.  Throw lazycat-diff-error on error.
-(define-method (lazycat-diff (obj     <lazycatd>)
-                             (msg-req <message>)
-                             (client  <port>))
+(define-method (handle-diff-req (obj     <lazycatd>)
+                                (msg-req <message>)
+                                (client  <port>))
 
   ;; Return:
   ;;   <result> ::= ( <host-id> ( <status> <output> ) )
@@ -498,6 +500,8 @@
       (lazycat-throw "Wrong action" action)))))
 
 
+;;;
+
 ;; Ping hosts periodically and update their statuses.
 (define-method (periodical-ping (obj <lazycatd>))
   (setpriority PRIO_PROCESS 0 *periodical-ping-thread-prio*)
@@ -531,6 +535,8 @@
         (sleep period)))))
 
 
+;;; Main loop
+
 (define-method (main-loop (obj <lazycatd>))
 
   ;; Wrapper for accept() that catch errors.
@@ -573,36 +579,36 @@
 
                ;; List objects
                ((= message-type *cmd-list*)
-                (lazycat-list obj msg-req client))
+                (handle-list-req obj msg-req client))
 
                ;; Add a new host
                ((= message-type *cmd-add-host*)
-                (lazycat-add obj msg-req client))
+                (handle-add-req obj msg-req client))
 
                ;; Remote a host
                ((= message-type *cmd-rem-host*)
-                (lazycat-rem obj msg-req client))
+                (handle-rem-req obj msg-req client))
 
                ;; Get an option value
                ((= message-type *cmd-get*)
-                (lazycat-get obj msg-req client))
+                (handle-get-req obj msg-req client))
 
                ;; Set an option
                ((= message-type *cmd-set*)
-                (lazycat-set obj msg-req client))
+                (handle-set-req obj msg-req client))
 
                ;; Execute a command
                ((= message-type *cmd-exec*)
-                (lazycat-exec obj msg-req client))
+                (handle-exec-req obj msg-req client))
 
                ;; Get a diff
                ((= message-type *cmd-diff*)
-                (lazycat-diff obj msg-req client))
+                (handle-diff-req obj msg-req client))
 
                ;; Stop the daemon
                ((eq? message-type *cmd-stop*)
                 (begin
-                  (lazycat-stop obj client)
+                  (handle-stop-req obj client)
                   (break)))))
 
             (lambda (key . args)

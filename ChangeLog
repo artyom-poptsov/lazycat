@@ -2,6 +2,15 @@
 
 	* lazycat-daemon/lazycatd.scm (lazycat-list, lazycat-diff):
 	Replace `cond' with `case'.
+	(lazycat-stop): Rename to `handle-stop-req'.
+	(lazycat-add): Rename to `handle-add-req'.
+	(lazycat-rem): Rename to `handle-rem-req'.
+	(lazycat-list): Rename to `handle-list-req'.
+	(lazycat-get): Rename to `handle-get-req'.
+	(lazycat-set): Rename to `handle-set-req'.
+	(lazycat-exec): Rename to `handle-exec-req'.
+	(lazycat-diff): Rename to `handle-diff-req'.
+	(main-loop): Update calls to request handlers.
 
 2013-11-04  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
