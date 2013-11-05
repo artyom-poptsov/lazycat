@@ -280,16 +280,16 @@
     (log-msg 'DEBUG (string-append "lazycat-list: type: "
                                    (symbol->string object-type)))
 
-    (cond
+    (case object-type
 
-     ((eq? object-type 'host)
+     ((host)
       (let* ((host-list   (get-host-list obj))
              (object-list (host-list-get-serialized-list host-list))
              (msg-rsp     (make <message> #:type *cmd-list*)))
         (message-field-set! msg-rsp 'object-list object-list)
         (message-send msg-rsp client)))
 
-     ((eq? object-type 'option)
+     ((option)
       (let* ((options     (get-options obj))
              (object-list (hash-map->list cons options))
              (msg-rsp     (make <message> #:type *cmd-list*)))
@@ -455,9 +455,9 @@
     (if (or (not action) (null? action))
         (lazycat-throw "Malformed message" args))
 
-    (cond
+    (case action
 
-     ((eq? action 'get-pattern)
+     ((get-pattern)
       (let* ((command (message-field-ref msg-req 'command))
              (master (string->number (hash-ref (get-options obj) 'master)))
              (result (cadr (lazycat-exec obj master command))))
@@ -468,7 +468,7 @@
           (message-field-set! msg-rsp 'output (list master result))
           (message-send msg-rsp client))))
 
-     ((eq? action 'continue)
+     ((continue)
       (if (not (eq? (get-pattern obj) #f))
           (let* ((host-list  (get-host-list obj))
                  (plain-list (host-list-get-plain-list host-list))
@@ -489,12 +489,12 @@
 
           (lazycat-throw "No pattern found")))
 
-     ((eq? action 'abort)
+     ((abort)
       (let ((msg-rsp (make <message> #:type *cmd-diff*)))
         (set-pattern! obj #f)
         (message-send msg-rsp client)))
 
-     (#t
+     (else
       (lazycat-throw "Wrong action" action)))))
 
 

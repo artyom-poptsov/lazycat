@@ -1,3 +1,8 @@
+2013-11-05  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat-daemon/lazycatd.scm (lazycat-list, lazycat-diff):
+	Replace `cond' with `case'.
+
 2013-11-04  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* lazycat-daemon/lazycatd.scm (main-loop): Improve debug messages.
