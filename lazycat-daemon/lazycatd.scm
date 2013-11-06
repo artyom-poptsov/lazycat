@@ -46,6 +46,7 @@
   #:use-module (lazycat lazycat-daemon host-list)
   #:use-module (lazycat lazycat-daemon proxy-list)
   #:use-module (lazycat lazycat-daemon diff)
+  #:use-module (lazycat lazycat-daemon curiosity)
   #:export (<lazycatd> run))
 
 
@@ -667,10 +668,12 @@ starts LazyCat daemon."
 
           ;; No-detach mode.  Don't detach from a terminal, and don't
           ;; become a daemon.
-          (begin
-            (proxy-list-load (get-proxy-list lazycatd))
-            (open-socket lazycatd)
+          (let ((proxy-list (get-proxy-list lazycatd))
+                (host-list  (get-host-list lazycatd)))
+            (proxy-list-load proxy-list)
             (make-thread (periodical-ping lazycatd))
+            (make-thread (curiosity host-list proxy-list))
+            (open-socket lazycatd)
             (main-loop   lazycatd))
 
           ;; Regular mode.
@@ -691,15 +694,13 @@ starts LazyCat daemon."
 
                   (setsid)
 
-                  ;; This call is here because we want to get a nice
-                  ;; process hierarhy in process manager such as htop.
-                  ;; So all proxy processes will be descendants of
-                  ;; lazycat-daemon.
-                  (proxy-list-load (get-proxy-list lazycatd))
-                  
-                  (open-socket lazycatd)
-                  (make-thread (periodical-ping lazycatd))
-                  (main-loop   lazycatd))
+                  (let ((proxy-list (get-proxy-list lazycatd))
+                        (host-list  (get-host-list lazycatd)))
+                    (proxy-list-load proxy-list)
+                    (make-thread (periodical-ping lazycatd))
+                    (make-thread (curiosity host-list proxy-list))
+                    (open-socket lazycatd)
+                    (main-loop   lazycatd)))
 
                 (begin
                   ;; FIXME: Fix it.

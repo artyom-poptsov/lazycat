@@ -42,7 +42,8 @@
   #:use-module (oop goops)
   #:export (<host>
             host-get-id host-get-name host-get-proxy-list host-get-address
-            host-get-description host-get-status host-set-status!))
+            host-get-description host-get-status host-set-status!
+            host-get-attr host-set-attr!))
 
 
 ;;; Main class
@@ -79,19 +80,18 @@
   (status
    #:setter host-set-status!
    #:getter host-get-status
-   #:init-value 'offline))
+   #:init-value 'offline)
+
+  (attr
+   #:getter get-attr
+   #:init-value (make-hash-table)))
 
 ;; Host initialization
 (define-method (initialize (obj <host>) args)
   (next-method))
 
 
-;;;
 ;;; Public methods
-;;;
-
-
-;;; Setters
 
 ;; Rename the host to NEW-NAME
 (define-method (host-set-name! (obj <host>) (new-name <string>))
@@ -130,5 +130,11 @@
 
 (define-method (host-set-id! (obj <host>) (id <number>))
   (set-id! obj id))
+
+(define-method (host-set-attr! (obj <host>) key val)
+  (hash-set! (get-attr obj) key val))
+
+(define-method (host-get-attr (obj <host>) key)
+  (hash-get (get-attr obj) key))
 
 ;;; host.scm ends here

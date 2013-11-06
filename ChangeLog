@@ -1,3 +1,11 @@
+2013-11-06  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Add a bit of curiosity.
+	* lazycat-daemon/host.scm (host-set-attr!, host-get-attr): New
+	methods.
+	* lazycat-daemon/curiosity.scm: Add to the repository.
+	* lazycat-daemon/lazycatd.scm (main): Add curiosity.
+
 2013-11-05  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* lazycat-daemon/lazycatd.scm (lazycat-list, lazycat-diff):
