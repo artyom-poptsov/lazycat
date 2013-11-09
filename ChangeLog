@@ -1,6 +1,7 @@
 2013-11-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* configure.ac: Use `AC_COPYRIGHT' to store copyright information.
+	Remove unneeded checks.
 	* configure: Update.
 
 2013-11-06  Artyom Poptsov  <poptsov.artyom@gmail.com>

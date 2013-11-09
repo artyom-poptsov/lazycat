@@ -43,17 +43,6 @@ GUILE_MODULE_REQUIRED(ssh session)
 AC_CHECK_FUNCS([mkdir socket])
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/socket.h syslog.h unistd.h])
 
-# Check for libssh
-AC_CHECK_LIB([ssh], [ssh_new], [], AC_MSG_ERROR([libssh is not found.], [1]))
-
-# Check libssh API version
-AC_CHECK_LIB([ssh], [ssh_channel_new],
-                    [],
-                    [AC_CHECK_LIB([ssh], [channel_new],
-                      [AC_MSG_NOTICE([Old libssh 0.4.x API is found.])
-                       AC_DEFINE(LIBSSH_0_4, 1, [Old libssh API])],
-                      AC_MSG_ERROR([No suitable libssh API is found (required 0.4.x or 0.5.x)]))])
-
 AC_FUNC_FORK
 AC_FUNC_MALLOC
 
