@@ -3,6 +3,8 @@
 	* lazycat-daemon/lazycatd.scm (main): Write PID of the daemon to a
 	.pid file.
 	(create-pid-file): Close the port after writing.
+	(handle-exec-req): Don't use generic methods for handling exec
+	request.
 
 2013-11-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
 

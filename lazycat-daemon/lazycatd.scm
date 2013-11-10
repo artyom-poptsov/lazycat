@@ -60,6 +60,8 @@
 ;; Accessible options
 (define *options* '(master log-verbosity ping-interval))
 
+(define *default-ping-interval* 30)     ;Seconds
+
 ;; Priority of the periodical ping thread.
 (define *periodical-ping-thread-prio* 15)
 
@@ -115,8 +117,7 @@
    #:getter get-pattern
    #:init-value #f))
 
-(define *default-ping-interval* 30)     ;Seconds
-
+
 (define-method (initialize (obj <lazycatd>) args)
   (next-method)
 
@@ -341,30 +342,7 @@
             (message-send msg-rsp client))))))
 
 
-(define-generic handle-exec-req)
-
-;; Execute a command and send output to the CLIENT.
-(define-method (handle-exec-req (obj     <lazycatd>)
-                                (msg-req <message>)
-                                (client  <port>))
-
-  (let ((host-id (message-field-ref msg-req 'host-id))
-        (command (message-field-ref msg-req 'command)))
-
-    (if (or (not command) (null? command))
-        (lazycat-throw "Malformed message" args))
-
-    (if (and host-id (not (null? host-id)))
-
-      (let ((output  (handle-exec-req obj host-id command))
-            (msg-rsp (make <message> #:type *cmd-exec*)))
-        (message-field-set! msg-rsp 'output (list output))
-        (message-send msg-rsp client))
-
-      (let ((output  (handle-exec-req obj command))
-            (msg-rsp (make <message> #:type *cmd-exec*)))
-        (message-field-set! msg-rsp 'output output)
-        (message-send msg-rsp client)))))
+;;; exec request
 
 ;; Execute a command COMMAND on a host with given HOST-ID.
 ;;
@@ -374,9 +352,9 @@
 ;;   <status>       = <scheme-boolean>
 ;;   <output>       = <scheme-string>
 ;;
-(define-method (handle-exec-req (obj     <lazycatd>)
-                                (host-id <number>)
-                                (command <string>))
+(define-method (exec-cmd-on-host (obj     <lazycatd>)
+                                 (host-id <number>)
+                                 (command <string>))
   (let* ((host-list    (get-host-list obj))
          (proxy-list   (get-proxy-list obj))
          (host         (host-list-get-host-by-id host-list host-id)))
@@ -405,9 +383,9 @@
 ;;   <status>       = <scheme-boolean>
 ;;   <output>       = <scheme-string>
 ;;
-(define-method (handle-exec-req (obj <lazycatd>) (command <string>))
+(define-method (exec-cmd (obj <lazycatd>) (cmd <string>))
 
-  (log-msg 'DEBUG (string-append "lazycat-exec: " command))
+  (log-msg 'DEBUG (string-append "lazycat-exec: " cmd))
 
   (let* ((host-list  (get-host-list obj))
          (plain-list (host-list-get-plain-list host-list))
@@ -417,12 +395,37 @@
 
      (lambda (host)
        (let* ((host-id  (host-get-id host))
-              (response (handle-exec-req obj host-id command)))
+              (response (exec-cmd-on-host obj host-id cmd)))
          (set! result (cons response result))))
 
      plain-list)
 
     result))
+
+;; Execute a command and send output to the CLIENT.
+(define-method (handle-exec-req (obj     <lazycatd>)
+                                (msg-req <message>)
+                                (client  <port>))
+
+  (let ((host-id (message-field-ref msg-req 'host-id))
+        (command (message-field-ref msg-req 'command)))
+
+    (if (or (not command) (null? command))
+        (lazycat-throw "Malformed message" args))
+
+    (if (and host-id (not (null? host-id)))
+
+      (let ((output  (exec-cmd-on-host obj host-id command))
+            (msg-rsp (make <message> #:type *cmd-exec*)))
+        (message-field-set! msg-rsp 'output (list output))
+        (message-send msg-rsp client))
+
+      (let ((output  (exec-cmd obj command))
+            (msg-rsp (make <message> #:type *cmd-exec*)))
+        (message-field-set! msg-rsp 'output output)
+        (message-send msg-rsp client)))))
+
+;;;
 
 ;; Compare output from hosts with an output from the master host.
 ;; Return diffs.  Throw lazycat-diff-error on error.
