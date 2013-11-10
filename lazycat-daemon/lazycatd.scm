@@ -63,6 +63,9 @@
 ;; Priority of the periodical ping thread.
 (define *periodical-ping-thread-prio* 15)
 
+;; The pid file placed in /tmp only for debugging.
+(define *pid-file* "/tmp/lazycat/lazycat.pid")
+
 
 ;;; Main class
 (define-class <lazycatd> ()
@@ -197,18 +200,15 @@
     (listen lazycatd-socket 1)))
 
 
-;; Create a file contains PID of the daemon.
-;;
-;; FIXME: Unused.
+;; Create a file that contains the PID of the daemon.
 (define-method (create-pid-file (obj <lazycatd>) (pid <number>))
-  (let ((pid-file (open-output-file (get-pid-file obj))))
-    (write pid pid-file)))
+  (let ((pid-file (open-output-file *pid-file*)))
+    (write pid pid-file)
+    (close-port pid-file)))
 
 ;; Remove the PID file.
-;;
-;; FIXME: Unused.
 (define-method (remove-pid-file (obj <lazycatd>))
-  (delete-file (get-pid-file obj)))
+  (delete-file *pid-file*))
 
 ;; Send message to a client.
 (define-method (send-message (obj <lazycatd>) message (port <port>))
@@ -670,6 +670,9 @@ starts LazyCat daemon."
           ;; become a daemon.
           (let ((proxy-list (get-proxy-list lazycatd))
                 (host-list  (get-host-list lazycatd)))
+
+            (create-pid-file lazycatd (getpid))
+
             (proxy-list-load proxy-list)
             (make-thread (periodical-ping lazycatd))
             (make-thread (curiosity host-list proxy-list))
@@ -703,8 +706,7 @@ starts LazyCat daemon."
                     (main-loop   lazycatd)))
 
                 (begin
-                  ;; FIXME: Fix it.
-                  ;; (create-pid-file obj pid)
+                  (create-pid-file lazycatd pid)
                   (quit))))))))
 
 ;;; lazycatd.scm ends here.

@@ -1,3 +1,9 @@
+2013-11-10  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat-daemon/lazycatd.scm (main): Write PID of the daemon to a
+	.pid file.
+	(create-pid-file): Close the port after writing.
+
 2013-11-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* configure.ac: Use `AC_COPYRIGHT' to store copyright information.
