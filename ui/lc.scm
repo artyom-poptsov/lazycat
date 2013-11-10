@@ -102,7 +102,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 
 ;; Add a new host.
-(define-method (lazycat-add (obj <lc>) (args <list>))
+(define-method (handle-add (obj <lc>) (args <list>))
 
   (define option-spec
     '((help        (single-char #\h) (value #f))
@@ -165,7 +165,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
                     (format-error *error-connection-lost*))))))))
 
 ;; Remove a host.
-(define-method (lazycat-rem (obj <lc>) (args <list>))
+(define-method (handle-rem (obj <lc>) (args <list>))
 
   (define (print-help)
     (display
@@ -191,8 +191,11 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
                   (format-error-message msg-rsp))
               (format-error *error-connection-lost*))))))
 
+
+;;; exec handler
+
 ;; A function that handles command line for 'exec' command.
-(define-method (lazycat-generic-exec (obj <lc>) (args <list>))
+(define-method (handle-exec (obj <lc>) (args <list>))
 
   (define (print-help)
     (display
@@ -215,19 +218,17 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       (for-each (lambda (s)
                   (set! cmd (string-append cmd " " s)))
                 (cddr args))
-      (lazycat-exec obj host-id cmd)))
+      (exec-cmd-on-host obj host-id cmd)))
 
    (#t
     (let ((cmd ""))
       (for-each (lambda (s)
                   (set! cmd (string-append cmd " " s)))
                 args)
-      (lazycat-exec obj cmd)))))
-
-(define-generic lazycat-exec)
+      (exec-cmd obj cmd)))))
 
 ;; Execute a command CMD on the every accessible host.
-(define-method (lazycat-exec (obj <lc>) (command <string>))
+(define-method (exec-cmd (obj <lc>) (command <string>))
   (let ((msg-req (make <message> #:type *cmd-exec* #:request-flag #t)))
     (message-field-set! msg-req 'command command)
     (let ((msg-rsp (send-message obj msg-req)))
@@ -238,7 +239,9 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
           (format-error *error-connection-lost*)))))
 
 ;; Execute a command CMD on a host with the given HOST-ID.
-(define-method (lazycat-exec (obj <lc>) (host-id <number>) (command <string>))
+(define-method (exec-cmd-on-host (obj     <lc>)
+                                 (host-id <number>)
+                                 (command <string>))
   (let ((msg-req (make <message> #:type *cmd-exec* #:request-flag #t)))
     (message-field-set! msg-req 'host-id host-id)
     (message-field-set! msg-req 'command command)
@@ -250,8 +253,10 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
               (format-error-message msg-rsp))
           (format-error *error-connection-lost*)))))
 
+;;;
+
 ;; Compare outputs between master host and other hosts.
-(define-method (lazycat-diff (obj <lc>) (args <list>))
+(define-method (handle-diff (obj <lc>) (args <list>))
 
   (define option-spec
     '((help        (single-char #\h) (value #f))
@@ -328,7 +333,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
                          "Wrong action: " (symbol->string (car args)))))))))
 
 ;; Set a new value to a option.
-(define-method (lazycat-set (obj <lc>) (args <list>))
+(define-method (handle-set (obj <lc>) (args <list>))
 
   (define (print-help)
     (display
@@ -356,7 +361,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
               (format-error *error-connection-lost*))))))
 
 ;; Get the value of an option.
-(define-method (lazycat-get (obj <lc>) (args <list>))
+(define-method (handle-get (obj <lc>) (args <list>))
 
   (define (print-help)
     (display
@@ -384,7 +389,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
               (format-error *error-connection-lost*))))))
 
 ;; Show a list of objects of the specific type.
-(define-method (lazycat-list (obj <lc>) (args <list>))
+(define-method (handle-list (obj <lc>) (args <list>))
 
   (define (print-help)
     (display
@@ -430,9 +435,11 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
     (format-error "Unknown command."))))
 
 ;; Stop lazycat daemon
-(define-method (lazycat-stop (obj <lc>))
+(define-method (handle-stop (obj <lc>))
   (let ((msg-req (make <message> #:type *cmd-stop* #:request-flag #t)))
     (send-message obj msg-req)))
+
+;;; Helper procedures
 
 ;; Get information about current version
 (define-method (print-version (obj <lc>))
@@ -479,28 +486,28 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       (print-version lc))
 
      ((or (string=? command "add")  (string=? command "a"))
-      (lazycat-add lc (cdr arguments)))
+      (handle-add lc (cdr arguments)))
 
      ((or (string=? command "rem")  (string=? command "r"))
-      (lazycat-rem lc (cdr arguments)))
+      (handle-rem lc (cdr arguments)))
 
      ((or (string=? command "exec") (string=? command "e"))
-      (lazycat-generic-exec lc (cdr arguments)))
+      (handle-exec lc (cdr arguments)))
 
      ((or (string=? command "diff") (string=? command "d"))
-      (lazycat-diff lc (cdr arguments)))
+      (handle-diff lc (cdr arguments)))
 
      ((or (string=? command "set")  (string=? command "s"))
-      (lazycat-set lc (cdr arguments)))
+      (handle-set lc (cdr arguments)))
 
      ((or (string=? command "get")  (string=? command "g"))
-      (lazycat-get lc (cdr arguments)))
+      (handle-get lc (cdr arguments)))
 
      ((or (string=? command "list") (string=? command "l"))
-      (lazycat-list lc (cdr arguments)))
+      (handle-list lc (cdr arguments)))
 
      ((string=? command "stop")
-      (lazycat-stop lc))
+      (handle-stop lc))
 
      (#t
       (print-help)))

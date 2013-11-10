@@ -1,5 +1,17 @@
 2013-11-10  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/lc.scm (lazycat-generic-exec): Don't use generic method for
+	`exec' handling.  Rename to `handle-exec'.
+	(lazycat-add): Rename to `handle-add'.
+	(lazycat-rem): Rename to `handle-rem'.
+	(lazycat-generic-exec): Rename to `handle-exec'.
+	(lazycat-diff): Rename to `handle-diff'.
+	(lazycat-set): Rename to `handle-set'.
+	(lazycat-get): Rename to `handle-get'.
+	(lazycat-list): Rename to `handle-list'.
+	(lazycat-stop): Rename to `handle-stop'.
+	(main): Update.
+
 	* lazycat-daemon/lazycatd.scm (periodical-ping): Check that a
 	proxy exists before using it.
 
