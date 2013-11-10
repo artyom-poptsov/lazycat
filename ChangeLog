@@ -1,5 +1,8 @@
 2013-11-10  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/lazycatd.scm (periodical-ping): Check that a
+	proxy exists before using it.
+
 	* lazycat-daemon/lazycatd.scm (main): Write PID of the daemon to a
 	.pid file.
 	(create-pid-file): Close the port after writing.

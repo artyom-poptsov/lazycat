@@ -526,13 +526,19 @@
          (lambda (host)
            (let* ((address      (host-get-address host))
                   (host-proxies (host-get-proxy-list host))
-                  (proxy        (proxy-list-get proxy-list (car host-proxies)))
-                  (msg-rsp      (proxy-ping proxy address)))
+                  (proxy        (proxy-list-get proxy-list (car host-proxies))))
 
-             (if (and msg-rsp (not (message-error? msg-rsp)))
-                 (if (message-field-ref msg-rsp 'status)
-                     (host-set-status! host 'online)
-                     (host-set-status! host 'offline)))))
+             (if proxy
+
+                 (let ((msg-rsp (proxy-ping proxy address)))
+                   (if (and msg-rsp (not (message-error? msg-rsp)))
+                       (if (message-field-ref msg-rsp 'status)
+                           (host-set-status! host 'online)
+                           (host-set-status! host 'offline))))
+
+                 (let ((msg (string-append "No such proxy: "
+                                           (object->string (car host-proxies)))))
+                   (log-msg 'DEBUG msg)))))
 
          host-list)
 
