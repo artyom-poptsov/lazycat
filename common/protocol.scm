@@ -254,6 +254,6 @@
 
 
 ;; Stop the proxy process
-(define-public *cmd-proxy-stop*           105)
+(define-public *cmd-proxy-stop*           110)
 
 ;;; protocol.scm ends here.

@@ -1,3 +1,8 @@
+2013-11-11  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* common/protocol.scm (*cmd-proxy-stop*): Set to 110 so it will be
+	similar to `*cmd-stop*'.
+
 2013-11-10  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/lc.scm (lazycat-generic-exec): Don't use generic method for
