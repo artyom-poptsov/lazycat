@@ -1,3 +1,11 @@
+2013-11-12  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* common/utils.scm (case*): New macro.
+	* lazycat-daemon/lazycatd.scm (main-loop): Use `case*' macro
+	instead of `cond'.
+	* common/message.scm (message-type->string): Likewise.
+	* common/proxy.scm (main-loop): Likewise.
+
 2013-11-11  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* common/protocol.scm (*cmd-proxy-stop*): Set to 110 so it will be

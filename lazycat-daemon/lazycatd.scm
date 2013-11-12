@@ -39,6 +39,7 @@
   #:use-module (logging rotating-log)
   #:use-module (logging port-log)
   ;; LazyCat modules
+  #:use-module (lazycat utils)
   #:use-module (lazycat proxy)
   #:use-module (lazycat protocol)
   #:use-module (lazycat message)
@@ -580,43 +581,43 @@
           (catch 'lazycat-exception
 
             (lambda ()
-              (cond
+              (case* = message-type
 
                ;; Get protocol version
-               ((= message-type *cmd-get-protocol-version*)
+               ((*cmd-get-protocol-version*)
                 (let ((msg-rsp (make <message> #:type *protocol-version*)))
                   (message-send msg-rsp client)))
 
                ;; List objects
-               ((= message-type *cmd-list*)
+               ((*cmd-list*)
                 (handle-list-req obj msg-req client))
 
                ;; Add a new host
-               ((= message-type *cmd-add-host*)
+               ((*cmd-add-host*)
                 (handle-add-req obj msg-req client))
 
                ;; Remote a host
-               ((= message-type *cmd-rem-host*)
+               ((*cmd-rem-host*)
                 (handle-rem-req obj msg-req client))
 
                ;; Get an option value
-               ((= message-type *cmd-get*)
+               ((*cmd-get*)
                 (handle-get-req obj msg-req client))
 
                ;; Set an option
-               ((= message-type *cmd-set*)
+               ((*cmd-set*)
                 (handle-set-req obj msg-req client))
 
                ;; Execute a command
-               ((= message-type *cmd-exec*)
+               ((*cmd-exec*)
                 (handle-exec-req obj msg-req client))
 
                ;; Get a diff
-               ((= message-type *cmd-diff*)
+               ((*cmd-diff*)
                 (handle-diff-req obj msg-req client))
 
                ;; Stop the daemon
-               ((eq? message-type *cmd-stop*)
+               ((*cmd-stop*)
                 (begin
                   (handle-stop-req obj client)
                   (break)))))

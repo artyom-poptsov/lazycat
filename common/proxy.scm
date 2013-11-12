@@ -36,6 +36,7 @@
   ;; Logging
   #:use-module (logging logger)
 
+  #:use-module (lazycat utils)
   #:use-module (lazycat protocol)
   #:use-module (lazycat message)
   #:export (<proxy> proxy-send-message
@@ -326,8 +327,8 @@
           (catch 'proxy-error
 
             (lambda ()
-              (cond
-               ((= message-type *cmd-proxy-send*)
+              (case* = message-type
+               ((*cmd-proxy-send*)
                 (let* ((address (message-field-ref msg-req 'address))
                        (message (message-field-ref msg-req 'message))
                        (res     (handle-send-message obj address message)))
@@ -335,14 +336,14 @@
                     (message-field-set! msg-rsp 'response res)
                     (message-send msg-rsp client))))
 
-               ((= message-type *cmd-proxy-set*)
+               ((*cmd-proxy-set*)
                 (let ((option (message-field-ref msg-req 'option))
                       (value  (message-field-ref msg-req 'value)))
                   (handle-set-option! obj option value)
                   (let ((msg-rsp (make <message> #:type message-type)))
                     (message-send msg-rsp client))))
 
-               ((= message-type *cmd-proxy-get*)
+               ((*cmd-proxy-get*)
                 (let* ((option (message-field-ref msg-req 'option))
                        (value  (handle-get-option obj option)))
                   (let ((msg-rsp (make <message> #:type message-type)))
@@ -350,20 +351,20 @@
                     (message-field-set! 'value  value)
                     (message-send msg-rsp client))))
 
-               ((= message-type *cmd-proxy-list-options*)
+               ((*cmd-proxy-list-options*)
                 (let ((object-list (handle-list-options obj))
                       (msg-rsp     (make <message> #:type message-type)))
                   (message-field-set! msg-rsp 'object-list object-list)
                   (message-send msg-rsp client)))
 
-               ((= message-type *cmd-proxy-ping*)
+               ((*cmd-proxy-ping*)
                 (let* ((address (message-field-ref msg-req 'address))
                        (status  (handle-ping obj address))
                        (msg-rsp (make <message> #:type message-type)))
                   (message-field-set! msg-rsp 'status status)
                   (message-send msg-rsp client)))
 
-               ((= message-type *cmd-proxy-stop*)
+               ((*cmd-proxy-stop*)
                 (let ((msg-rsp (make <message> #:type message-type)))
                   (message-send msg-rsp client)
                   (close client)

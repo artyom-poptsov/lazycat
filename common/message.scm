@@ -29,6 +29,7 @@
 
 (define-module (lazycat message)
   #:use-module (lazycat protocol)
+  #:use-module (lazycat utils)
   #:use-module (ice-9 format)
   #:use-module (ice-9 rdelim)
   #:use-module (oop goops)
@@ -181,23 +182,23 @@
 
 ;; Convert the message type TYPE to a string.
 (define (message-type->string type)
-  (cond
-    ((= type *cmd-get-protocol-version*) "get-protocol-version")
-    ((= type *cmd-add-host*)             "add-host")
-    ((= type *cmd-rem-host*)             "rem-host")
-    ((= type *cmd-upd-host*)             "upd-host")
-    ((= type *cmd-list*)                 "list")
-    ((= type *cmd-exec*)                 "exec")
-    ((= type *cmd-diff*)                 "diff")
-    ((= type *cmd-get*)                  "get")
-    ((= type *cmd-set*)                  "set")
-    ((= type *cmd-stop*)                 "stop")
-    ((= type *cmd-proxy-send*)           "proxy-send")
-    ((= type *cmd-proxy-set*)            "proxy-set")
-    ((= type *cmd-proxy-get*)            "proxy-get")
-    ((= type *cmd-proxy-list-options*)   "proxy-list-options")
-    ((= type *cmd-proxy-ping*)           "proxy-ping")
-    ((= type *cmd-proxy-stop*)           "proxy-stop")))
+  (case* = type
+         ((*cmd-get-protocol-version*) "get-protocol-version")
+         ((*cmd-add-host*)             "add-host")
+         ((*cmd-rem-host*)             "rem-host")
+         ((*cmd-upd-host*)             "upd-host")
+         ((*cmd-list*)                 "list")
+         ((*cmd-exec*)                 "exec")
+         ((*cmd-diff*)                 "diff")
+         ((*cmd-get*)                  "get")
+         ((*cmd-set*)                  "set")
+         ((*cmd-stop*)                 "stop")
+         ((*cmd-proxy-send*)           "proxy-send")
+         ((*cmd-proxy-set*)            "proxy-set")
+         ((*cmd-proxy-get*)            "proxy-get")
+         ((*cmd-proxy-list-options*)   "proxy-list-options")
+         ((*cmd-proxy-ping*)           "proxy-ping")
+         ((*cmd-proxy-stop*)           "proxy-stop")))
 
 ;; Format message OBJ in human-easy-readable format.
 (define-method (message-format (obj <message>))

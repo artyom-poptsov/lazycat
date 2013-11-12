@@ -33,7 +33,7 @@
   #:use-module (oop goops)
   #:use-module (ice-9 syncase)
   #:use-module (ice-9 optargs)
-  #:export-syntax (define-method*))
+  #:export-syntax (define-method* case*))
 
 ;; define*-like macro that allows to use keywords with GOOPS'
 ;; define-method.
@@ -49,4 +49,27 @@
        (let-keywords args #t ((var defval) ...)
                      body ...)))))
 
+;; Extended form of `case' that compares the key K with objects using
+;; the given predicate P.
+(define-syntax case*
+  (syntax-rules (else)
+    ;; Sanity check for the syntax
+    ((_)
+     (syntax-error "Missing predicate and clauses"))
+    ((_ p)
+     (syntax-error "Missing clauses"))
+    ;; Syntax rules
+    ((_ p k ((obj) expr) . clauses)
+     (case* p k clauses ((p k obj) expr)))
+    ((_ p k (((obj) expr) . clauses) . forms)
+     (case* p k clauses ((p k obj) expr) . forms))
+    ((_ p k ((obj) expr))
+     (case* p k () ((p k obj) expr) . ignore))
+    ((_ p k () (c e) ...)
+     (cond (c e) ...))
+    ((_ p0 k ((else expr ...)) ((p1 a b) e) ...)
+     (cond ((p1 a b) e) ... (else expr ...)))
+    ((_ p k (else expr))
+     (cond (else expr)))))
+         
 ;;; utils.scm ends here
