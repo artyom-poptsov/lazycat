@@ -132,7 +132,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
       (print-help)
 
-      (let* ((args         (cons "lazycat-add" args))
+      (let* ((args         (cons "handle-add" args))
              (options      (getopt-long args option-spec))
              (help-needed? (option-ref options 'help        #f))
              (group        (option-ref options 'group       #f))

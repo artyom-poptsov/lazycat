@@ -1,5 +1,8 @@
 2013-11-13  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/lc.scm (handle-add, handle-diff): Fix procedure name used by
+	`getopt-long'.
+
 	* common/utils.scm: Update comments.
 
 2013-11-12  Artyom Poptsov  <poptsov.artyom@gmail.com>
