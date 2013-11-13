@@ -24,7 +24,8 @@
 ;;
 ;; This module exports:
 ;;
-;;   (define-method* (obj <class>) . args)
+;;   define-method*
+;;   case*
 
 
 ;;; Code:
@@ -51,6 +52,10 @@
 
 ;; Extended form of `case' that compares the key K with objects using
 ;; the given predicate P.
+;; 
+;; FIXME: Current version of the macro accepts only the list with
+;;        a single object in each clause.
+;; 
 (define-syntax case*
   (syntax-rules (else)
     ;; Sanity check for the syntax

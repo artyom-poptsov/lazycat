@@ -1,3 +1,7 @@
+2013-11-13  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* common/utils.scm: Update comments.
+
 2013-11-12  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* common/utils.scm (case*): New macro.

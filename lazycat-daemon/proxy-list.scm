@@ -38,53 +38,55 @@
   ;; Proxies
   #:use-module (lazycat proxies ssh-proxy)
   #:use-module (lazycat proxies tcp-proxy)
-  #:export (<proxy-list> proxy-list-get
-                         proxy-list-get-list
-                         proxy-list-load
-                         proxy-list-stop-all))
+  #:export (proxy-list-set-sock-dir!
+            proxy-list-get
+            proxy-list-get-list
+            proxy-list-load
+            proxy-list-stop-all))
 
-(define-class <proxy-list> ()
-  (tmp-dir
-   #:init-keyword #:tmp-dir
-   #:getter get-tmp-dir)
+
+;;; Global variables
 
-  (htable
-   #:init-value (make-hash-table)
-   #:getter get-htable)
+(define htable      (make-hash-table))
+(define debug-mode? #f)
+(define sock-dir    #f)
 
-  (debug-mode?
-   #:init-keyword #:debug-mode
-   #:getter       debug-mode?
-   #:init-value #f))
+
+;;; Procedures
 
-;; Load all proxies
-(define-method (proxy-list-load (obj <proxy-list>))
-  (let ((ssh-proxy (make <ssh-proxy> #:socket-dir (get-tmp-dir obj)))
-        (tcp-proxy (make <tcp-proxy> #:socket-dir (get-tmp-dir obj))))
+(define (proxy-list-set-sock-dir! dir)
+  (set! tmp-dir dir))
 
-    (if (debug-mode? obj)
+(define (proxy-list-debug! s)
+  (set! debug-mode? s))
+
+(define (proxy-list-load!)
+  "Load all proxies"
+  (let ((ssh-proxy (make <ssh-proxy> #:socket-dir sock-dir))
+        (tcp-proxy (make <tcp-proxy> #:socket-dir sock-dir)))
+
+    (if debug-mode?
         (begin
           (proxy-debug! ssh-proxy #t)
           (proxy-debug! tcp-proxy #t)))
 
     (proxy-start ssh-proxy)
     (proxy-start tcp-proxy)
-    (hash-set! (get-htable obj) (proxy-get-name ssh-proxy) ssh-proxy)
-    (hash-set! (get-htable obj) (proxy-get-name tcp-proxy) tcp-proxy)))
+    (hash-set! htable (proxy-get-name ssh-proxy) ssh-proxy)
+    (hash-set! htable (proxy-get-name tcp-proxy) tcp-proxy)))
 
-;; Get a proxy with name NAME.
-(define-method (proxy-list-get (obj <proxy-list>) (name <string>))
-  (let ((ht (get-htable obj)))
-    (hash-ref ht name #f)))
+(define (proxy-list-get name)
+  "Get a proxy with name NAME."
+  (hash-ref htable name #f))
 
-;; Get list of proxies
-(define-method (proxy-list-get-list (obj <proxy-list>))
-  (hash-map->list cons (get-htable obj)))
+(define (proxy-list-get-list)
+  "Get list of proxies"
+  (hash-map->list cons htable))
 
-;; Stop all proxy processes
-(define-method (proxy-list-stop-all (obj <proxy-list>))
+(define (proxy-list-stop-all)
+  "Stop all proxy processes"
   (for-each (lambda (p) (proxy-stop (cdr p)))
-            (proxy-list-get-list obj)))
+            (proxy-list-get-list)))
 
 ;;; proxy-list.scm ends here
 
