@@ -1,3 +1,7 @@
+2013-11-14  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* README: Update.
+
 2013-11-13  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/lc.scm (handle-add, handle-diff): Fix procedure name used by
