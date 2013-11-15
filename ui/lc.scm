@@ -479,33 +479,34 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
   (let* ((lc        (make <lc>))
          (arguments (cdr args))
-         (command   (car arguments)))
+         (cmd       (car arguments))
+         (cmd-args  (cdr arguments)))
 
-    (case* string=? command
+    (case* string=? cmd
 
      (("version")
       (print-version lc))
 
      (("add" "a")
-      (handle-add lc (cdr arguments)))
+      (handle-add lc cmd-args))
 
      (("rem" "r")
-      (handle-rem lc (cdr arguments)))
+      (handle-rem lc cmd-args))
 
      (("exec" "e")
-      (handle-exec lc (cdr arguments)))
+      (handle-exec lc cmd-args))
 
      (("diff" "d")
-      (handle-diff lc (cdr arguments)))
+      (handle-diff lc cmd-args))
 
      (("set" "s")
-      (handle-set lc (cdr arguments)))
+      (handle-set lc cmd-args))
 
      (("get" "g")
-      (handle-get lc (cdr arguments)))
+      (handle-get lc cmd-args))
 
      (("list" "l")
-      (handle-list lc (cdr arguments)))
+      (handle-list lc cmd-args))
 
      (("stop")
       (handle-stop lc))
