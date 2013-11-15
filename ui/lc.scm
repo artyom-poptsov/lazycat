@@ -56,6 +56,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
   #:use-module (lazycat ui cli pretty-format)
   #:use-module (lazycat protocol)
   #:use-module (lazycat message)
+  #:use-module (lazycat utils)
   #:export (<lc> main))
 
 
@@ -480,36 +481,36 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
          (arguments (cdr args))
          (command   (car arguments)))
 
-    (cond
+    (case* string=? command
 
-     ((string=? command "version")
+     (("version")
       (print-version lc))
 
-     ((or (string=? command "add")  (string=? command "a"))
+     (("add" "a")
       (handle-add lc (cdr arguments)))
 
-     ((or (string=? command "rem")  (string=? command "r"))
+     (("rem" "r")
       (handle-rem lc (cdr arguments)))
 
-     ((or (string=? command "exec") (string=? command "e"))
+     (("exec" "e")
       (handle-exec lc (cdr arguments)))
 
-     ((or (string=? command "diff") (string=? command "d"))
+     (("diff" "d")
       (handle-diff lc (cdr arguments)))
 
-     ((or (string=? command "set")  (string=? command "s"))
+     (("set" "s")
       (handle-set lc (cdr arguments)))
 
-     ((or (string=? command "get")  (string=? command "g"))
+     (("get" "g")
       (handle-get lc (cdr arguments)))
 
-     ((or (string=? command "list") (string=? command "l"))
+     (("list" "l")
       (handle-list lc (cdr arguments)))
 
-     ((string=? command "stop")
+     (("stop")
       (handle-stop lc))
 
-     (#t
+     (else
       (print-help)))
 
     (lc-quit lc)))

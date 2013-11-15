@@ -1,5 +1,7 @@
 2013-11-16  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/lc.scm (main): Use `case*' instead of `cond'.
+
 	* common/utils.scm (case*): Use `define-macro' instead of
 	`define-syntax'.  Add support for multiple datums per clause.
 
