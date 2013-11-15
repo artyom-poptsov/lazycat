@@ -52,29 +52,22 @@
 
 ;; Extended form of `case' that compares the key K with objects using
 ;; the given predicate P.
-;; 
-;; FIXME: Current version of the macro accepts only the list with
-;;        a single object in each clause.
-;; 
-(define-syntax case*
-  (syntax-rules (else)
-    ;; Sanity check for the syntax
-    ((_)
-     (syntax-error "Missing predicate and clauses"))
-    ((_ p)
-     (syntax-error "Missing clauses"))
-    ;; Syntax rules
-    ((_ p k ((obj) expr) . clauses)
-     (case* p k clauses ((p k obj) expr)))
-    ((_ p k (((obj) expr) . clauses) . forms)
-     (case* p k clauses ((p k obj) expr) . forms))
-    ((_ p k ((obj) expr))
-     (case* p k () ((p k obj) expr) . ignore))
-    ((_ p k () (c e) ...)
-     (cond (c e) ...))
-    ((_ p0 k ((else expr ...)) ((p1 a b) e) ...)
-     (cond ((p1 a b) e) ... (else expr ...)))
-    ((_ p k (else expr))
-     (cond (else expr)))))
-         
+(define-macro (case* pred key . clauses)
+  `(cond
+    ,@(map
+       (lambda (clause)
+         (let ((datum (car clause))
+               (exp   (cadr clause)))
+           (cond
+            ((and (not (list? datum)) (not (eq? datum 'else)))
+             (error "Syntax error: expected a list" datum))
+            ((eq? datum 'else)
+             `(else ,exp))
+            ((= (length datum) 1)
+             `((,pred ,key ,(car datum)) ,exp))
+            (else
+             `((or ,@(map (lambda (o) `(,pred ,key ,o))
+                          datum)) ,exp)))))
+       clauses)))
+
 ;;; utils.scm ends here
