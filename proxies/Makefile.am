@@ -18,4 +18,4 @@
 ## along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
 lazycat_proxiesdir	= $(pkgdatadir)/proxies
-lazycat_proxies_DATA	= ssh-proxy/*.scm tcp-proxy/*.scm
+lazycat_proxies_DATA	= *.scm
