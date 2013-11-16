@@ -1,5 +1,13 @@
 2013-11-16  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* common/proxy.scm (send-request): Change error handling: throw
+	a proxy-error exception on error.
+	(proxy-send-message): Improve error handling.  Throw a proxy-error
+	exception on error.
+	* lazycat-daemon/lazycatd.scm (periodical-ping): Handle
+	proxy-error exceptions.
+	* lazycat-daemon/curiosity.scm (curiosity): Likewise.
+
 	* ui/lc.scm (main): Use `case*' instead of `cond'.
 	Improve.
 

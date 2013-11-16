@@ -182,16 +182,24 @@
 
 ;;; Interface
 
+;; Send the message MESSAGE through the proxy OBJ.
+;;
+;; Returns new <message> object.  Throws proxy-error on error.
 (define-method (proxy-send-message (obj     <proxy>)
                                    (address <string>)
                                    (message <string>))
- (lock-mutex (get-mutex obj))
- (let ((msg-req (make <message> #:type *cmd-proxy-send* #:request-flag #t)))
-   (message-field-set! msg-req 'address address)
-   (message-field-set! msg-req 'message message)
-   (let ((res (send-request obj msg-req)))
-     (unlock-mutex (get-mutex obj))
-     res)))
+  (lock-mutex (get-mutex obj))
+  (let ((msg-req (make <message> #:type *cmd-proxy-send* #:request-flag #t)))
+    (message-field-set! msg-req 'address address)
+    (message-field-set! msg-req 'message message)
+    (catch 'proxy-error
+      (lambda ()
+        (let ((res (send-request obj msg-req)))
+          (unlock-mutex (get-mutex obj))
+          res))
+      (lambda (key . args)
+        (unlock-mutex (get-mutex obj))
+        (proxy-error key args)))))
 
 (define-method (proxy-set-option! (obj <proxy>) (option <symbol>) value)
   (lock-mutex (get-mutex obj))
@@ -278,6 +286,8 @@
     (listen proxy-socket 1)))
 
 ;; Send message to the real proxy
+;;
+;; Returns new <message> object.  Throws proxy-error on error.
 (define-method (send-request (obj <proxy>) (msg-req <message>))
   (set-client-socket! obj (socket PF_UNIX SOCK_STREAM 0))
   (catch 'system-error
@@ -289,7 +299,7 @@
     (lambda (key . args)
       (proxy-log-msg obj 'ERROR (string-append
                                  (symbol->string key) ": " (object->string args)))
-      #f)))
+      (proxy-error key args))))
 
 
 ;; Main loop of the proxy process.

@@ -31,6 +31,9 @@
 ;;; Code:
 
 (define-module (lazycat lazycat-daemon curiosity)
+  ;; Logging
+  #:use-module (logging logger)
+
   #:use-module (lazycat lazycat-daemon host)
   #:use-module (lazycat lazycat-daemon host-list)
   #:use-module (lazycat lazycat-daemon proxy-list)
@@ -87,13 +90,17 @@
      (lambda (host)
        (let ((status (host-get-status host)))
          (if (eq? status 'online)
-             (let* ((host-proxies (host-get-proxy-list host))
-                    (host-addr    (host-get-address host))
-                    (proxy        (proxy-list-get proxy-list (car host-proxies)))
-                    (msg-rsp      (proxy-send-message proxy host-addr *lsb-release-cmd*)))
-               (if (not (message-error? msg-rsp))
-                   (let ((lsb-info (lsb->alist (message-field-ref msg-rsp 'response))))
-                     (set-host-lsb lsb-info host)))))))
+             (catch 'proxy-error
+               (lambda ()
+                 (let* ((host-proxies (host-get-proxy-list host))
+                        (host-addr    (host-get-address host))
+                        (proxy        (proxy-list-get proxy-list (car host-proxies)))
+                        (msg-rsp      (proxy-send-message proxy host-addr *lsb-release-cmd*)))
+                   (if (not (message-error? msg-rsp))
+                       (let ((lsb-info (lsb->alist (message-field-ref msg-rsp 'response))))
+                         (set-host-lsb lsb-info host)))))
+               (lambda (key . args)
+                 (log-msg 'WARNING (object->string args)))))))
 
      (host-list-get-plain-list host-list))
     (sleep 10)))

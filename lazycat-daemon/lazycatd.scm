@@ -531,11 +531,16 @@
 
              (if proxy
 
-                 (let ((msg-rsp (proxy-ping proxy address)))
-                   (if (and msg-rsp (not (message-error? msg-rsp)))
-                       (if (message-field-ref msg-rsp 'status)
-                           (host-set-status! host 'online)
-                           (host-set-status! host 'offline))))
+                 (catch 'proxy-error
+                   (lambda ()
+                     (let ((msg-rsp (proxy-ping proxy address)))
+                       (if (not (message-error? msg-rsp))
+                           (if (message-field-ref msg-rsp 'status)
+                               (host-set-status! host 'online)
+                               (host-set-status! host 'offline)))))
+                   (lambda (key . args)
+                     (log-msg 'ERROR (object->string args))
+                     (host-set-status! host 'offline)))
 
                  (let ((msg (string-append "No such proxy: "
                                            (object->string (car host-proxies)))))
