@@ -26,6 +26,7 @@
 
 (define-module (lazycat ui cli pretty-format)
   #:use-module (ice-9 format)
+  #:use-module (srfi srfi-1)
   #:use-module (oop goops)
   #:use-module (lazycat ui cli format-table)
   #:use-module (lazycat message)
@@ -43,6 +44,15 @@
 
 ;; Display the host list LIST as a table
 (define (format-host-list lst)
+
+  (define (proxy-list->string lst)
+    (fold
+     (lambda (proxy res)
+       (let ((p (car (string-split proxy #\-))))
+         (string-append p " " res)))
+     ""
+     lst))
+
   ;; Print the header
   (format #t *header-fmt* "Group" "ID" "Status" "Name" "Proxy" "Address" "Description")
   (format #t *header-fmt* "-----" "--" "------" "----" "-----" "-------" "-----------")
@@ -59,7 +69,7 @@
                 (id          (number->string (assoc-ref host 'id)))
                 (status      (symbol->string (assoc-ref host 'status)))
                 (name        (assoc-ref host 'name))
-                (proxy-list  (object->string (assoc-ref host 'proxy-list)))
+                (proxy-list  (proxy-list->string (assoc-ref host 'proxy-list)))
                 (address     (assoc-ref host 'address))
                 (description (assoc-ref host 'description)))
 
