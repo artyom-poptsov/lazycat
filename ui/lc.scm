@@ -405,35 +405,34 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       "  $ lc list hosts\n"
       "  $ lc list options\n")))
 
-  (cond
+  (let ((cmd (car args)))
+    (cond
+     ((or (null? args) (string=? cmd "--help") (string=? cmd "-h"))
+      (print-help))
 
-   ((or (null? args)
-        (string=? (car args) "--help") (string=? (car args) "-h"))
-    (print-help))
+     ((or (string=? cmd "hosts") (string=? cmd "h"))
+      (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t)))
+        (message-field-set! msg-req 'object-type 'host)
 
-   ((or (string=? (car args) "hosts") (string=? (car args) "h"))
-    (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t)))
-      (message-field-set! msg-req 'object-type 'host)
+        (let ((msg-rsp (send-message obj msg-req)))
+          (if msg-rsp
+              (if (not (message-error? msg-rsp))
+                  (format-host-list (message-field-ref msg-rsp 'object-list))
+                  (format-error-message msg-rsp))
+              (format-error *error-connection-lost*)))))
 
-      (let ((msg-rsp (send-message obj msg-req)))
-        (if msg-rsp
-            (if (not (message-error? msg-rsp))
-                (format-host-list (message-field-ref msg-rsp 'object-list))
-                (format-error-message msg-rsp))
-            (format-error *error-connection-lost*)))))
+     ((or (string=? cmd "options") (string=? cmd "o"))
+      (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t)))
+        (message-field-set! msg-req 'object-type 'option)
+        (let ((msg-rsp (send-message obj msg-req)))
+          (if msg-rsp
+              (if (not (message-error? msg-rsp))
+                  (format-options-list (message-field-ref msg-rsp 'object-list))
+                  (format-error-message msg-rsp))
+              (format-error *error-connection-lost*)))))
 
-   ((or (string=? (car args) "options") (string=? (car args) "o"))
-    (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t)))
-      (message-field-set! msg-req 'object-type 'option)
-      (let ((msg-rsp (send-message obj msg-req)))
-        (if msg-rsp
-            (if (not (message-error? msg-rsp))
-                (format-options-list (message-field-ref msg-rsp 'object-list))
-                (format-error-message msg-rsp))
-            (format-error *error-connection-lost*)))))
-
-   (#t
-    (format-error "Unknown command."))))
+     (#t
+      (format-error "Unknown command.")))))
 
 ;; Stop lazycat daemon
 (define-method (handle-stop (obj <lc>))

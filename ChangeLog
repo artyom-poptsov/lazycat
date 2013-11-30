@@ -1,5 +1,7 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/lc.scm (handle-list): Improve checks in `cond' clauses.
+
 	* configure.ac: Improve check for Guile modules.
 	Set `AC_CONFIG_AUX_DIR'.
 
