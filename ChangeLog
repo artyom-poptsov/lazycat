@@ -1,5 +1,10 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/lc.scm (handle-diff): Fix a bug: fix handling of command line
+	arguments during `get-pattern' action.  Change invocation syntax.
+	Print error if a command is not specified for `get-pattern'
+	action.
+
 	* .gitignore: Add `Makefile.in', `configure', `aclocal.m4',
 	`build-aux/'.
 

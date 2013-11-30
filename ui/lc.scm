@@ -260,7 +260,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
   (define option-spec
     '((help        (single-char #\h) (value #f))
-      (get-pattern (single-char #\g) (value #t))
+      (get-pattern (single-char #\g) (value #f))
       (continue    (single-char #\c) (value #f))
       (abort       (single-char #\a) (value #f))))
 
@@ -270,43 +270,50 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       "Usage: lc diff [ -h ] [ -g | -c | -a ]\n"
       "\n"
       "Parameters:\n"
-      "  -h, --help                             Print this message\n"
-      "  -g <command>, --get-pattern=<command>  Get pattern from a master host\n"
-      "  -c, --continue                         Execute command on the rest of hosts\n"
-      "  -a, --abort                            Delete the stored pattern\n"
+      "  -h, --help               Print this message\n"
+      "  -g, --get-pattern        Get pattern from a master host\n"
+      "  -c, --continue           Execute command on the rest of hosts\n"
+      "  -a, --abort              Delete the stored pattern\n"
       "\n"
       "Examples:\n"
-      "  $ lc diff --get-pattern uname -a\n"
+      "  $ lc diff --get-pattern -- uname -a\n"
       "  $ lc diff --continue\n")))
 
   (if (null? args)
 
       (print-help)
 
-      (let* ((args            (cons "lazycat-diff" args))
-             (options         (getopt-long args option-spec))
+      (let* ((opt-args        (cons "handle-diff" args))
+             (options         (getopt-long opt-args option-spec))
              (help-needed?    (option-ref options 'help #f))
-             (pattern         (option-ref options 'get-pattern #f))
+             (pattern-needed? (option-ref options 'get-pattern #f))
              (continue?       (option-ref options 'continue    #f))
-             (abort?          (option-ref options 'abort       #f)))
-    
+             (abort?          (option-ref options 'abort       #f))
+             (action-args     (option-ref options '()          #f)))
+
         (cond
 
          (help-needed?
           (print-help))
 
-         (pattern
-          (let* ((command (string-join (cdr args) " ")))
-            (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
-              (message-field-set! msg-req 'action  'get-pattern)
-              (message-field-set! msg-req 'command command)
+         (pattern-needed?
+          (if action-args 
+              (let ((cmd (string-join action-args " "))
+                    (msg-req (make <message>
+                               #:type *cmd-diff*
+                               #:request-flag #t)))
+                (message-field-set! msg-req 'action  'get-pattern)
+                (message-field-set! msg-req 'command cmd)
 
-              (let ((msg-rsp (send-message obj msg-req)))
-                (if msg-rsp
-                    (if (not (message-error? msg-rsp))
-                        (format-output (message-field-ref msg-rsp 'output))
-                        (format-error-message msg-rsp))
-                    (format-error *error-connection-lost*))))))
+                (let ((msg-rsp (send-message obj msg-req)))
+                  (if msg-rsp
+                      (if (not (message-error? msg-rsp))
+                          (format-output (message-field-ref msg-rsp 'output))
+                          (format-error-message msg-rsp))
+                      (format-error *error-connection-lost*))))
+              (let ((msg (string-append "No command is specified: "
+                                        (object->string args))))
+                (format-error msg))))
 
          (continue?
           (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
@@ -329,8 +336,9 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
                       (format-error-message msg-rsp))
                   (format-error *error-connection-lost*)))))
          (else
-          (format-error (string-append
-                         "Wrong action: " (symbol->string (car args)))))))))
+          (let ((msg (string-append "No valid action specified: "
+                                    (symbol->string  args))))
+            (format-error msg)))))))
 
 ;; Set a new value to a option.
 (define-method (handle-set (obj <lc>) (args <list>))
