@@ -1,5 +1,10 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* common/proxy.scm (proxy-ping): Catch `proxy-error'.  Unlock the
+	mutex if an error occured to prevent the deadlock with
+	`proxy-stop'.
+	(proxy-stop): Add a debug trace.
+
 	* lazycat-daemon/lazycatd.scm (handle-list-req): Remove a debug
 	trace.
 

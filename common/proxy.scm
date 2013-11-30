@@ -232,9 +232,14 @@
   (lock-mutex (get-mutex obj))
   (let ((msg-req (make <message> #:type *cmd-proxy-ping* #:request-flag #t)))
     (message-field-set! msg-req 'address address)
-    (let ((res (send-request obj msg-req)))
-      (unlock-mutex (get-mutex obj))
-      res)))
+    (catch 'proxy-error
+      (lambda ()
+        (let ((res (send-request obj msg-req)))
+          (unlock-mutex (get-mutex obj))
+          res))
+      (lambda (key . args)
+        (unlock-mutex (get-mutex obj))
+        (proxy-error key args)))))
 
 
 ;; Start the proxy
@@ -264,6 +269,7 @@
 
 ;; Stop the proxy
 (define-method (proxy-stop (obj <proxy>))
+  (proxy-log-msg obj 'DEBUG "Stopping the proxy...")
   (lock-mutex (get-mutex obj))
   (let ((msg-req (make <message> #:type *cmd-proxy-stop* #:request-flag #t)))
     (send-request obj msg-req)
