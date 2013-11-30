@@ -1,5 +1,8 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* configure.ac: Improve check for Guile modules.
+	* INSTALL: Update.
+
 	* Makefile.in, aclocal.m4, configure, depcomp, install-sh,
 	missing, common/Makefile.in, host/Makefile.in,
 	lazycat-daemon/Makefile.in, proxies/Makefile.in, ui/Makefile.in:

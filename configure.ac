@@ -32,12 +32,10 @@ AC_PROG_CC
 # Checks related to GNU Guile
 GUILE_PROGS
 GUILE_FLAGS
+GUILE_SITE_DIR
 
 # Check for required Guile modules
-export GUILE=`which guile-gnome-2`
 GUILE_MODULE_REQUIRED(gnome gtk)
-
-# Check for Guile-SSH
 GUILE_MODULE_REQUIRED(ssh session)
 
 AC_CHECK_FUNCS([mkdir socket])
