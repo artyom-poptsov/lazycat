@@ -1,5 +1,8 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/lc.scm (handle-list): Fix a bug: don't try to get `car' of
+	the empty args list.
+
 	* lazycat-daemon/host-list.scm: Turn to singleton.
 	(set-default-host-list!): New procedure.
 	(host-list-empty?, host-list-load, serialize-host)
