@@ -81,8 +81,9 @@
   (host-set-attr! host "lsb/codename"       (assoc-ref lsb "Codename")))
 
 
-(define (curiosity host-list)
-  "Explore network and store information about hosts in HOST-LIST."
+(define (curiosity)
+  "Explore network and store information about hosts in the LazyCat
+host list."
   (setpriority PRIO_PROCESS 0 *curiosity-thread-prio*)
   (set! pid (getpid))
   (while #t
@@ -102,7 +103,7 @@
                (lambda (key . args)
                  (log-msg 'WARNING (object->string args)))))))
 
-     (host-list-get-plain-list host-list))
+     (host-list-get-plain-list))
     (sleep 10)))
 
 ;;; curiosity.scm ends here.

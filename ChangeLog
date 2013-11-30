@@ -1,5 +1,21 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/host-list.scm: Turn to singleton.
+	(set-default-host-list!): New procedure.
+	(host-list-empty?, host-list-load, serialize-host)
+	(host-list-save, host-list-add-group, host-list-rem-group)
+	(add-host, host-list-add-host, host-list-rem-host)
+	(host-list-get-host-by-id, host-list-get-group-name-by-host-id)
+	(get-group-by-host-id, host-list-get-plain-list)
+	(host-list-get-serialized-list): Change syntax.  All callers
+	updated.
+	(serialize-host/state, serialize-group): Add comments.
+	* lazycat-daemon/curiosity.scm (curiosity): Update.
+	* lazycat-daemon/lazycatd.scm (initialize)
+	(handle-add-req, handle-rem-req, handle-list-req)
+	(exec-cmd-on-host, exec-cmd, handle-diff-req, main): Update.
+	* lazycat-daemon/periodical-ping.scm (periodical-ping): Update.
+
 	* lazycat-daemon/periodical-ping.scm (ping-host): New procedure.
 	(periodical-ping): Use `ping-host'.
 

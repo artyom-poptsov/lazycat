@@ -63,13 +63,13 @@
                                   (object->string (car host-proxies)))))
           (log-msg 'DEBUG msg)))))
 
-(define (periodical-ping host-list options)
+(define (periodical-ping options)
   "Ping hosts from HOST-LIST periodically and update their statuses.
 Ping interval is set through `ping-interval' option from the OPTIONS
 hash table."
   (setpriority PRIO_PROCESS 0 *periodical-ping-thread-prio*)
   (while #t
-    (let ((plain-host-list (host-list-get-plain-list host-list))
+    (let ((plain-host-list (host-list-get-plain-list))
           (period    (string->number (hash-ref options 'ping-interval))))
 
       ;; Zero interval means disabled ping.

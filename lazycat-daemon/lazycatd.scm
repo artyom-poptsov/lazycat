@@ -103,10 +103,6 @@
    #:getter get-options
    #:init-value (make-hash-table))
 
-  (host-list
-   #:setter set-host-list!
-   #:getter get-host-list)
-
   (pattern-output
    #:setter set-pattern!
    #:getter get-pattern
@@ -120,15 +116,16 @@
 
   (if (not (file-exists? (get-tmp-dir obj)))
       (mkdir (get-tmp-dir obj)))
-  
-  (set-host-list! obj (make <host-list> #:lazycat-home (get-home obj)))
+
+  (let ((hlist (make <host-list> #:lazycat-home (get-home obj))))
+    (set-default-host-list! hlist))
 
   (let ((plist (make <proxy-list>
                  #:tmp-dir    (get-tmp-dir obj)
                  #:debug-mode (debug? obj))))
     (set-default-proxy-list! plist))
 
-  (host-list-load (get-host-list obj))
+  (host-list-load)
 
   ;; Load options
   (let ((options (get-options obj)))
@@ -136,15 +133,14 @@
     (hash-set! options 'log-verbosity (if (debug? obj) "4" "1"))
     (hash-set! options 'ping-interval (number->string *default-ping-interval*)))
 
-  (let ((host-list (get-host-list obj)))
-    (if (not (host-list-empty? host-list))
-        ;; Set default master host (the 1st host from the list)
-        ;; TODO: It'll be good idea to store info about master host between
-        ;;       sessions.
-        (let* ((list (host-list-get-plain-list host-list))
-               (master-host-id (host-get-id (car list))))
-          (hash-set! (get-options obj) 'master (number->string master-host-id)))
-        (log-msg 'INFO "Host list is empty"))))
+  (if (not (host-list-empty?))
+      ;; Set default master host (the 1st host from the list)
+      ;; TODO: It'll be good idea to store info about master host between
+      ;;       sessions.
+      (let* ((list (host-list-get-plain-list))
+             (master-host-id (host-get-id (car list))))
+        (hash-set! (get-options obj) 'master (number->string master-host-id)))
+      (log-msg 'INFO "Host list is empty")))
 
 
 ;;; Helper procedures
@@ -218,7 +214,7 @@
 
 ;; Stop the lazycat daemon.
 (define-method (handle-stop-req (obj <lazycatd>) (port <port>))
-  (host-list-save (get-host-list obj))
+  (host-list-save)
   (proxy-list-stop-all)
 
   (let ((msg-rsp (make <message> #:type *cmd-stop*)))
@@ -236,11 +232,9 @@
         (name        (message-field-ref msg-req 'name))
         (proxy-list  (message-field-ref msg-req 'proxy-list))
         (address     (message-field-ref msg-req 'address))
-        (description (message-field-ref msg-req 'description))
-        (host-list   (get-host-list obj)))
+        (description (message-field-ref msg-req 'description)))
 
-    (host-list-add-host host-list
-                        #:group       group
+    (host-list-add-host #:group       group
                         #:name        name
                         #:proxy-list  proxy-list
                         #:address     address
@@ -253,13 +247,12 @@
 (define-method (handle-rem-req (obj     <lazycatd>)
                                (msg-req <message>)
                                (client  <port>))
-  (let ((host-list (get-host-list obj))
-        (host-id   (message-field-ref msg-req 'host-id)))
+  (let ((host-id (message-field-ref msg-req 'host-id)))
 
     (if (or (not host-id) (null? host-id))
         (lazycat-throw "Malformed message"))
 
-    (host-list-rem-host host-list host-id)
+    (host-list-rem-host host-id)
     (let ((msg-rsp (make <message> #:type *cmd-rem-host*)))
       (message-send msg-rsp client))))
 
@@ -285,15 +278,14 @@
 
      ((host)
       (let ((host-id   (message-field-ref msg-req 'host-id))
-            (host-list (get-host-list obj))
             (msg-rsp   (make <message> #:type *cmd-list*)))
         (if host-id
-            (let ((host (host-list-get-host-by-id host-list host-id)))
+            (let ((host (host-list-get-host-by-id host-id)))
               (let ((serialized-host (host-serialize/state host)))
                 (message-field-set! msg-rsp 'serialized-host serialized-host)
                 (message-send msg-rsp client)))
 
-            (let* ((object-list (host-list-get-serialized-list host-list)))
+            (let* ((object-list (host-list-get-serialized-list)))
               (message-field-set! msg-rsp 'object-list object-list)
               (message-send msg-rsp client)))))
 
@@ -359,8 +351,7 @@
 (define-method (exec-cmd-on-host (obj     <lazycatd>)
                                  (host-id <number>)
                                  (command <string>))
-  (let* ((host-list    (get-host-list obj))
-         (host         (host-list-get-host-by-id host-list host-id)))
+  (let ((host (host-list-get-host-by-id host-id)))
 
     (if (not host)
         (lazycat-throw "Couldn't find the host with the given ID" host-id))
@@ -390,8 +381,7 @@
 
   (log-msg 'DEBUG (string-append "exec-cmd: " cmd))
 
-  (let* ((host-list  (get-host-list obj))
-         (plain-list (host-list-get-plain-list host-list))
+  (let* ((plain-list (host-list-get-plain-list))
          (result     '()))
 
     (for-each
@@ -479,8 +469,7 @@
 
      ((continue)
       (if (not (eq? (get-pattern obj) #f))
-          (let* ((host-list  (get-host-list obj))
-                 (plain-list (host-list-get-plain-list host-list))
+          (let* ((plain-list (host-list-get-plain-list))
                  (pattern    (get-pattern obj))
                  (result     '()))
 
@@ -639,14 +628,13 @@ starts LazyCat daemon."
 
           ;; No-detach mode.  Don't detach from a terminal, and don't
           ;; become a daemon.
-          (let ((host-list (get-host-list lazycatd))
-                (options   (get-options   lazycatd)))
+          (let ((options (get-options   lazycatd)))
 
             (create-pid-file lazycatd (getpid))
 
             (proxy-list-load)
-            (make-thread (periodical-ping host-list options))
-            (make-thread (curiosity host-list))
+            (make-thread (periodical-ping options))
+            (make-thread (curiosity))
             (open-socket lazycatd)
             (main-loop   lazycatd))
 
@@ -668,11 +656,10 @@ starts LazyCat daemon."
 
                   (setsid)
 
-                  (let ((host-list (get-host-list lazycatd))
-                        (options   (get-options   lazycatd)))
+                  (let ((options (get-options lazycatd)))
                     (proxy-list-load)
-                    (make-thread (periodical-ping host-list options))
-                    (make-thread (curiosity host-list))
+                    (make-thread (periodical-ping options))
+                    (make-thread (curiosity))
                     (open-socket lazycatd)
                     (main-loop   lazycatd)))
 
