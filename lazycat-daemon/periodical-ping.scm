@@ -41,6 +41,28 @@
   "Priority of the periodical ping thread."
   15)
 
+(define (ping-host host)
+  "Ping a host HOST and update its status."
+  (let* ((address      (host-get-address host))
+         (host-proxies (host-get-proxy-list host))
+         (proxy        (proxy-list-get-proxy (car host-proxies))))
+    (if proxy
+
+        (catch 'proxy-error
+          (lambda ()
+            (let ((msg-rsp (proxy-ping proxy address)))
+              (if (not (message-error? msg-rsp))
+                  (if (message-field-ref msg-rsp 'status)
+                      (host-set-status! host 'online)
+                      (host-set-status! host 'offline)))))
+          (lambda (key . args)
+            (log-msg 'ERROR (object->string args))
+            (host-set-status! host 'offline)))
+
+        (let ((msg (string-append "No such proxy: "
+                                  (object->string (car host-proxies)))))
+          (log-msg 'DEBUG msg)))))
+
 (define (periodical-ping host-list options)
   "Ping hosts from HOST-LIST periodically and update their statuses.
 Ping interval is set through `ping-interval' option from the OPTIONS
@@ -57,30 +79,7 @@ hash table."
             (sleep 5)
             (continue)))
 
-      (for-each
-       (lambda (host)
-         (let* ((address      (host-get-address host))
-                (host-proxies (host-get-proxy-list host))
-                (proxy        (proxy-list-get-proxy (car host-proxies))))
-
-           (if proxy
-
-               (catch 'proxy-error
-                 (lambda ()
-                   (let ((msg-rsp (proxy-ping proxy address)))
-                     (if (not (message-error? msg-rsp))
-                         (if (message-field-ref msg-rsp 'status)
-                             (host-set-status! host 'online)
-                             (host-set-status! host 'offline)))))
-                 (lambda (key . args)
-                   (log-msg 'ERROR (object->string args))
-                   (host-set-status! host 'offline)))
-
-               (let ((msg (string-append "No such proxy: "
-                                         (object->string (car host-proxies)))))
-                 (log-msg 'DEBUG msg)))))
-
-       plain-host-list)
+      (for-each ping-host plain-host-list)
 
       (sleep period))))
 

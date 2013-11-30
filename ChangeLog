@@ -1,5 +1,8 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/periodical-ping.scm (ping-host): New procedure.
+	(periodical-ping): Use `ping-host'.
+
 	* ui/lc.scm (handle-diff): Fix a bug: fix handling of command line
 	arguments during `get-pattern' action.  Change invocation syntax.
 	Print error if a command is not specified for `get-pattern'
