@@ -67,6 +67,9 @@
 ;; The pid file placed in /tmp only for debugging.
 (define *pid-file* "/tmp/lazycat/lazycat.pid")
 
+;;; lazycatd instance
+(define lcd #f)
+
 
 ;;; Main class
 (define-class <lazycatd> ()
@@ -145,7 +148,7 @@
 
 ;;; Helper procedures
 
-(define-method (setup-logging (self <lazycatd>))
+(define-method (setup-logging)
 
   (let ((lgr       (make <logger>))
         (rotating  (make <rotating-log>
@@ -153,9 +156,9 @@
                      #:size-limit 10000
                      #:file-name "/tmp/lazycat/lazycat.log")))
 
-    (if (no-detach? self)
+    (if (no-detach? lcd)
         (let ((err (make <port-log> #:port (current-error-port))))
-          (if (not (debug? self))
+          (if (not (debug? lcd))
               (begin
                 ;; don't want to see warnings or info on the screen!
                 (disable-log-level! err 'WARN)
@@ -181,11 +184,11 @@
 ;;;
 
 
-;; Open a socket and start listening it.
-(define-method (open-socket (obj <lazycatd>))
-  (set-socket! obj (socket PF_UNIX SOCK_STREAM 0))
-  (let ((path            (get-socket-path obj))
-        (lazycatd-socket (get-socket obj)))
+(define (open-socket)
+  "Open a socket and start listening it."
+  (set-socket! lcd (socket PF_UNIX SOCK_STREAM 0))
+  (let ((path            (get-socket-path lcd))
+        (lazycatd-socket (get-socket lcd)))
 
     (if (file-exists? path)
         (delete-file path))
@@ -194,40 +197,38 @@
     (listen lazycatd-socket 1)))
 
 
-;; Create a file that contains the PID of the daemon.
-(define-method (create-pid-file (obj <lazycatd>) (pid <number>))
+(define (create-pid-file pid)
+  "Create a file that contains the PID of the daemon."
   (let ((pid-file (open-output-file *pid-file*)))
     (write pid pid-file)
     (close-port pid-file)))
 
-;; Remove the PID file.
-(define-method (remove-pid-file (obj <lazycatd>))
+(define (remove-pid-file)
+  "Remove the PID file."
   (delete-file *pid-file*))
 
-;; Send message to a client.
-(define-method (send-message (obj <lazycatd>) message (port <port>))
+(define (send-message message port)
+  "Send message to a client."
   (write message port)
   (newline port))
 
 
 ;;; Request handlers
 
-;; Stop the lazycat daemon.
-(define-method (handle-stop-req (obj <lazycatd>) (port <port>))
+(define (handle-stop-req port)
+  "Stop the lazycat daemon."
   (host-list-save)
   (proxy-list-stop-all)
 
   (let ((msg-rsp (make <message> #:type *cmd-stop*)))
     (message-send msg-rsp port))
 
-  (close (get-socket obj))
+  (close (get-socket lcd))
   (shutdown-logging))
 
-;; Add a new host to the host list.
-(define-method (handle-add-req (obj     <lazycatd>)
-                               (msg-req <message>)
-                               (client  <port>))
-
+;; 
+(define (handle-add-req msg-req client)
+  "Add a new host to the host list."
   (let ((group       (message-field-ref msg-req 'group))
         (name        (message-field-ref msg-req 'name))
         (proxy-list  (message-field-ref msg-req 'proxy-list))
@@ -243,10 +244,8 @@
     (let ((msg-rsp (make <message> #:type *cmd-add-host*)))
       (message-send msg-rsp client))))
 
-;; Remove the host with given HOST-ID from the host list.
-(define-method (handle-rem-req (obj     <lazycatd>)
-                               (msg-req <message>)
-                               (client  <port>))
+(define (handle-rem-req msg-req client)
+  "Remove a host from the host list."
   (let ((host-id (message-field-ref msg-req 'host-id)))
 
     (if (or (not host-id) (null? host-id))
@@ -256,13 +255,9 @@
     (let ((msg-rsp (make <message> #:type *cmd-rem-host*)))
       (message-send msg-rsp client))))
 
-;; Get list of objects with the given type TYPE.
-;;
-;; Throws lazycat-exception on error.
-(define-method (handle-list-req (obj     <lazycatd>)
-                                (msg-req <message>)
-                                (client  <port>))
-
+(define (handle-list-req msg-req client)
+  "Get list of objects with the given type.
+Throw lazycat-exception on error."
   (let ((object-type (message-field-ref msg-req 'object-type)))
 
     (if (not object-type)
@@ -290,16 +285,14 @@
               (message-send msg-rsp client)))))
 
      ((option)
-      (let* ((options     (get-options obj))
+      (let* ((options     (get-options lcd))
              (object-list (hash-map->list cons options))
              (msg-rsp     (make <message> #:type *cmd-list*)))
         (message-field-set! msg-rsp 'object-list object-list)
         (message-send msg-rsp client))))))
 
-;; Get value of an option OPTION
-(define-method (handle-get-req (obj     <lazycatd>)
-                                (msg-req <message>)
-                                (client  <port>))
+(define (handle-get-req msg-req client)
+  "Get value of an option."
   (let ((option (message-field-ref msg-req 'option)))
 
     (if (or (not option) (null? option))
@@ -308,18 +301,15 @@
     (if (eqv? (member option *options*) #f)
         (lazycat-throw "No such option" option))
 
-    (let ((value   (hash-ref (get-options obj) option))
+    (let ((value   (hash-ref (get-options lcd) option))
           (msg-rsp (make <message> #:type *cmd-get*)))
       (message-field-set! msg-rsp 'option option)
       (message-field-set! msg-rsp 'value value)
       (message-send msg-rsp client))))
 
-;; Set a VALUE for the OPTION.
-;;
-;; Throws lazycat-exception on error.
-(define-method (handle-set-req (obj     <lazycatd>)
-                               (msg-req <message>)
-                               (client  <port>))
+(define (handle-set-req msg-req client)
+  "Set a value for the given option.
+Throw lazycat-exception on error."
   (let ((option (message-field-ref msg-req 'option))
         (value  (message-field-ref msg-req 'value)))
 
@@ -330,7 +320,7 @@
         (lazycat-throw "No such option" option))
 
     (let ((msg-rsp (make <message> #:type *cmd-set*)))
-      (if (hash-set! (get-options obj) option value)
+      (if (hash-set! (get-options lcd) option value)
           (message-send msg-rsp client)
           (begin
             (message-set-error-flag! msg-rsp #t)
@@ -348,9 +338,8 @@
 ;;   <status>       = <scheme-boolean>
 ;;   <output>       = <scheme-string>
 ;;
-(define-method (exec-cmd-on-host (obj     <lazycatd>)
-                                 (host-id <number>)
-                                 (command <string>))
+(define (exec-cmd-on-host host-id command)
+  "Execute a command on a host with given host ID."
   (let ((host (host-list-get-host-by-id host-id)))
 
     (if (not host)
@@ -377,8 +366,8 @@
 ;;   <status>       = <scheme-boolean>
 ;;   <output>       = <scheme-string>
 ;;
-(define-method (exec-cmd (obj <lazycatd>) (cmd <string>))
-
+(define (exec-cmd cmd)
+  "Execute the command CMD on all accessible hosts."
   (log-msg 'DEBUG (string-append "exec-cmd: " cmd))
 
   (let* ((plain-list (host-list-get-plain-list))
@@ -388,18 +377,15 @@
 
      (lambda (host)
        (let* ((host-id  (host-get-id host))
-              (response (exec-cmd-on-host obj host-id cmd)))
+              (response (exec-cmd-on-host host-id cmd)))
          (set! result (cons response result))))
 
      plain-list)
 
     result))
 
-;; Execute a command and send output to the CLIENT.
-(define-method (handle-exec-req (obj     <lazycatd>)
-                                (msg-req <message>)
-                                (client  <port>))
-
+(define (handle-exec-req msg-req client)
+  "Execute a command and send output to the CLIENT."
   (let ((host-id (message-field-ref msg-req 'host-id))
         (command (message-field-ref msg-req 'command)))
 
@@ -408,23 +394,21 @@
 
     (if (and host-id (not (null? host-id)))
 
-      (let ((output  (exec-cmd-on-host obj host-id command))
+      (let ((output  (exec-cmd-on-host host-id command))
             (msg-rsp (make <message> #:type *cmd-exec*)))
         (message-field-set! msg-rsp 'output (list output))
         (message-send msg-rsp client))
 
-      (let ((output  (exec-cmd obj command))
+      (let ((output  (exec-cmd command))
             (msg-rsp (make <message> #:type *cmd-exec*)))
         (message-field-set! msg-rsp 'output output)
         (message-send msg-rsp client)))))
 
 ;;;
 
-;; Compare output from hosts with an output from the master host.
-;; Return diffs.  Throw lazycat-diff-error on error.
-(define-method (handle-diff-req (obj     <lazycatd>)
-                                (msg-req <message>)
-                                (client  <port>))
+(define (handle-diff-req msg-req client)
+  "Compare output from hosts with an output from the master host.
+Return diffs.  Throw lazycat-diff-error on error."
 
   ;; Return:
   ;;   <result> ::= ( <host-id> ( <status> <output> ) )
@@ -433,7 +417,7 @@
     (let* ((host-id  (host-get-id host))
 
            ;; <result> ::= ( <host-id> ( <status> <output> ) )
-           (result   (exec-cmd-on-host obj host-id command))
+           (result   (exec-cmd-on-host host-id command))
 
            (result   (cadr result))
            (success? (car result))
@@ -441,7 +425,7 @@
 
       (if success?
 
-          (let ((diff (make-string-diff (get-tmp-dir obj) pattern output)))
+          (let ((diff (make-string-diff (get-tmp-dir lcd) pattern output)))
             (if (diff-empty? diff)
                 (list host-id 'similar)
                 (list host-id 'different (diff-get diff))))
@@ -458,19 +442,19 @@
 
      ((get-pattern)
       (let* ((command (message-field-ref msg-req 'command))
-             (master (string->number (hash-ref (get-options obj) 'master)))
-             (result (cadr (exec-cmd-on-host obj master command))))
+             (master (string->number (hash-ref (get-options lcd) 'master)))
+             (result (cadr (exec-cmd-on-host master command))))
 
-        (set-pattern! obj (list command (cadr result)))
+        (set-pattern! lcd (list command (cadr result)))
 
         (let ((msg-rsp (make <message> #:type *cmd-diff*)))
           (message-field-set! msg-rsp 'output (list master result))
           (message-send msg-rsp client))))
 
      ((continue)
-      (if (not (eq? (get-pattern obj) #f))
+      (if (not (eq? (get-pattern lcd) #f))
           (let* ((plain-list (host-list-get-plain-list))
-                 (pattern    (get-pattern obj))
+                 (pattern    (get-pattern lcd))
                  (result     '()))
 
             (for-each
@@ -489,7 +473,7 @@
 
      ((abort)
       (let ((msg-rsp (make <message> #:type *cmd-diff*)))
-        (set-pattern! obj #f)
+        (set-pattern! lcd #f)
         (message-send msg-rsp client)))
 
      (else
@@ -498,7 +482,7 @@
 
 ;;; Main loop
 
-(define-method (main-loop (obj <lazycatd>))
+(define (main-loop)
 
   ;; Wrapper for accept() that catch errors.
   (define (accept-and-catch socket)
@@ -508,7 +492,7 @@
       (lambda (key . args)
         (log-msg 'ERROR "accept() call was interrupted."))))
 
-  (let ((lazycatd-socket (get-socket obj)))
+  (let ((lazycatd-socket (get-socket lcd)))
 
     (while #t
 
@@ -540,36 +524,36 @@
 
                ;; List objects
                ((*cmd-list*)
-                (handle-list-req obj msg-req client))
+                (handle-list-req msg-req client))
 
                ;; Add a new host
                ((*cmd-add-host*)
-                (handle-add-req obj msg-req client))
+                (handle-add-req msg-req client))
 
                ;; Remote a host
                ((*cmd-rem-host*)
-                (handle-rem-req obj msg-req client))
+                (handle-rem-req msg-req client))
 
                ;; Get an option value
                ((*cmd-get*)
-                (handle-get-req obj msg-req client))
+                (handle-get-req msg-req client))
 
                ;; Set an option
                ((*cmd-set*)
-                (handle-set-req obj msg-req client))
+                (handle-set-req msg-req client))
 
                ;; Execute a command
                ((*cmd-exec*)
-                (handle-exec-req obj msg-req client))
+                (handle-exec-req msg-req client))
 
                ;; Get a diff
                ((*cmd-diff*)
-                (handle-diff-req obj msg-req client))
+                (handle-diff-req msg-req client))
 
                ;; Stop the daemon
                ((*cmd-stop*)
                 (begin
-                  (handle-stop-req obj client)
+                  (handle-stop-req client)
                   (break)))))
 
             (lambda (key . args)
@@ -626,53 +610,54 @@ starts LazyCat daemon."
           (print-help)
           (quit)))
 
-    (let ((lazycatd (make <lazycatd>
-                      #:no-detach-mode no-detach?
-                      #:debug-mode     debug-needed?)))
+    ;; Create the lazycatd instance.
+    (set! lcd (make <lazycatd>
+                #:no-detach-mode no-detach?
+                #:debug-mode     debug-needed?))
 
-      (setup-logging lazycatd)
+    (setup-logging)
 
-      (if no-detach?
+    (if no-detach?
 
-          ;; No-detach mode.  Don't detach from a terminal, and don't
-          ;; become a daemon.
-          (let ((options (get-options   lazycatd)))
+        ;; No-detach mode.  Don't detach from a terminal, and don't
+        ;; become a daemon.
+        (let ((options (get-options lcd)))
 
-            (create-pid-file lazycatd (getpid))
+          (create-pid-file (getpid))
 
-            (proxy-list-load)
-            (make-thread (periodical-ping options))
-            (make-thread (curiosity))
-            (open-socket lazycatd)
-            (main-loop   lazycatd))
+          (proxy-list-load)
+          (make-thread (periodical-ping options))
+          (make-thread (curiosity))
+          (open-socket)
+          (main-loop))
 
-          ;; Regular mode.
-          (let ((pid (primitive-fork)))
-            (if (zero? pid)
+        ;; Regular mode.
+        (let ((pid (primitive-fork)))
+          (if (zero? pid)
 
-                (begin
-                  (close-port (current-input-port))
-                  (close-port (current-output-port))
-                  (close-port (current-error-port))
+              (begin
+                (close-port (current-input-port))
+                (close-port (current-output-port))
+                (close-port (current-error-port))
 
-                  ;; This is the workaround for problem with
-                  ;; `with-output-to-string' procedure which tries to
-                  ;; restore the default port even if it closed.
-                  (let ((p (open-output-file "/dev/null")))
-                    (set-current-output-port p)
-                    (set-current-error-port  p))
+                ;; This is the workaround for problem with
+                ;; `with-output-to-string' procedure which tries to
+                ;; restore the default port even if it closed.
+                (let ((p (open-output-file "/dev/null")))
+                  (set-current-output-port p)
+                  (set-current-error-port  p))
 
-                  (setsid)
+                (setsid)
 
-                  (let ((options (get-options lazycatd)))
-                    (proxy-list-load)
-                    (make-thread (periodical-ping options))
-                    (make-thread (curiosity))
-                    (open-socket lazycatd)
-                    (main-loop   lazycatd)))
+                (let ((options (get-options lcd)))
+                  (proxy-list-load)
+                  (make-thread (periodical-ping options))
+                  (make-thread (curiosity))
+                  (open-socket)
+                  (main-loop)))
 
-                (begin
-                  (create-pid-file lazycatd pid)
-                  (quit))))))))
+              (begin
+                (create-pid-file pid)
+                (quit)))))))
 
 ;;; lazycatd.scm ends here.

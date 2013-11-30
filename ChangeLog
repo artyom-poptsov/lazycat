@@ -1,5 +1,9 @@
 2013-12-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/lazycatd.scm: Simplify the design: instead of
+	passing lazycatd instance to almost every method use one global
+	instance.
+
 	Implement basic signal handling.
 	* lazycat-daemon/lazycat-daemon.c (react_to_terminal_signal)
 	(set_lazycat_signals): New procedures.
