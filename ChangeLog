@@ -1,5 +1,8 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* .gitignore: Add `Makefile.in', `configure', `aclocal.m4',
+	`build-aux/'.
+
 	* ui/lc.scm (handle-diff): Fix a bug: rename `coninue?' to
 	`continue?'.
 	(handle-exec): Print error if host-id is not a number.

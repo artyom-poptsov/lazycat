@@ -12,8 +12,13 @@ lazycat-daemon/lazycat-daemon
 ui/lazycat-gtk
 ui/lc
 
-# Auto-generated Makefile
+# Auto-generated files
 Makefile
+Makefile.in
+configure
+aclocal.m4
+
+build-aux/
 
 config.log
 config.status
