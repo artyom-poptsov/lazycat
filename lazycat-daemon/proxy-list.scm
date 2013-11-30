@@ -23,7 +23,7 @@
 ;;
 ;; This module exports:
 ;;   <proxy-list>
-;;   proxy-list-get
+;;   proxy-list-get-proxy
 ;;   proxy-list-get-list
 ;;   proxy-list-load
 ;;   proxy-list-stop-all
@@ -38,7 +38,7 @@
   ;; Proxies
   #:use-module (lazycat proxies ssh-proxy)
   #:use-module (lazycat proxies tcp-proxy)
-  #:export (<proxy-list> proxy-list-get
+  #:export (<proxy-list> proxy-list-get-proxy
                          proxy-list-get-list
                          proxy-list-load
                          proxy-list-stop-all))
@@ -73,7 +73,7 @@
     (hash-set! (get-htable obj) (proxy-get-name tcp-proxy) tcp-proxy)))
 
 ;; Get a proxy with name NAME.
-(define-method (proxy-list-get (obj <proxy-list>) (name <string>))
+(define-method (proxy-list-get-proxy (obj <proxy-list>) (name <string>))
   (let ((ht (get-htable obj)))
     (hash-ref ht name #f)))
 

@@ -366,7 +366,7 @@
     (let* ((host-addr    (host-get-address host))
            (host-proxies (host-get-proxy-list host))
            ;; FIXME: We use first proxy from the list for now.
-           (proxy        (proxy-list-get proxy-list (car host-proxies))))
+           (proxy        (proxy-list-get-proxy proxy-list (car host-proxies))))
 
       (let ((msg-proxy-rsp (proxy-send-message proxy host-addr command)))
         (if (not (message-error? msg-proxy-rsp))
@@ -527,7 +527,8 @@
          (lambda (host)
            (let* ((address      (host-get-address host))
                   (host-proxies (host-get-proxy-list host))
-                  (proxy        (proxy-list-get proxy-list (car host-proxies))))
+                  (proxy        (proxy-list-get-proxy proxy-list
+                                                      (car host-proxies))))
 
              (if proxy
 

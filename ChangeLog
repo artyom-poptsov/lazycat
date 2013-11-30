@@ -1,3 +1,10 @@
+2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat-daemon/proxy-list.scm (proxy-list-get): Rename to
+	`proxy-list-get-proxy'.  All callers updated.
+	* lazycat-daemon/lazycatd.scm: Update.
+	* lazycat-daemon/curiosity.scm: Update.
+
 2013-11-27  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/cli/pretty-format.scm (format-host-list): Improve printing of
