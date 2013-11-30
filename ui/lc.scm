@@ -208,9 +208,6 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       "  $ lc exec uname -a\n"
       "  $ lc exec --host-id 2 uptime\n")))
 
-  (define (fold-args args)
-    (fold (lambda (s res) (string-append res " " s)) "" args))
-
   (cond
 
    ((or (null? args)
@@ -219,7 +216,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
    ((or (string=? (car args) "--host-id") (string=? (car args) "-n"))
     (let ((host-id (string->number (cadr args)))
-          (cmd     (fold-args (cddr args))))
+          (cmd     (string-join (cddr args) " ")))
       (if host-id
           (exec-cmd-on-host obj host-id cmd)
           (let ((msg (string-append "Wrong host ID: "
@@ -227,7 +224,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
             (format-error msg)))))
 
    (#t
-    (let ((cmd (fold-args args)))
+    (let ((cmd (string-join args " ")))
       (exec-cmd obj cmd)))))
 
 ;; Execute a command CMD on the every accessible host.
