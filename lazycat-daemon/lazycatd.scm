@@ -584,6 +584,12 @@
 
           (close client)))))
 
+;;; Signal handling
+
+(define (handle-signal sig)
+  (log-msg 'WARN (string-append "Caught signal: " (number->string sig)))
+  (quit 1))
+
 
 ;;; Entry point of the program.
 
@@ -608,6 +614,8 @@
 (define (main args)
   "Entry point of the program.  It is called from the C code and
 starts LazyCat daemon."
+  (c-set-lazycat-signals)
+
   (let* ((options       (getopt-long args *option-spec*))
          (debug-needed? (option-ref options 'debug     #f))
          (no-detach?    (option-ref options 'no-detach #f))

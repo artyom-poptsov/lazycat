@@ -18,7 +18,33 @@
  * along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
+#include <signal.h>
 #include <libguile.h>
+
+void
+react_to_terminal_signal (int sig)
+{
+  enum { EXPLEN = 25 };
+  char exp[EXPLEN];
+  snprintf (exp, EXPLEN, "(handle-signal %d)", sig);
+  scm_eval_string (scm_from_locale_string (exp));
+  exit (1);
+}
+
+SCM
+set_lazycat_signals (void)
+{
+  static struct sigaction sa;
+  memset (&sa, 0, sizeof (sa));
+  sa.sa_handler = react_to_terminal_signal;
+  sigaction (SIGTERM, &sa, 0);
+  sigaction (SIGINT,  &sa, 0);
+  sigaction (SIGQUIT, &sa, 0);
+  sigaction (SIGHUP,  &sa, 0);
+
+  return SCM_BOOL_T;
+}
 
 
 /* Start the LazyCat main procedure. */
@@ -30,6 +56,12 @@ inner_main (void* closure, int argc, char** argv)
   SCM module;
 
   module = scm_c_resolve_module ("lazycat lazycat-daemon lazycatd");
+
+  scm_set_current_module (module);
+
+  scm_c_define_gsubr ("c-set-lazycat-signals", 0, 0, 0, set_lazycat_signals);
+  scm_c_export ("c-set-lazycat-signals", NULL);
+
   main   = scm_c_module_lookup (module, "main");
   args   = scm_program_arguments ();
 

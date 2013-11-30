@@ -1,3 +1,12 @@
+2013-12-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	Implement basic signal handling.
+	* lazycat-daemon/lazycat-daemon.c (react_to_terminal_signal)
+	(set_lazycat_signals): New procedures.
+	(inner_main): Export `c-set-lazycat-signals'.
+	* lazycat-daemon/lazycatd.scm (handle-signal): New procedure.
+	(main): Setup signal handling.
+
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* lazycat-daemon/host-list.scm (host-list-rem-host): Fix wrong
