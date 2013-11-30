@@ -388,7 +388,7 @@
 ;;
 (define-method (exec-cmd (obj <lazycatd>) (cmd <string>))
 
-  (log-msg 'DEBUG (string-append "lazycat-exec: " cmd))
+  (log-msg 'DEBUG (string-append "exec-cmd: " cmd))
 
   (let* ((host-list  (get-host-list obj))
          (plain-list (host-list-get-plain-list host-list))
@@ -443,7 +443,7 @@
     (let* ((host-id  (host-get-id host))
 
            ;; <result> ::= ( <host-id> ( <status> <output> ) )
-           (result   (lazycat-exec obj host-id command))
+           (result   (exec-cmd-on-host obj host-id command))
 
            (result   (cadr result))
            (success? (car result))
@@ -469,7 +469,7 @@
      ((get-pattern)
       (let* ((command (message-field-ref msg-req 'command))
              (master (string->number (hash-ref (get-options obj) 'master)))
-             (result (cadr (lazycat-exec obj master command))))
+             (result (cadr (exec-cmd-on-host obj master command))))
 
         (set-pattern! obj (list command (cadr result)))
 

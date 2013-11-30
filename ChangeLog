@@ -1,5 +1,9 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/lazycatd.scm (exec-cmd): Fix the debug trace.
+	(handle-diff-req): Fix a bug: call `exec-cmd-on-host' instead of
+	`lazycat-exec'.
+
 	* common/proxy.scm (proxy-ping): Catch `proxy-error'.  Unlock the
 	mutex if an error occured to prevent the deadlock with
 	`proxy-stop'.
