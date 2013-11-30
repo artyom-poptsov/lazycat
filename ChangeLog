@@ -1,5 +1,8 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/lazycatd.scm (handle-list-req): Remove a debug
+	trace.
+
 	* lazycat-daemon/lazycatd.scm (periodical-ping): Move to its own
 	file.
 	* lazycat-daemon/periodical-ping.scm: New file.

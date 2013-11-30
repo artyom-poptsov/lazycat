@@ -290,7 +290,6 @@
         (if host-id
             (let ((host (host-list-get-host-by-id host-list host-id)))
               (let ((serialized-host (host-serialize/state host)))
-                (write serialized-host)
                 (message-field-set! msg-rsp 'serialized-host serialized-host)
                 (message-send msg-rsp client)))
 
