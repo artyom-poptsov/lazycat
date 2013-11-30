@@ -395,7 +395,8 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
   (define (print-help)
     (display
      (string-append
-      "Usage: lc list <object-type>\n"
+      "Usage: lc list <object-type> [args]\n"
+      "       lc list hosts [host-id]\n"
       "\n"
       "Available object types:\n"
       "  h, hosts        List hosts\n"
@@ -403,6 +404,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       "\n"
       "Examples:\n"
       "  $ lc list hosts\n"
+      "  $ lc list hosts 1\n"
       "  $ lc list options\n")))
 
   (let ((cmd (car args)))
@@ -411,13 +413,21 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       (print-help))
 
      ((or (string=? cmd "hosts") (string=? cmd "h"))
-      (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t)))
+      (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t))
+            (host-id #f))
         (message-field-set! msg-req 'object-type 'host)
+
+        (if (not (null? (cdr args)))
+            (begin
+              (set! host-id (string->number (cadr args)))
+              (message-field-set! msg-req 'host-id host-id)))
 
         (let ((msg-rsp (send-message obj msg-req)))
           (if msg-rsp
               (if (not (message-error? msg-rsp))
-                  (format-host-list (message-field-ref msg-rsp 'object-list))
+                  (if host-id
+                      (format-host (message-field-ref msg-rsp 'serialized-host))
+                      (format-host-list (message-field-ref msg-rsp 'object-list)))
                   (format-error-message msg-rsp))
               (format-error *error-connection-lost*)))))
 

@@ -1,5 +1,13 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/lc.scm (handle-list): Take a host ID passed as an argument
+	for `hosts' command as a request for information about the
+	specific host.
+	* ui/cli/pretty-format.scm (format-host): New procedure.
+	* lazycat-daemon/lazycatd.scm (handle-list-req): Handle requests
+	for a host information.
+	* lazycat-daemon/host.scm (host-serialize/state): New method.
+
 	* ui/lc.scm (handle-list): Improve checks in `cond' clauses.
 
 	* configure.ac: Improve check for Guile modules.

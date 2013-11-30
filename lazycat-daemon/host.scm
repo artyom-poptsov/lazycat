@@ -43,7 +43,7 @@
   #:export (<host>
             host-get-id host-get-name host-get-proxy-list host-get-address
             host-get-description host-get-status host-set-status!
-            host-get-attr host-set-attr!))
+            host-get-attr host-set-attr! host-serialize/state))
 
 
 ;;; Main class
@@ -136,5 +136,15 @@
 
 (define-method (host-get-attr (obj <host>) key)
   (hash-get (get-attr obj) key))
+
+(define-method (host-serialize/state (obj <host>))
+  (list
+   (cons 'id          (host-get-id obj))
+   (cons 'name        (get-name obj))
+   (cons 'proxy-list  (get-proxy-list obj))
+   (cons 'address     (host-get-address obj))
+   (cons 'description (host-get-description obj))
+   (cons 'state       (host-get-status obj))
+   (cons 'attributes  (hash-map->list cons (get-attr obj)))))
 
 ;;; host.scm ends here

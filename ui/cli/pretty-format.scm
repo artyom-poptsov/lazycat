@@ -30,7 +30,8 @@
   #:use-module (oop goops)
   #:use-module (lazycat ui cli format-table)
   #:use-module (lazycat message)
-  #:export (format-host-list
+  #:export (format-host
+            format-host-list
             format-options-list
             format-error
             format-error-message
@@ -84,6 +85,24 @@
    lst)
 
   (newline))
+
+(define (format-host host)
+  (for-each
+   (lambda (field)
+     (let ((field-name (car field))
+           (field-val  (cdr field)))
+       (if (list? field-val)
+           (begin
+             (format #t "~15a:~%" field-name)
+             (for-each
+              (lambda (v)
+                (if (pair? v)
+                    (format #t "  ~20a: ~a~%" (car v) (cdr v))
+                    (format #t "  ~20a~%" v)))
+                
+              field-val))
+           (format #t "~15a: ~a~%" field-name field-val))))
+   host))
 
 
 ;; Display an error message
