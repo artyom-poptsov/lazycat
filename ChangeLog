@@ -1,5 +1,14 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/host-list.scm (host-list-rem-host): Fix wrong
+	call to `host-list-rem-host' and `host-list-get-host-by-id'.
+	(get-group-by-host-id): Fix wrong call to
+	`host-list-get-host-by-id'.
+	(host-list-get-group-name-by-host-id): Fix wrong call to
+	`get-group-by-host-id'.
+	(get-group-by-host-id): Fix wrong call to
+	`host-list-get-host-by-id'.
+
 	* ui/lc.scm (handle-list): Fix a bug: don't try to get `car' of
 	the empty args list.
 

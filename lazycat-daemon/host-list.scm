@@ -251,10 +251,10 @@ group will be created if it doesn't exist."
             #:description description))
 
 ;; TODO: Add check that the host exists.
-(define (host-list-rem-host host-id)
-  "Remove a host HOST-ID from the list"
-  (let ((host    (host-list-get-host-by-id hlist host-id))
-        (group   (get-group-by-host-id hlist host-id)))
+(define (host-list-rem-host id)
+  "Remove a host with given ID from the list"
+  (let ((host    (host-list-get-host-by-id id))
+        (group   (get-group-by-host-id id)))
     ;; Remove the host from the list
     (set-cdr! group (remove-if (lambda (element) (eq? element host)) (cdr group)))))
 
@@ -270,7 +270,7 @@ group will be created if it doesn't exist."
 
 (define (host-list-get-group-name-by-host-id id)
   "Get group by the host ID"
-  (let ((group (get-group-by-host-id hlist id)))
+  (let ((group (get-group-by-host-id id)))
     (car group)))
 
 (define (get-group-by-host-id id)
@@ -284,7 +284,7 @@ group will be created if it doesn't exist."
               #f ; Host is not found.
               (f (cdr group-members))))))
 
-  (let ((host (host-list-get-host-by-id hlist host-id)))
+  (let ((host (host-list-get-host-by-id id)))
     (let f ((group-list (host-list hlist)))
       (let ((group (car group-list)))
         (if (eq? (contains-host? host group) #t)
