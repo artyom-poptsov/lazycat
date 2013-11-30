@@ -48,6 +48,7 @@
   #:use-module (lazycat lazycat-daemon proxy-list)
   #:use-module (lazycat lazycat-daemon diff)
   #:use-module (lazycat lazycat-daemon curiosity)
+  #:use-module (lazycat lazycat-daemon periodical-ping)
   #:export (<lazycatd> run))
 
 
@@ -62,9 +63,6 @@
 (define *options* '(master log-verbosity ping-interval))
 
 (define *default-ping-interval* 30)     ;Seconds
-
-;; Priority of the periodical ping thread.
-(define *periodical-ping-thread-prio* 15)
 
 ;; The pid file placed in /tmp only for debugging.
 (define *pid-file* "/tmp/lazycat/lazycat.pid")
@@ -510,51 +508,6 @@
       (lazycat-throw "Wrong action" action)))))
 
 
-;;;
-
-;; Ping hosts periodically and update their statuses.
-(define-method (periodical-ping (obj <lazycatd>))
-  (setpriority PRIO_PROCESS 0 *periodical-ping-thread-prio*)
-  (while #t
-    (let ((host-list (host-list-get-plain-list (get-host-list obj)))
-          (period    (string->number
-                      (hash-ref (get-options obj) 'ping-interval))))
-
-      ;; Zero interval means disabled ping.
-      (if (zero? period)
-          (begin
-            (yield)
-            (sleep 5)
-            (continue)))
-
-      (for-each
-       (lambda (host)
-         (let* ((address      (host-get-address host))
-                (host-proxies (host-get-proxy-list host))
-                (proxy        (proxy-list-get-proxy (car host-proxies))))
-
-           (if proxy
-
-               (catch 'proxy-error
-                 (lambda ()
-                   (let ((msg-rsp (proxy-ping proxy address)))
-                     (if (not (message-error? msg-rsp))
-                         (if (message-field-ref msg-rsp 'status)
-                             (host-set-status! host 'online)
-                             (host-set-status! host 'offline)))))
-                 (lambda (key . args)
-                   (log-msg 'ERROR (object->string args))
-                   (host-set-status! host 'offline)))
-
-               (let ((msg (string-append "No such proxy: "
-                                         (object->string (car host-proxies)))))
-                 (log-msg 'DEBUG msg)))))
-
-       host-list)
-
-      (sleep period))))
-
-
 ;;; Main loop
 
 (define-method (main-loop (obj <lazycatd>))
@@ -687,12 +640,13 @@ starts LazyCat daemon."
 
           ;; No-detach mode.  Don't detach from a terminal, and don't
           ;; become a daemon.
-          (let ((host-list  (get-host-list lazycatd)))
+          (let ((host-list (get-host-list lazycatd))
+                (options   (get-options   lazycatd)))
 
             (create-pid-file lazycatd (getpid))
 
             (proxy-list-load)
-            (make-thread (periodical-ping lazycatd))
+            (make-thread (periodical-ping host-list options))
             (make-thread (curiosity host-list))
             (open-socket lazycatd)
             (main-loop   lazycatd))
@@ -715,9 +669,10 @@ starts LazyCat daemon."
 
                   (setsid)
 
-                  (let ((host-list  (get-host-list lazycatd)))
+                  (let ((host-list (get-host-list lazycatd))
+                        (options   (get-options   lazycatd)))
                     (proxy-list-load)
-                    (make-thread (periodical-ping lazycatd))
+                    (make-thread (periodical-ping host-list options))
                     (make-thread (curiosity host-list))
                     (open-socket lazycatd)
                     (main-loop   lazycatd)))

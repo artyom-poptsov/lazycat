@@ -1,5 +1,9 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/lazycatd.scm (periodical-ping): Move to its own
+	file.
+	* lazycat-daemon/periodical-ping.scm: New file.
+
 	* lazycat-daemon/proxy-list.scm: Turn to singleton.
 	(set-default-proxy-list!): New procedure.
 	(proxy-list-load): Change syntax.  All callers updated.
