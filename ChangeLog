@@ -1,6 +1,8 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* configure.ac: Improve check for Guile modules.
+	Set `AC_CONFIG_AUX_DIR'.
+
 	* INSTALL: Update.
 
 	* Makefile.in, aclocal.m4, configure, depcomp, install-sh,

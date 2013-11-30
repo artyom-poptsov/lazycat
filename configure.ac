@@ -24,6 +24,8 @@ AC_INIT([lazycat], [0.2])
 
 AC_COPYRIGHT(LAZYCAT_CONFIGURE_COPYRIGHT)
 
+AC_CONFIG_AUX_DIR([build-aux])
+
 AM_INIT_AUTOMAKE
 
 # Find a C compiler.
