@@ -1,5 +1,10 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* Makefile.in, aclocal.m4, configure, depcomp, install-sh,
+	missing, common/Makefile.in, host/Makefile.in,
+	lazycat-daemon/Makefile.in, proxies/Makefile.in, ui/Makefile.in:
+	Remove.
+
 	* lazycat-daemon/proxy-list.scm (proxy-list-get): Rename to
 	`proxy-list-get-proxy'.  All callers updated.
 	* lazycat-daemon/lazycatd.scm: Update.
