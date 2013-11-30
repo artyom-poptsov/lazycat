@@ -81,7 +81,7 @@
   (host-set-attr! host "lsb/codename"       (assoc-ref lsb "Codename")))
 
 
-(define (curiosity host-list proxy-list)
+(define (curiosity host-list)
   "Explore network and store information about hosts in HOST-LIST."
   (setpriority PRIO_PROCESS 0 *curiosity-thread-prio*)
   (set! pid (getpid))
@@ -94,7 +94,7 @@
                (lambda ()
                  (let* ((host-proxies (host-get-proxy-list host))
                         (host-addr    (host-get-address host))
-                        (proxy        (proxy-list-get-proxy proxy-list (car host-proxies)))
+                        (proxy        (proxy-list-get-proxy (car host-proxies)))
                         (msg-rsp      (proxy-send-message proxy host-addr *lsb-release-cmd*)))
                    (if (not (message-error? msg-rsp))
                        (let ((lsb-info (lsb->alist (message-field-ref msg-rsp 'response))))

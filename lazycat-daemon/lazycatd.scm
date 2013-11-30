@@ -109,10 +109,6 @@
    #:setter set-host-list!
    #:getter get-host-list)
 
-  (proxy-list
-   #:setter set-proxy-list!
-   #:getter get-proxy-list)
-
   (pattern-output
    #:setter set-pattern!
    #:getter get-pattern
@@ -128,9 +124,11 @@
       (mkdir (get-tmp-dir obj)))
   
   (set-host-list! obj (make <host-list> #:lazycat-home (get-home obj)))
-  (set-proxy-list! obj (make <proxy-list>
-                         #:tmp-dir    (get-tmp-dir obj)
-                         #:debug-mode (debug? obj)))
+
+  (let ((plist (make <proxy-list>
+                 #:tmp-dir    (get-tmp-dir obj)
+                 #:debug-mode (debug? obj))))
+    (set-default-proxy-list! plist))
 
   (host-list-load (get-host-list obj))
 
@@ -223,7 +221,7 @@
 ;; Stop the lazycat daemon.
 (define-method (handle-stop-req (obj <lazycatd>) (port <port>))
   (host-list-save (get-host-list obj))
-  (proxy-list-stop-all (get-proxy-list obj))
+  (proxy-list-stop-all)
 
   (let ((msg-rsp (make <message> #:type *cmd-stop*)))
     (message-send msg-rsp port))
@@ -365,7 +363,6 @@
                                  (host-id <number>)
                                  (command <string>))
   (let* ((host-list    (get-host-list obj))
-         (proxy-list   (get-proxy-list obj))
          (host         (host-list-get-host-by-id host-list host-id)))
 
     (if (not host)
@@ -374,7 +371,7 @@
     (let* ((host-addr    (host-get-address host))
            (host-proxies (host-get-proxy-list host))
            ;; FIXME: We use first proxy from the list for now.
-           (proxy        (proxy-list-get-proxy proxy-list (car host-proxies))))
+           (proxy        (proxy-list-get-proxy (car host-proxies))))
 
       (let ((msg-proxy-rsp (proxy-send-message proxy host-addr command)))
         (if (not (message-error? msg-proxy-rsp))
@@ -518,46 +515,44 @@
 ;; Ping hosts periodically and update their statuses.
 (define-method (periodical-ping (obj <lazycatd>))
   (setpriority PRIO_PROCESS 0 *periodical-ping-thread-prio*)
-  (let ((proxy-list (get-proxy-list obj)))
-    (while #t
-      (let ((host-list (host-list-get-plain-list (get-host-list obj)))
-            (period    (string->number
-                        (hash-ref (get-options obj) 'ping-interval))))
+  (while #t
+    (let ((host-list (host-list-get-plain-list (get-host-list obj)))
+          (period    (string->number
+                      (hash-ref (get-options obj) 'ping-interval))))
 
-        ;; Zero interval means disabled ping.
-        (if (zero? period)
-            (begin
-              (yield)
-              (sleep 5)
-              (continue)))
+      ;; Zero interval means disabled ping.
+      (if (zero? period)
+          (begin
+            (yield)
+            (sleep 5)
+            (continue)))
 
-        (for-each
-         (lambda (host)
-           (let* ((address      (host-get-address host))
-                  (host-proxies (host-get-proxy-list host))
-                  (proxy        (proxy-list-get-proxy proxy-list
-                                                      (car host-proxies))))
+      (for-each
+       (lambda (host)
+         (let* ((address      (host-get-address host))
+                (host-proxies (host-get-proxy-list host))
+                (proxy        (proxy-list-get-proxy (car host-proxies))))
 
-             (if proxy
+           (if proxy
 
-                 (catch 'proxy-error
-                   (lambda ()
-                     (let ((msg-rsp (proxy-ping proxy address)))
-                       (if (not (message-error? msg-rsp))
-                           (if (message-field-ref msg-rsp 'status)
-                               (host-set-status! host 'online)
-                               (host-set-status! host 'offline)))))
-                   (lambda (key . args)
-                     (log-msg 'ERROR (object->string args))
-                     (host-set-status! host 'offline)))
+               (catch 'proxy-error
+                 (lambda ()
+                   (let ((msg-rsp (proxy-ping proxy address)))
+                     (if (not (message-error? msg-rsp))
+                         (if (message-field-ref msg-rsp 'status)
+                             (host-set-status! host 'online)
+                             (host-set-status! host 'offline)))))
+                 (lambda (key . args)
+                   (log-msg 'ERROR (object->string args))
+                   (host-set-status! host 'offline)))
 
-                 (let ((msg (string-append "No such proxy: "
-                                           (object->string (car host-proxies)))))
-                   (log-msg 'DEBUG msg)))))
+               (let ((msg (string-append "No such proxy: "
+                                         (object->string (car host-proxies)))))
+                 (log-msg 'DEBUG msg)))))
 
-         host-list)
+       host-list)
 
-        (sleep period)))))
+      (sleep period))))
 
 
 ;;; Main loop
@@ -692,14 +687,13 @@ starts LazyCat daemon."
 
           ;; No-detach mode.  Don't detach from a terminal, and don't
           ;; become a daemon.
-          (let ((proxy-list (get-proxy-list lazycatd))
-                (host-list  (get-host-list lazycatd)))
+          (let ((host-list  (get-host-list lazycatd)))
 
             (create-pid-file lazycatd (getpid))
 
-            (proxy-list-load proxy-list)
+            (proxy-list-load)
             (make-thread (periodical-ping lazycatd))
-            (make-thread (curiosity host-list proxy-list))
+            (make-thread (curiosity host-list))
             (open-socket lazycatd)
             (main-loop   lazycatd))
 
@@ -721,11 +715,10 @@ starts LazyCat daemon."
 
                   (setsid)
 
-                  (let ((proxy-list (get-proxy-list lazycatd))
-                        (host-list  (get-host-list lazycatd)))
-                    (proxy-list-load proxy-list)
+                  (let ((host-list  (get-host-list lazycatd)))
+                    (proxy-list-load)
                     (make-thread (periodical-ping lazycatd))
-                    (make-thread (curiosity host-list proxy-list))
+                    (make-thread (curiosity host-list))
                     (open-socket lazycatd)
                     (main-loop   lazycatd)))
 

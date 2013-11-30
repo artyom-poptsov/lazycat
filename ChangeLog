@@ -1,5 +1,16 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/proxy-list.scm: Turn to singleton.
+	(set-default-proxy-list!): New procedure.
+	(proxy-list-load): Change syntax.  All callers updated.
+	(proxy-list-get-proxy): Likewise.
+	(proxy-list-get-list): Likewise.
+	(proxy-list-stop-all): Likewise.
+	* lazycat-daemon/curiosity.scm (curiosity): Update.
+	* lazycat-daemon/lazycatd.scm (periodical-ping, initialize)
+	(handle-stop-req, exec-cmd-on-host, periodical-ping, main):
+	Update.
+
 	* ui/lc.scm (handle-list): Take a host ID passed as an argument
 	for `hosts' command as a request for information about the
 	specific host.
