@@ -53,6 +53,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 format)
   #:use-module (ice-9 getopt-long)
+  #:use-module (srfi srfi-1)            ;fold
   #:use-module (lazycat ui cli pretty-format)
   #:use-module (lazycat protocol)
   #:use-module (lazycat message)
@@ -207,6 +208,9 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       "  $ lc exec uname -a\n"
       "  $ lc exec --host-id 2 uptime\n")))
 
+  (define (fold-args args)
+    (fold (lambda (s res) (string-append res " " s)) "" args))
+
   (cond
 
    ((or (null? args)
@@ -215,22 +219,15 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
    ((or (string=? (car args) "--host-id") (string=? (car args) "-n"))
     (let ((host-id (string->number (cadr args)))
-          (cmd     ""))
+          (cmd     (fold-args (cddr args))))
       (if host-id
-          (begin
-            (for-each (lambda (s)
-                        (set! cmd (string-append cmd " " s)))
-                      (cddr args))
-            (exec-cmd-on-host obj host-id cmd))
+          (exec-cmd-on-host obj host-id cmd)
           (let ((msg (string-append "Wrong host ID: "
                                     (object->string (cadr args)))))
             (format-error msg)))))
 
    (#t
-    (let ((cmd ""))
-      (for-each (lambda (s)
-                  (set! cmd (string-append cmd " " s)))
-                args)
+    (let ((cmd (fold-args args)))
       (exec-cmd obj cmd)))))
 
 ;; Execute a command CMD on the every accessible host.
