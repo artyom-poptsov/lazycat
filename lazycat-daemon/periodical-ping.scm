@@ -35,11 +35,17 @@
   #:use-module (lazycat lazycat-daemon host)
   #:use-module (lazycat lazycat-daemon host-list)
   #:use-module (lazycat lazycat-daemon proxy-list)
-  #:export (periodical-ping))
+  #:export (periodical-ping periodical-ping-get-pid))
 
 (define-with-docs *periodical-ping-thread-prio*
   "Priority of the periodical ping thread."
   15)
+
+(define pid #f)
+
+(define (periodical-ping-get-pid)
+  "Get PID of the Periodical Ping thread."
+  pid)
 
 (define (ping-host host)
   "Ping a host HOST and update its status."
@@ -68,6 +74,7 @@
 Ping interval is set through `ping-interval' option from the OPTIONS
 hash table."
   (setpriority PRIO_PROCESS 0 *periodical-ping-thread-prio*)
+  (set! pid (getpid))
   (while #t
     (let ((plain-host-list (host-list-get-plain-list))
           (period    (string->number (hash-ref options 'ping-interval))))

@@ -1,5 +1,9 @@
 2013-12-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/periodical-ping.scm (periodical-ping): Store PID
+	of the thread on the start.
+	(periodical-ping-get-pid): New procedure.
+
 	* lazycat-daemon/lazycatd.scm: Simplify the design: instead of
 	passing lazycatd instance to almost every method use one global
 	instance.
