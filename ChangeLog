@@ -2,6 +2,7 @@
 
 	* ui/lc.scm (handle-diff): Fix a bug: rename `coninue?' to
 	`continue?'.
+	(handle-exec): Print error if host-id is not a number.
 
 	* lazycat-daemon/lazycatd.scm (exec-cmd): Fix the debug trace.
 	(handle-diff-req): Fix a bug: call `exec-cmd-on-host' instead of

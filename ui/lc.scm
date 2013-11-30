@@ -216,10 +216,15 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
    ((or (string=? (car args) "--host-id") (string=? (car args) "-n"))
     (let ((host-id (string->number (cadr args)))
           (cmd     ""))
-      (for-each (lambda (s)
-                  (set! cmd (string-append cmd " " s)))
-                (cddr args))
-      (exec-cmd-on-host obj host-id cmd)))
+      (if host-id
+          (begin
+            (for-each (lambda (s)
+                        (set! cmd (string-append cmd " " s)))
+                      (cddr args))
+            (exec-cmd-on-host obj host-id cmd))
+          (let ((msg (string-append "Wrong host ID: "
+                                    (object->string (cadr args)))))
+            (format-error msg)))))
 
    (#t
     (let ((cmd ""))
