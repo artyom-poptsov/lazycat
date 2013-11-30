@@ -1,5 +1,8 @@
 2013-11-30  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/lc.scm (handle-diff): Fix a bug: rename `coninue?' to
+	`continue?'.
+
 	* lazycat-daemon/lazycatd.scm (exec-cmd): Fix the debug trace.
 	(handle-diff-req): Fix a bug: call `exec-cmd-on-host' instead of
 	`lazycat-exec'.

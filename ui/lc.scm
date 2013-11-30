@@ -288,7 +288,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
              (options         (getopt-long args option-spec))
              (help-needed?    (option-ref options 'help #f))
              (pattern         (option-ref options 'get-pattern #f))
-             (coninue?        (option-ref options 'continue    #f))
+             (continue?       (option-ref options 'continue    #f))
              (abort?          (option-ref options 'abort       #f)))
     
         (cond
