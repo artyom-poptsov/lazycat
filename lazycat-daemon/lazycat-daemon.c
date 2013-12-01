@@ -22,6 +22,29 @@
 #include <signal.h>
 #include <libguile.h>
 
+#include <sys/prctl.h>
+
+
+/* prctl module. */
+
+SCM
+set_thread_name (SCM name)
+{
+  char *n = scm_to_locale_string (name);
+  prctl (PR_SET_NAME, n);
+  return SCM_UNDEFINED;
+}
+
+void
+init_prctl_module (void *data)
+{
+  scm_c_define_gsubr ("prctl-pr-set-name!", 1, 0, 0, set_thread_name);
+  scm_c_export ("prctl-pr-set-name!", NULL);
+}
+
+
+/* Signal handling */
+
 void
 react_to_terminal_signal (int sig)
 {
@@ -55,8 +78,9 @@ inner_main (void* closure, int argc, char** argv)
   SCM args;
   SCM module;
 
-  module = scm_c_resolve_module ("lazycat lazycat-daemon lazycatd");
+  scm_c_define_module ("lazycat prctl", init_prctl_module, NULL);
 
+  module = scm_c_resolve_module ("lazycat lazycat-daemon lazycatd");
   scm_set_current_module (module);
 
   scm_c_define_gsubr ("c-set-lazycat-signals", 0, 0, 0, set_lazycat_signals);

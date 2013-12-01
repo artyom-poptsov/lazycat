@@ -40,6 +40,7 @@
   #:use-module (lazycat proxy)
   #:use-module (lazycat message)
   #:use-module (lazycat protocol)
+  #:use-module (lazycat prctl)
   #:use-module (oop goops)
   #:export (curiosity
             curiosity-get-pid))
@@ -86,6 +87,7 @@
 host list."
   (setpriority PRIO_PROCESS 0 *curiosity-thread-prio*)
   (set! pid (getpid))
+  (prctl-pr-set-name! "curiosity")
   (while #t
     (map
      (lambda (host)

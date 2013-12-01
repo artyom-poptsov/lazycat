@@ -1,5 +1,12 @@
 2013-12-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/lazycat-daemon.c (set_thread_name): New
+	procedure.
+	(init_prctl_module): New procedure.
+	(inner_main): Define `prctl' module.
+	* lazycat-daemon/curiosity.scm (curiosity): Set thread name.
+	* lazycat-daemon/periodical-ping.scm (periodical-ping): Likewise.
+
 	* lazycat-daemon/periodical-ping.scm (periodical-ping): Store PID
 	of the thread on the start.
 	(periodical-ping-get-pid): New procedure.

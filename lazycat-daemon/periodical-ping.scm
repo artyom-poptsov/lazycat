@@ -32,6 +32,7 @@
   ;; LazyCat modules:
   #:use-module (lazycat message)
   #:use-module (lazycat proxy)
+  #:use-module (lazycat prctl)
   #:use-module (lazycat lazycat-daemon host)
   #:use-module (lazycat lazycat-daemon host-list)
   #:use-module (lazycat lazycat-daemon proxy-list)
@@ -75,6 +76,7 @@ Ping interval is set through `ping-interval' option from the OPTIONS
 hash table."
   (setpriority PRIO_PROCESS 0 *periodical-ping-thread-prio*)
   (set! pid (getpid))
+  (prctl-pr-set-name! "periodical-ping")
   (while #t
     (let ((plain-host-list (host-list-get-plain-list))
           (period    (string->number (hash-ref options 'ping-interval))))
