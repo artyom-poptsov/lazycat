@@ -1,6 +1,8 @@
 2013-12-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/lc.scm (<lc>): Remove unused slot.
+	(print-version): Simplify the procedure.  All callers updated.
+	(main): Update.
 
 2013-12-01  Artyom Poptsov  <poptsov.artyom@gmail.com>
 

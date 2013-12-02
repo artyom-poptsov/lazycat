@@ -453,8 +453,8 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 ;;; Helper procedures
 
-;; Get information about current version
-(define-method (print-version (obj <lc>))
+(define (print-version)
+  "Get information about the current version"
   (display
    (string-append
     "Version:          " *version* "\n"
@@ -496,7 +496,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
     (case* string=? cmd
 
      (("version")
-      (print-version lc))
+      (print-version))
 
      (("add" "a")
       (handle-add lc cmd-args))
