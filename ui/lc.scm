@@ -72,10 +72,6 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 ;;; Main class
 
 (define-class <lc> ()
-  (server-socket
-   #:setter set-socket
-   #:getter get-socket)
-
   (server-socket-path
    #:getter get-server-socket-path
    #:init-value "/tmp/lazycat/server")
