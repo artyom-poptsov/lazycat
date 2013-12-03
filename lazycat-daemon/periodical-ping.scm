@@ -58,7 +58,7 @@
         (catch 'proxy-error
           (lambda ()
             (let ((msg-rsp (proxy-ping proxy address)))
-              (if (not (message-error? msg-rsp))
+              (if (and msg-rsp (not (message-error? msg-rsp)))
                   (if (message-field-ref msg-rsp 'status)
                       (host-set-status! host 'online)
                       (host-set-status! host 'offline)))))

@@ -1,3 +1,9 @@
+2013-12-03  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* common/proxy.scm (proxy-ping): Add a check for #f returned as a
+	result of `proxy-ping' to prevent calling `message-error?' with #f
+	as the argument.
+
 2013-12-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/lc.scm (<lc>): Remove unused slot.
