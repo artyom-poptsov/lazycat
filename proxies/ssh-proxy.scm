@@ -128,12 +128,17 @@
 
       (proxy-log-msg obj 'DEBUG "Connect to a host.")
 
-      (let ((res (connect! session)))
-        (case res
-          ((ok)
-           (proxy-log-msg obj 'DEBUG "Connected."))
-          (else
-           (proxy-error (get-error session) res))))
+      (catch 'guile-ssh-error
+        (lambda ()
+          (let ((res (connect! session)))
+            (case res
+              ((ok)
+               (proxy-log-msg obj 'DEBUG "Connected."))
+              (else
+               (proxy-error (get-error session) res)))))
+        (lambda (key . args)
+          (proxy-log-msg obj 'WARN (get-error session))
+          (proxy-error (get-error session))))
 
       ;; TODO: Authenticate server
                                         ;    (ssh:authenticate-server session)

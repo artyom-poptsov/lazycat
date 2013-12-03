@@ -1,5 +1,8 @@
 2013-12-03  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* proxies/ssh-proxy.scm (make-new-session): Catch
+	`guile-ssh-error' on connection.
+
 	* common/proxy.scm (proxy-ping): Add a check for #f returned as a
 	result of `proxy-ping' to prevent calling `message-error?' with #f
 	as the argument.
