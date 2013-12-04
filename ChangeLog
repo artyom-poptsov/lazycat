@@ -1,3 +1,9 @@
+2013-12-04  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat-daemon/host-list.scm (host-list-rem-host): Throw an
+	exception if host does not exist.
+	* lazycat-daemon/lazycatd.scm (handle-rem-req): Likewise.
+
 2013-12-03  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* proxies/ssh-proxy.scm (make-new-session): Catch

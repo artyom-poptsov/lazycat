@@ -251,9 +251,14 @@
     (if (or (not host-id) (null? host-id))
         (lazycat-throw "Malformed message"))
 
-    (host-list-rem-host host-id)
-    (let ((msg-rsp (make <message> #:type *cmd-rem-host*)))
-      (message-send msg-rsp client))))
+      (catch 'no-such-host
+        (lambda ()
+          (host-list-rem-host host-id))
+        (lambda (key . args)
+          (lazycat-throw "No such host" args)))
+
+      (let ((msg-rsp (make <message> #:type *cmd-rem-host*)))
+        (message-send msg-rsp client))))
 
 (define (handle-list-req msg-req client)
   "Get list of objects with the given type.
