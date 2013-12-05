@@ -75,11 +75,15 @@
 
 (define (set-host-lsb lsb host)
   "Set LSB information for the host HOST."
-  (host-set-attr! host "lsb/version"        (assoc-ref lsb "LSB Version"))
-  (host-set-attr! host "lsb/distributor-id" (assoc-ref lsb "Distributor ID"))
-  (host-set-attr! host "lsb/description"    (assoc-ref lsb "Description"))
-  (host-set-attr! host "lsb/release"        (assoc-ref lsb "Release"))
-  (host-set-attr! host "lsb/codename"       (assoc-ref lsb "Codename")))
+  (define (set-if-not-#f attr lsb-rec)
+    (let ((rec-val (assoc-ref lsb lsb-rec)))
+      (if rec-val (host-set-attr! host attr rec-val))))
+  (set-if-not-#f "lsb/version"        "LSB Version")
+  (set-if-not-#f "lsb/version"        "LSB Version")
+  (set-if-not-#f "lsb/distributor-id" "Distributor ID")
+  (set-if-not-#f "lsb/description"    "Description")
+  (set-if-not-#f "lsb/release"        "Release")
+  (set-if-not-#f "lsb/codename"       "Codename"))
 
 
 (define (curiosity)
