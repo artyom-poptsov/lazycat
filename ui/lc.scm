@@ -195,33 +195,51 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 ;; A function that handles command line for 'exec' command.
 (define-method (handle-exec (obj <lc>) (args <list>))
 
+  (define option-spec
+    '((help    (single-char #\h) (value #f))
+      (host-id (single-char #\n) (value #t))))
+
   (define (print-help)
     (display
      (string-append
-      "Usage: lc exec [ --host-id <host-id> | -n <host-id> ] <command>\n"
+      "Usage: lc exec [ options ] -- <command>\n"
+      "\n"
+      "Options:\n"
+      "  --host-id=<id>, -n <id>  Execute a command on the specified host.\n"
+      "  --help, -h               Print this message end exit.\n"
       "\n"
       "Examples:\n"
-      "  $ lc exec uname -a\n"
-      "  $ lc exec --host-id 2 uptime\n")))
+      "  $ lc exec -- uname -a\n"
+      "  $ lc exec --host-id=2 uptime\n"
+      "  $ lc exec -n 2 -- uptime -a\n")))
 
-  (cond
+  (if (null? args)
 
-   ((or (null? args)
-        (string=? (car args) "--help")    (string=? (car args) "-h"))
-    (print-help))
+      (print-help)
 
-   ((or (string=? (car args) "--host-id") (string=? (car args) "-n"))
-    (let ((host-id (string->number (cadr args)))
-          (cmd     (string-join (cddr args) " ")))
-      (if host-id
-          (exec-cmd-on-host obj host-id cmd)
-          (let ((msg (string-append "Wrong host ID: "
-                                    (object->string (cadr args)))))
-            (format-error msg)))))
+      (let* ((opt-args     (cons "handle-exec" args))
+             (options      (getopt-long opt-args option-spec))
+             (help-needed? (option-ref options 'help #f))
+             (host-id      (option-ref options 'host-id #f))
+             (cmd-args     (option-ref options '() #f)))
 
-   (#t
-    (let ((cmd (string-join args " ")))
-      (exec-cmd obj cmd)))))
+        (if help-needed?
+
+            (print-help)
+
+            (cond
+             (host-id
+              (let ((host-id (string->number host-id))
+                    (cmd     (string-join cmd-args " ")))
+                (if host-id
+                    (exec-cmd-on-host obj host-id cmd)
+                    (let ((msg (string-append "Wrong host ID: "
+                                              (object->string (cadr args)))))
+                      (format-error msg)))))
+
+             (#t
+              (let ((cmd (string-join cmd-args " ")))
+                (exec-cmd obj cmd))))))))
 
 ;; Execute a command CMD on the every accessible host.
 (define-method (exec-cmd (obj <lc>) (command <string>))
