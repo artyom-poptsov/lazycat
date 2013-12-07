@@ -1,3 +1,8 @@
+2013-12-08  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat-daemon/host.scm (host-get-attr): Fix a bug: call
+	`hash-ref' instead of `hash-get'.
+
 2013-12-07  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/lc.scm (handle-exec): Use `getopt-long' for processing

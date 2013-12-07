@@ -135,7 +135,7 @@
   (hash-set! (get-attr obj) key val))
 
 (define-method (host-get-attr (obj <host>) key)
-  (hash-get (get-attr obj) key))
+  (hash-ref (get-attr obj) key))
 
 (define-method (host-serialize/state (obj <host>))
   (list
