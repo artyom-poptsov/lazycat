@@ -56,6 +56,7 @@ AC_CONFIG_FILES([
         proxies/Makefile
         host/Makefile
         common/Makefile
+        trans/Makefile
 ])
 
 # Generate a Makefile, based on the results.

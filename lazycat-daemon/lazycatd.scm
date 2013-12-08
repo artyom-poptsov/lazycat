@@ -43,12 +43,14 @@
   #:use-module (lazycat proxy)
   #:use-module (lazycat protocol)
   #:use-module (lazycat message)
+  #:use-module (lazycat translator)
   #:use-module (lazycat lazycat-daemon host)
   #:use-module (lazycat lazycat-daemon host-list)
   #:use-module (lazycat lazycat-daemon proxy-list)
   #:use-module (lazycat lazycat-daemon diff)
   #:use-module (lazycat lazycat-daemon curiosity)
   #:use-module (lazycat lazycat-daemon periodical-ping)
+  #:use-module (lazycat lazycat-daemon translator-list)
   #:export (<lazycatd> run))
 
 
@@ -335,6 +337,15 @@ Throw lazycat-exception on error."
 
 ;;; exec request
 
+(define (translate-command host command)
+  (let ((trans (get-translator-for-host host)))
+    (if (not trans)
+        (lazycat-throw (string-append
+                        "Couldn't find an appropriate"
+                        "translator for the host.")
+                       (host-get-id host)))
+    (translate trans command)))
+
 ;; Execute a command COMMAND on a host with given HOST-ID.
 ;;
 ;; Return:
@@ -343,17 +354,19 @@ Throw lazycat-exception on error."
 ;;   <status>       = <scheme-boolean>
 ;;   <output>       = <scheme-string>
 ;;
-(define (exec-cmd-on-host host-id command)
+(define (exec-cmd-on-host translate? host-id command)
   "Execute a command on a host with given host ID."
   (let ((host (host-list-get-host-by-id host-id)))
 
     (if (not host)
         (lazycat-throw "Couldn't find the host with the given ID" host-id))
-
     (let* ((host-addr    (host-get-address host))
            (host-proxies (host-get-proxy-list host))
            ;; FIXME: We use first proxy from the list for now.
-           (proxy        (proxy-list-get-proxy (car host-proxies))))
+           (proxy        (proxy-list-get-proxy (car host-proxies)))
+           (command      (if translate?
+                             (translate-command host command)
+                             (string-join command " "))))
 
       (let ((msg-proxy-rsp (proxy-send-message proxy host-addr command)))
         (if (not (message-error? msg-proxy-rsp))
@@ -371,9 +384,9 @@ Throw lazycat-exception on error."
 ;;   <status>       = <scheme-boolean>
 ;;   <output>       = <scheme-string>
 ;;
-(define (exec-cmd cmd)
+(define (exec-cmd translate? cmd)
   "Execute the command CMD on all accessible hosts."
-  (log-msg 'DEBUG (string-append "exec-cmd: " cmd))
+  (log-msg 'DEBUG (string-append "exec-cmd: " (object->string cmd)))
 
   (let* ((plain-list (host-list-get-plain-list))
          (result     '()))
@@ -382,7 +395,7 @@ Throw lazycat-exception on error."
 
      (lambda (host)
        (let* ((host-id  (host-get-id host))
-              (response (exec-cmd-on-host host-id cmd)))
+              (response (exec-cmd-on-host translate? host-id cmd)))
          (set! result (cons response result))))
 
      plain-list)
@@ -392,22 +405,23 @@ Throw lazycat-exception on error."
 (define (handle-exec-req msg-req client)
   "Execute a command and send output to the CLIENT."
   (let ((host-id (message-field-ref msg-req 'host-id))
-        (command (message-field-ref msg-req 'command)))
+        (command (message-field-ref msg-req 'command))
+        (translate? (message-field-ref msg-req 'translate?)))
+    (cond
+     ((or (not command) (null? command))
+      (lazycat-throw "Malformed message"))
 
-    (if (or (not command) (null? command))
-        (lazycat-throw "Malformed message" args))
-
-    (if (and host-id (not (null? host-id)))
-
-      (let ((output  (exec-cmd-on-host host-id command))
+     ((and host-id (not (null? host-id)))
+      (let ((output  (exec-cmd-on-host translate? host-id command))
             (msg-rsp (make <message> #:type *cmd-exec*)))
         (message-field-set! msg-rsp 'output (list output))
-        (message-send msg-rsp client))
+        (message-send msg-rsp client)))
 
-      (let ((output  (exec-cmd command))
+     ((or (not host-id) (null? host-id))
+      (let ((output  (exec-cmd translate? command))
             (msg-rsp (make <message> #:type *cmd-exec*)))
         (message-field-set! msg-rsp 'output output)
-        (message-send msg-rsp client)))))
+        (message-send msg-rsp client))))))
 
 ;;;
 

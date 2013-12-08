@@ -1,5 +1,25 @@
 2013-12-08  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	Add basic support of translators.
+	* lazycat-daemon/lazycatd.scm (translate-command): New procedure.
+	(exec-cmd-on-host): Add support of translators.  Change arguments.
+	All callers updated.
+	(exec-cmd): Likewise.
+	(handle-exec-req): Add support of translators.
+	* ui/lc.scm (handle-exec): Handle `translate' option.
+	(exec-cmd): Add support of translators.  Change arguments.
+	All callers updated.
+	(exec-cmd-on-host): Likewise.
+	(print-help): Update.
+	* Makefile.am (SUBDIRS): Add `trans' subdirectory.
+	* configure.ac: Update.
+	* common/protocol.scm (*cmd-exec*): Update comment.
+	* common/translator.scm: New file.
+	* lazycat-daemon/translator-list.scm: New file.
+	* trans/portage.scm: New file.
+	* trans/apt.scm: New file.
+	* trans/Makefile.am: New file.
+
 	* lazycat-daemon/host.scm (host-get-attr): Fix a bug: call
 	`hash-ref' instead of `hash-get'.
 

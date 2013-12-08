@@ -196,8 +196,9 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 (define-method (handle-exec (obj <lc>) (args <list>))
 
   (define option-spec
-    '((help    (single-char #\h) (value #f))
-      (host-id (single-char #\n) (value #t))))
+    '((help      (single-char #\h) (value #f))
+      (host-id   (single-char #\n) (value #t))
+      (translate (single-char #\t) (value #f))))
 
   (define (print-help)
     (display
@@ -206,6 +207,8 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       "\n"
       "Options:\n"
       "  --host-id=<id>, -n <id>  Execute a command on the specified host.\n"
+      "  --translate, -t          Translate a command to the native command,\n"
+      "                           understood by a specific package manager.\n"
       "  --help, -h               Print this message end exit.\n"
       "\n"
       "Examples:\n"
@@ -220,31 +223,34 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       (let* ((opt-args     (cons "handle-exec" args))
              (options      (getopt-long opt-args option-spec))
              (help-needed? (option-ref options 'help #f))
+             (translate?   (option-ref options 'translate #f))
              (host-id      (option-ref options 'host-id #f))
-             (cmd-args     (option-ref options '() #f)))
+             (cmd          (option-ref options '() #f)))
 
-        (if help-needed?
+        (cond
 
-            (print-help)
+         (help-needed?
+          (print-help))
 
-            (cond
-             (host-id
-              (let ((host-id (string->number host-id))
-                    (cmd     (string-join cmd-args " ")))
-                (if host-id
-                    (exec-cmd-on-host obj host-id cmd)
-                    (let ((msg (string-append "Wrong host ID: "
-                                              (object->string (cadr args)))))
-                      (format-error msg)))))
+         ((not cmd)
+          (format-error "No command is specified."))
 
-             (#t
-              (let ((cmd (string-join cmd-args " ")))
-                (exec-cmd obj cmd))))))))
+         (host-id
+          (let ((id (string->number host-id)))
+            (if id
+                (exec-cmd-on-host obj translate? id cmd)
+                (let ((msg (string-append "Wrong host ID: "
+                                          (object->string host-id))))
+                  (format-error msg)))))
+
+         ((not host-id)
+          (exec-cmd obj translate? cmd))))))
 
 ;; Execute a command CMD on the every accessible host.
-(define-method (exec-cmd (obj <lc>) (command <string>))
+(define-method (exec-cmd (obj <lc>) (translate? <boolean>) (cmd <list>))
   (let ((msg-req (make <message> #:type *cmd-exec* #:request-flag #t)))
-    (message-field-set! msg-req 'command command)
+    (message-field-set! msg-req 'translate? translate?)
+    (message-field-set! msg-req 'command cmd)
     (let ((msg-rsp (send-message obj msg-req)))
       (if msg-rsp
           (if (not (message-error? msg-rsp))
@@ -253,12 +259,14 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
           (format-error *error-connection-lost*)))))
 
 ;; Execute a command CMD on a host with the given HOST-ID.
-(define-method (exec-cmd-on-host (obj     <lc>)
-                                 (host-id <number>)
-                                 (command <string>))
+(define-method (exec-cmd-on-host (obj        <lc>)
+                                 (translate? <boolean>)
+                                 (host-id    <number>)
+                                 (cmd        <list>))
   (let ((msg-req (make <message> #:type *cmd-exec* #:request-flag #t)))
+    (message-field-set! msg-req 'translate? translate?)
     (message-field-set! msg-req 'host-id host-id)
-    (message-field-set! msg-req 'command command)
+    (message-field-set! msg-req 'command cmd)
 
     (let ((msg-rsp (send-message obj msg-req)))
       (if msg-rsp
@@ -484,15 +492,16 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
     "Usage: lc <command>\n"
     "\n"
     "Possible commands:\n"
-    "  a, add     add a new host\n"
-    "  d, diff    compare outputs from hosts\n"
-    "  e, exec    execute a command\n"
-    "  g, get     get current value of an option\n"
-    "  l, list    list objects\n"
-    "  r, rem     remove host\n"
-    "  s, set     set a new value for an option\n"
-    "  stop       stop LazyCat daemon\n"
-    "  version    print information about current version\n"
+    "  a, add        add a new host\n"
+    "  d, diff       compare outputs from hosts\n"
+    "  e, exec       execute a command\n"
+    "  t, translate  translate a command\n"
+    "  g, get        get current value of an option\n"
+    "  l, list       list objects\n"
+    "  r, rem        remove host\n"
+    "  s, set        set a new value for an option\n"
+    "  stop          stop LazyCat daemon\n"
+    "  version       print information about current version\n"
     "\n"
     "Enter 'lc <command> -h' to get documentation for the command.\n")))
 

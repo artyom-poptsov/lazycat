@@ -127,11 +127,12 @@
 ;; Execute a command on a host.
 ;;
 ;; Request payload:
-;;   <payload>      = "(command . " <scheme-string> ")"
+;;   <payload>      = "(command . " <scheme-list> ")"
 ;;                    [ "(host-id . " <scheme-number> ")" ]
 ;;                          ; If host-id is omitted it means that
 ;;                          ; the command should be executed on all
 ;;                          ; accessible hosts.
+;;                    [ "(translate? . " <scheme-boolean> ")" ]
 ;;
 ;; Response payload:
 ;;   <payload>      = "( output . " <output-list> ")"
