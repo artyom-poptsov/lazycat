@@ -1,3 +1,8 @@
+2013-12-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat-daemon/curiosity.scm (set-host-lsb): Fix double
+	setting of `lsb/version' attribute.
+
 2013-12-08  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	Add basic support of translators.

@@ -79,7 +79,6 @@
     (let ((rec-val (assoc-ref lsb lsb-rec)))
       (if rec-val (host-set-attr! host attr rec-val))))
   (set-if-not-#f "lsb/version"        "LSB Version")
-  (set-if-not-#f "lsb/version"        "LSB Version")
   (set-if-not-#f "lsb/distributor-id" "Distributor ID")
   (set-if-not-#f "lsb/description"    "Description")
   (set-if-not-#f "lsb/release"        "Release")
