@@ -84,11 +84,13 @@
 
   (attr
    #:getter get-attr
-   #:init-value (make-hash-table)))
+   #:setter set-attr!
+   #:init-value #f))
 
 ;; Host initialization
 (define-method (initialize (obj <host>) args)
-  (next-method))
+  (next-method)
+  (set-attr! obj (make-hash-table)))
 
 
 ;;; Public methods

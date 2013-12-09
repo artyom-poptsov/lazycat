@@ -1,5 +1,11 @@
 2013-12-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/host.scm: Fix a bug: initialize its own
+	attributions hash table for each instance of the <host> class
+	instead of initialization of the one global hash table for the
+	class.
+	(initialize): Initialize attributions hash table.
+
 	* lazycat-daemon/curiosity.scm (set-host-lsb): Fix double
 	setting of `lsb/version' attribute.
 
