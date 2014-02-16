@@ -1,5 +1,8 @@
 2014-02-16  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* README: Update.
+	* README.org: New file.
+
 	* host/Makefile.am: Fix building with GNU Guile 2.0.
 	* lazycat-daemon/Makefile.am: Likewise.
 	* configure.ac: Commented out the check for `(gnome gtk)'.

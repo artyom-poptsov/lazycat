@@ -1,6 +1,6 @@
-			LazyCat
+# -*- mode: org; -*-
 
-LazyCat is a configuration management system.  It is on the early
+LazyCat is a [[https://en.wikipedia.org/wiki/Configuration_management][configuration management]] system.  It is on the early
 stages of development, but already can do some useful work.
 
 LazyCat is distributed under the terms of GNU GPLv3 license or (at
@@ -9,8 +9,7 @@ your option) any later version. See COPYING for details.
 For information about open issues and ideas about development of the
 project see TODO file.
 
-
-	OVERVIEW
+* Overview
 
 LazyCat consists of the four main parts: UI, daemon, proxies and
 optional clients that are running on hosts.
@@ -31,51 +30,51 @@ SSH proxy uses authorisation based on public keys. To use this proxy
 you must have SSH daemon running on the every host.
 
 The private/public key names are hardcoded for now: they are
-~/.ssh/lazycat and ~/.ssh/lazycat.pub respectively.
+=~/.ssh/lazycat= and =~/.ssh/lazycat.pub= respectively.
 
-
-	DEPENDENCIES
+* Requirements
 
 LazyCat has got the following dependences:
 
- - GNU Guile 1.8 (probably will work with 2.0, not tested)
-   <https://www.gnu.org/software/guile/>
+ - [[https://www.gnu.org/software/guile/][GNU Guile]] 2.0
+ - [[https://github.com/artyom-poptsov/libguile-ssh][Guile-SSH]] 0.5.0
+ - [[https://www.gnu.org/software/diffutils/][GNU Diffutils]]
 
- - Guile-SSH -- Needed for ssh-proxy
-   <https://github.com/artyom-poptsov/libguile-ssh>
-
- - libssh 0.5.4 -- Needed for Guile-SSH
-   <http://www.libssh.org/>
-
- - GNU Diffutils -- Needed for the diff-mode
-   <https://www.gnu.org/software/diffutils/>
-
-
-	USAGE EXAMPLE
+* Usage Examples
 
 First of all, you have to start the daemon:
 
+#+BEGIN_EXAMPLE
   $ lazycat-daemon
+#+END_EXAMPLE
 
 Then you can add hosts to be able to manage them:
 
+#+BEGIN_EXAMPLE
   $ lc add home-network lazy-pc1 ssh-proxy "avp@pc1:22" \
       "A lazy computer"
+#+END_EXAMPLE
 
 You can get list of hosts with "list" command:
 
+#+BEGIN_EXAMPLE
   $ lc list hosts
+#+END_EXAMPLE
 
 Hosts are addressed by their IDs.  For example, to send command to a
-concrete host, you can pass its ID to the "exec" command.  Say you
-want to send "uname -a" to the host with ID 2 :
+concrete host, you can pass its ID to the =exec= command.  Say you
+want to send =uname -a= to the host with ID 2:
 
+#+BEGIN_EXAMPLE
   $ lc exec -n 2 uname -a
+#+END_EXAMPLE
 
 If you don't specify a host ID, a command will be sent to all the
 accessible hosts:
 
+#+BEGIN_EXAMPLE
   $ lc exec uname -a
+#+END_EXAMPLE
 
 It's possible to compare outputs from hosts with output from the
 master host.  In other words, you'll get only diff between different
@@ -83,28 +82,37 @@ outputs instead of full output from the every host.
 
 Set master host:
 
+#+BEGIN_EXAMPLE
   $ lc set master 5
+#+END_EXAMPLE
 
 Get output from the master host:
 
+#+BEGIN_EXAMPLE
   $ lc diff --get-pattern "uname -a"
+#+END_EXAMPLE
 
 Check the output.  If it's OK, continue the operation:
 
+#+BEGIN_EXAMPLE
   $ lc diff --continue
+#+END_EXAMPLE
 
 If something went wrong, you can abort the operation:
 
+#+BEGIN_EXAMPLE
   $ lc diff --abort
+#+END_EXAMPLE
 
-All commands have short documentation and usage examples.  Use "-h"
+All commands have short documentation and usage examples.  Use =-h=
 key to get help:
 
+#+BEGIN_EXAMPLE
   $ lc -h
   $ lc exec -h
+#+END_EXAMPLE
 
-
-	HACKING
+* Hacking
 
 There are few ways to get useful information about the program.  The
 first is to use standard Guile tool display-commentary to get
@@ -112,28 +120,24 @@ information about files.
 
 Second, lazycat sources are well documented.  I.e. you can find
 commentaries for almost all procedures.  Protocol description can be
-found in common/protocol.scm file.  Augmented Bacus-Naur Form (ABNF)
+found in =common/protocol.scm= file.  Augmented Bacus-Naur Form (ABNF)
 is used for description of the protocol.  See RFC5234 for descripton
 of the ABNF notation.  ABNF/BNF is used to describe some procedures'
 parameters and return values as well.
 
 If you planning to develop a new proxy for the lazycat, commentaries
 in common/proxy.scm should be useful.  This file contains the class
-<proxy> that must be the accessor for all proxies (although, of
+=<proxy>= that must be the accessor for all proxies (although, of
 course, theoreticaly you can implement your own proxy from scratch).
 
 To implement a new UI for the lazycat, you should use the protocol and
-<message> class described in common/message.scm file.
+=<message>= class described in common/message.scm file.
 
-lazycat-daemon can be run in the debug mode by passing '-d' as a
-command line argument.  '-D' can be used to run the program in
-'no-detach' mode -- that is, the daemon won't close standard ports and
+=lazycat-daemon= can be run in the debug mode by passing =-d= as a
+command line argument.  =-D= can be used to run the program in
+"no-detach" mode -- that is, the daemon won't close standard ports and
 detach from the console.  This mode is useful for debugging.
 
 The daemon also uses syslog interface.  Check the log for records
 tagged with 'lazycatd'.  You can control verbosity of the log by
-setting 'log-verbosity' parameter (see 'lc l options').
-
-
-
-
+setting =log-verbosity= parameter (see =lc l options=).
