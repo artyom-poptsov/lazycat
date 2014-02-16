@@ -1,5 +1,8 @@
 2014-02-16  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* proxies/ssh-proxy.scm (handle-send-message): Update to work with
+	Guile-SSH 0.5.0.
+
 	* README: Update.
 	* README.org: New file.
 

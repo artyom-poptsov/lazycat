@@ -90,16 +90,13 @@
 
         #f)))
 
-;; Poll a channel CHANNEL for data and read available data.
-;; Return obtained data.
-(define (poll-channel channel)
-  (let poll ((count (channel-poll channel #f)))
-    (if (not count)
-        #f
-        (if (zero? count)
-            (poll (channel-poll channel #f))
-            (let ((result (channel-read channel count #f)))
-              result)))))
+(define (read-all port)
+  "Read all lines from the PORT."
+  (let r ((res "")
+          (str (read-line port 'concat)))
+    (if (not (eof-object? str))
+        (r (string-append res str) (read-line port 'concat))
+        res)))
 
 ;; Make a SSH session and connect to ADDRESS
 (define-method (make-new-session (obj <ssh-proxy>) (address <string>))
@@ -212,9 +209,8 @@
             (proxy-error (get-error session)))))
 
       (proxy-log-msg obj 'DEBUG "Poll SSH channel")
-      (let ((res (poll-channel channel)))
-        (blocking-flush! session 10)
-        (free-channel! channel)
+      (let ((res (read-all channel)))
+        (close channel)
         (proxy-log-msg obj 'DEBUG "Data received")
         res))))
 
