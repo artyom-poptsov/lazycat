@@ -8,7 +8,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 ;;; lc -- A CLI for LazyCat.
 
-;; Copyright (C) 2013 Artyom Poptsov <poptsov.artyom@gmail.com>
+;; Copyright (C) 2013, 2014 Artyom Poptsov <poptsov.artyom@gmail.com>
 ;;
 ;; This file is part of LazyCat.
 ;;
@@ -69,39 +69,27 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
   "connection to the server lost\n")
 
 
-;;; Main class
+;;; Global symbols
 
-(define-class <lc> ()
-  (server-socket-path
-   #:getter get-server-socket-path
-   #:init-value "/tmp/lazycat/server")
-
-  (server-port
-   #:getter get-server-port
-   #:setter set-server-port))
-
-(define-method (initialize (obj <lc>) args)
-  (next-method)
-  (set-server-port obj (socket PF_UNIX SOCK_STREAM 0))
-  (connect (get-server-port obj) AF_UNIX (get-server-socket-path obj)))
+(define server-socket-path "/tmp/lazycat/server")
+(define server-port (socket PF_UNIX SOCK_STREAM 0))
 
 
 ;;; Methods
 
-;; Quit the application.
-(define-method (lc-quit (obj <lc>))
-  (close (get-server-port obj)))
+(define (lc-quit)
+  "Quit the application."
+  (close server-port obj))
 
-;; Send a MESSAGE of TYPE to the server.
-(define-method (send-message (obj <lc>) (msg-req <message>))
-  (let ((server-port (get-server-port obj)))
-    (message-send msg-req server-port)
-    (message-recv server-port)))
+;; 
+(define (send-message msg-req)
+  "Send a MESSAGE of TYPE to the server."
+  (message-send msg-req server-port)
+  (message-recv server-port))
 
 
-;; Add a new host.
-(define-method (handle-add (obj <lc>) (args <list>))
-
+(define (handle-add args)
+  "Add a new host."
   (define option-spec
     '((help        (single-char #\h) (value #f))
       (group       (single-char #\g) (value #t))
@@ -156,15 +144,15 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
               (message-field-set! msg-req 'address     address)
               (message-field-set! msg-req 'description description)
 
-              (let ((msg-rsp (send-message obj msg-req)))
+              (let ((msg-rsp (send-message msg-req)))
                 (if msg-rsp
                     (if (message-error? msg-rsp)
                         (format-error-message msg-rsp))
                     (format-error *error-connection-lost*))))))))
 
-;; Remove a host.
-(define-method (handle-rem (obj <lc>) (args <list>))
-
+
+(define (handle-rem args)
+  "Remove a host."
   (define (print-help)
     (display
      (string-append
@@ -183,7 +171,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
         (message-format msg-req)    ;DEBUG
 
-        (let ((msg-rsp (send-message obj msg-req)))
+        (let ((msg-rsp (send-message msg-req)))
           (if msg-rsp
               (if (message-error? msg-rsp)
                   (format-error-message msg-rsp))
@@ -192,8 +180,8 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 ;;; exec handler
 
-;; A function that handles command line for 'exec' command.
-(define-method (handle-exec (obj <lc>) (args <list>))
+(define (handle-exec args)
+  "A function that handles command line for 'exec' command."
 
   (define option-spec
     '((help      (single-char #\h) (value #f))
@@ -238,37 +226,34 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
          (host-id
           (let ((id (string->number host-id)))
             (if id
-                (exec-cmd-on-host obj translate? id cmd)
+                (exec-cmd-on-host translate? id cmd)
                 (let ((msg (string-append "Wrong host ID: "
                                           (object->string host-id))))
                   (format-error msg)))))
 
          ((not host-id)
-          (exec-cmd obj translate? cmd))))))
+          (exec-cmd translate? cmd))))))
 
-;; Execute a command CMD on the every accessible host.
-(define-method (exec-cmd (obj <lc>) (translate? <boolean>) (cmd <list>))
+(define (exec-cmd translate? cmd)
+  "Execute a command CMD on the every accessible host."
   (let ((msg-req (make <message> #:type *cmd-exec* #:request-flag #t)))
     (message-field-set! msg-req 'translate? translate?)
     (message-field-set! msg-req 'command cmd)
-    (let ((msg-rsp (send-message obj msg-req)))
+    (let ((msg-rsp (send-message msg-req)))
       (if msg-rsp
           (if (not (message-error? msg-rsp))
               (format-output-list (message-field-ref msg-rsp 'output))
               (format-error-message msg-rsp))
           (format-error *error-connection-lost*)))))
 
-;; Execute a command CMD on a host with the given HOST-ID.
-(define-method (exec-cmd-on-host (obj        <lc>)
-                                 (translate? <boolean>)
-                                 (host-id    <number>)
-                                 (cmd        <list>))
+(define (exec-cmd-on-host translate? host-id cmd)
+  "Execute a command CMD on a host with the given HOST-ID."
   (let ((msg-req (make <message> #:type *cmd-exec* #:request-flag #t)))
     (message-field-set! msg-req 'translate? translate?)
     (message-field-set! msg-req 'host-id host-id)
     (message-field-set! msg-req 'command cmd)
 
-    (let ((msg-rsp (send-message obj msg-req)))
+    (let ((msg-rsp (send-message msg-req)))
       (if msg-rsp
           (if (not (message-error? msg-rsp))
               (format-output-list (message-field-ref msg-rsp 'output))
@@ -277,9 +262,8 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 ;;;
 
-;; Compare outputs between master host and other hosts.
-(define-method (handle-diff (obj <lc>) (args <list>))
-
+(define (handle-diff args)
+  "Compare outputs between master host and other hosts."
   (define option-spec
     '((help        (single-char #\h) (value #f))
       (get-pattern (single-char #\g) (value #f))
@@ -327,7 +311,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
                 (message-field-set! msg-req 'action  'get-pattern)
                 (message-field-set! msg-req 'command cmd)
 
-                (let ((msg-rsp (send-message obj msg-req)))
+                (let ((msg-rsp (send-message msg-req)))
                   (if msg-rsp
                       (if (not (message-error? msg-rsp))
                           (format-output (message-field-ref msg-rsp 'output))
@@ -341,7 +325,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
           (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
             (message-field-set! msg-req 'action 'continue)
 
-            (let ((msg-rsp (send-message obj msg-req)))
+            (let ((msg-rsp (send-message msg-req)))
               (if msg-rsp
                   (if (not (message-error? msg-rsp))
                       (format-diff (message-field-ref msg-rsp 'output))
@@ -352,7 +336,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
           (let ((msg-req (make <message> #:type *cmd-diff* #:request-flag #t)))
             (message-field-set! msg-req 'action 'abort)
 
-            (let ((msg-rsp (send-message obj msg-req)))
+            (let ((msg-rsp (send-message msg-req)))
               (if msg-rsp
                   (if (message-error? msg-rsp)
                       (format-error-message msg-rsp))
@@ -362,9 +346,8 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
                                     (symbol->string  args))))
             (format-error msg)))))))
 
-;; Set a new value to a option.
-(define-method (handle-set (obj <lc>) (args <list>))
-
+(define (handle-set args)
+  "Set a new value to a option."
   (define (print-help)
     (display
      (string-append
@@ -384,15 +367,14 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
         (message-field-set! msg-req 'option option)
         (message-field-set! msg-req 'value  value)
-        (let ((msg-rsp (send-message obj msg-req)))
+        (let ((msg-rsp (send-message msg-req)))
           (if msg-rsp
               (if (message-error? msg-rsp)
                   (format-error-message msg-rsp))
               (format-error *error-connection-lost*))))))
 
-;; Get the value of an option.
-(define-method (handle-get (obj <lc>) (args <list>))
-
+(define (handle-get args)
+  "Get the value of an option."
   (define (print-help)
     (display
      (string-append
@@ -409,7 +391,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       (let ((option (string->symbol (car args)))
             (msg-req (make <message> #:type *cmd-get* #:request-flag #t)))
         (message-field-set! msg-req 'option option)
-        (let ((msg-rsp (send-message obj msg-req)))
+        (let ((msg-rsp (send-message msg-req)))
           (if msg-rsp
               (if (not (message-error? msg-rsp))
                   (begin
@@ -418,9 +400,8 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
                   (format-error-message msg-rsp))
               (format-error *error-connection-lost*))))))
 
-;; Show a list of objects of the specific type.
-(define-method (handle-list (obj <lc>) (args <list>))
-
+(define (handle-list args)
+  "Show a list of objects of the specific type."
   (define (print-help)
     (display
      (string-append
@@ -450,7 +431,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
             (set! host-id (string->number (cadr args)))
             (message-field-set! msg-req 'host-id host-id)))
 
-      (let ((msg-rsp (send-message obj msg-req)))
+      (let ((msg-rsp (send-message msg-req)))
         (if msg-rsp
             (if (not (message-error? msg-rsp))
                 (if host-id
@@ -462,7 +443,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
    ((or (string=? (car args) "options") (string=? (car args) "o"))
     (let ((msg-req (make <message> #:type *cmd-list* #:request-flag #t)))
       (message-field-set! msg-req 'object-type 'option)
-      (let ((msg-rsp (send-message obj msg-req)))
+      (let ((msg-rsp (send-message msg-req)))
         (if msg-rsp
             (if (not (message-error? msg-rsp))
                 (format-options-list (message-field-ref msg-rsp 'object-list))
@@ -472,10 +453,10 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
    (#t
     (format-error "Unknown command."))))
 
-;; Stop lazycat daemon
-(define-method (handle-stop (obj <lc>))
+(define (handle-stop)
+  "Stop lazycat daemon"
   (let ((msg-req (make <message> #:type *cmd-stop* #:request-flag #t)))
-    (send-message obj msg-req)))
+    (send-message msg-req)))
 
 ;;; Helper procedures
 
@@ -514,9 +495,8 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       (begin
         (print-help)
         (quit)))
-
-  (let* ((lc        (make <lc>))
-         (arguments (cdr args))
+  (connect server-port AF_UNIX server-socket-path)
+  (let* ((arguments (cdr args))
          (cmd       (car arguments))
          (cmd-args  (cdr arguments)))
 
@@ -526,32 +506,32 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       (print-version))
 
      (("add" "a")
-      (handle-add lc cmd-args))
+      (handle-add cmd-args))
 
      (("rem" "r")
-      (handle-rem lc cmd-args))
+      (handle-rem cmd-args))
 
      (("exec" "e")
-      (handle-exec lc cmd-args))
+      (handle-exec cmd-args))
 
      (("diff" "d")
-      (handle-diff lc cmd-args))
+      (handle-diff cmd-args))
 
      (("set" "s")
-      (handle-set lc cmd-args))
+      (handle-set cmd-args))
 
      (("get" "g")
-      (handle-get lc cmd-args))
+      (handle-get cmd-args))
 
      (("list" "l")
-      (handle-list lc cmd-args))
+      (handle-list cmd-args))
 
      (("stop")
-      (handle-stop lc))
+      (handle-stop))
 
      (else
       (print-help)))
 
-    (lc-quit lc)))
+    (lc-quit)))
 
 ;;; lc ends here.

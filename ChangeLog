@@ -1,3 +1,7 @@
+2014-02-16  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* ui/lc.scm: Don't use GOOPS.
+
 2013-12-09  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* lazycat-daemon/host.scm: Fix a bug: initialize its own
