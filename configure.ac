@@ -37,7 +37,7 @@ GUILE_FLAGS
 GUILE_SITE_DIR
 
 # Check for required Guile modules
-GUILE_MODULE_REQUIRED(gnome gtk)
+#GUILE_MODULE_REQUIRED(gnome gtk)
 GUILE_MODULE_REQUIRED(ssh session)
 
 AC_CHECK_FUNCS([mkdir socket])

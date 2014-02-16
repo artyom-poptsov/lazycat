@@ -1,5 +1,9 @@
 2014-02-16  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* host/Makefile.am: Fix building with GNU Guile 2.0.
+	* lazycat-daemon/Makefile.am: Likewise.
+	* configure.ac: Commented out the check for `(gnome gtk)'.
+
 	* ui/lc.scm: Don't use GOOPS.
 
 2013-12-09  Artyom Poptsov  <poptsov.artyom@gmail.com>

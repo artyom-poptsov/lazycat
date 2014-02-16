@@ -17,9 +17,9 @@
 ## You should have received a copy of the GNU General Public License
 ## along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
-AM_CFLAGS = @GUILE_CFLAGS@ `pkg-config --cflags guile-1.8`
+AM_CFLAGS = $(GUILE_CFLAGS)
 AM_CFLAGS += -DGUILE_LOAD_PATH=\"$(datadir)\"
-AM_LDFLAGS=`pkg-config --libs guile-1.8`
+AM_LDFLAGS = $(GUILE_LDFLAGS)
 
 bin_PROGRAMS = lazycat-daemon
 
