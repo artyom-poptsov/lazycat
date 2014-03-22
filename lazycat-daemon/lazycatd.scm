@@ -602,17 +602,19 @@ Return diffs.  Throw lazycat-diff-error on error."
     (no-detach (single-char #\D) (value #f))
     (help      (single-char #\h) (value #f))))
 
-(define (print-help)
+(define (print-help-and-exit)
   "Print the help message"
   (display
-   (string-append
-    "Usage: lazycat-daemon [ -dDh ]\n"
-    "\n"
-    "Options:\n"
-    "\t" "-d, --debug        Debug mode.\n"
-    "\t" "-D, --no-detach    Don't detach from a terminal and don't become a\n"
-    "\t" "                   daemon.  Useful for debugging.\n"
-    "\t" "-h, --help         Print this message and exit.\n")))
+   (string-append "\
+Usage: lazycat-daemon [ OPTIONS ]
+
+Options:
+  --debug, -d        Debug mode.
+  --no-detach, -D    Don't detach from a terminal and don't become a
+                     daemon.  Useful for debugging.
+  --help, -h         Print this message and exit.
+"))
+  (exit 0))
 
 (define (main args)
   "Entry point of the program.  It is called from the C code and
@@ -625,9 +627,7 @@ starts LazyCat daemon."
          (help-needed?  (option-ref options 'help      #f)))
 
     (if help-needed?
-        (begin
-          (print-help)
-          (quit)))
+        (print-help-and-exit))
 
     ;; Create the lazycatd instance.
     (set! lcd (make <lazycatd>

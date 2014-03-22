@@ -1,3 +1,9 @@
+2014-03-23  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat-daemon/lazycatd.scm (print-help): Rename to
+	`print-help-and-exit'.  All callers updated.
+	(main): Update.
+
 2014-02-16  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* proxies/ssh-proxy.scm (handle-send-message): Update to work with
