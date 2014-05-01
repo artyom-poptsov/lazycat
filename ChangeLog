@@ -3,6 +3,7 @@
 	* ui/cli/format-table.scm (get-padding-from-fmt): Improve.
 	(cut): Improve error checking.
 	(rest): Likewise.
+	(format-table): Improve.
 
 	* ui/lc.scm (print-help): Improve.  Rename to
 	`print-help-and-exit'.  Call `exit'.  All callers updated.

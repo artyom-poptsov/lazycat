@@ -124,7 +124,7 @@ column.  All rows must have the same number of columns."
          (padding (map (lambda (fmt) (get-padding-from-fmt fmt)) columns)))
     (for-each (lambda (row)
                 (let print ((r row))
-                  (if (not (null? (filter (lambda (col) (not (string-null? col))) r)))
+                  (or (null? (filter (lambda (col) (not (string-null? col))) r))
                       (begin
                         (apply format dest fmt (cut padding r))
                         (print (rest padding r))))))
