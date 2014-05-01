@@ -253,13 +253,15 @@ group will be created if it doesn't exist."
 (define (host-list-rem-host id)
   "Remove a host with given ID from the list"
   (let ((host (host-list-get-host-by-id id)))
-    (if host
-        (let ((group (get-group-by-host-id id)))
-          ;; Remove the host from the list
-          (set-cdr! group (remove-if
-                           (lambda (element) (eq? element host))
-                           (cdr group))))
-        (throw 'no-such-host id))))
+
+    (or host
+        (throw 'no-such-host id))
+
+    (let ((group (get-group-by-host-id id)))
+      ;; Remove the host from the list
+      (set-cdr! group (remove-if
+                       (lambda (element) (eq? element host))
+                       (cdr group))))))
 
 (define (host-list-get-host-by-id id)
   "Get host by ID"

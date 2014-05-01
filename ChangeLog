@@ -1,5 +1,8 @@
 2014-05-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/host-list.scm (host-list-rem-host): Improve error
+	checking.
+
 	* ui/cli/format-table.scm (get-padding-from-fmt): Improve.
 	(cut): Improve error checking.
 	(rest): Likewise.
