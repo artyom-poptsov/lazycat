@@ -1,5 +1,9 @@
 2014-05-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* common/message.scm (message-serialize)
+	(message-set-error-flag!, message-set-request-flag!): Simplify
+	conditionals: Use `or' instead of `if' where it's possible.
+
 	* lazycat-daemon/host-list.scm (host-list-rem-host): Improve error
 	checking.
 

@@ -124,7 +124,7 @@
 (define-method (message-serialize (obj <message>))
   (let ((msg (list (cons 'type (message-get-type obj))
                    (cons 'flags (flags-get obj)))))
-    (if (not (null? (payload-get obj)))
+    (or (null? (payload-get obj))
         (set! msg (append msg (payload-get obj))))
     msg))
 
@@ -140,7 +140,7 @@
 (define-method (message-set-error-flag! (obj <message>) (enable <boolean>))
   (let ((flags (flags-get obj)))
     (if enable
-        (if (not (member *flag-error* flags))
+        (or (member *flag-error* flags)
             (flags-set! obj (cons *flag-error* flags)))
         (flags-set! obj (delete *flag-error* flags)))))
 
@@ -149,7 +149,7 @@
 (define-method (message-set-request-flag! (obj <message>) (enable <boolean>))
   (let ((flags (flags-get obj)))
     (if enable
-        (if (not (member *flag-request* flags))
+        (or (member *flag-request* flags)
             (flags-set! obj (cons *flag-request* flags)))
         (flags-set! obj (delete *flag-request* flags)))))
 
