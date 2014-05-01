@@ -73,7 +73,7 @@ Example:
   => '(\"Hello\" \"Hello Scheme\")
 
 Return the list of processed strings."
-  (if (not (equal-length? padding-list string-list))
+  (or (equal-length? padding-list string-list)
       (error "Lists are differ in length"
              (length padding-list) (length string-list)))
 
@@ -99,7 +99,7 @@ Example:
   => (\" Scheme World!\" \" World!\")
 
 Retrun the list of processed strings."
-  (if (not (equal-length? padding-list string-list))
+  (or (equal-length? padding-list string-list)
       (error "Lists are differ in length"
              (length padding-list) (length string-list)))
 
