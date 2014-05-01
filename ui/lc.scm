@@ -467,34 +467,35 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
     "Version:          " *version* "\n"
     "Protocol version: " (number->string *protocol-version*) "\n")))
 
-(define (print-help)
+(define (print-help-and-exit)
   (display
-   (string-append
-    "Usage: lc <command>\n"
-    "\n"
-    "Possible commands:\n"
-    "  a, add        add a new host\n"
-    "  d, diff       compare outputs from hosts\n"
-    "  e, exec       execute a command\n"
-    "  t, translate  translate a command\n"
-    "  g, get        get current value of an option\n"
-    "  l, list       list objects\n"
-    "  r, rem        remove host\n"
-    "  s, set        set a new value for an option\n"
-    "  stop          stop LazyCat daemon\n"
-    "  version       print information about current version\n"
-    "\n"
-    "Enter 'lc <command> -h' to get documentation for the command.\n")))
+   (string-append "\
+Usage: lc <command>
+
+Possible commands:
+  a, add        add a new host
+  d, diff       compare outputs from hosts
+  e, exec       execute a command
+  t, translate  translate a command
+  g, get        get current value of an option
+  l, list       list objects
+  r, rem        remove host
+  s, set        set a new value for an option
+  stop          stop LazyCat daemon
+  version       print information about current version
+
+Enter 'lc <command> -h' to get documentation for the command.
+"))
+  (exit 0))
 
 
 ;;; Entry point of the program
 
 (define (main . args)
 
-  (if (null? (cdr args))
-      (begin
-        (print-help)
-        (quit)))
+  (and (null? (cdr args))
+       (print-help-and-exit))
+
   (connect server-port AF_UNIX server-socket-path)
   (let* ((arguments (cdr args))
          (cmd       (car arguments))
@@ -530,7 +531,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
       (handle-stop))
 
      (else
-      (print-help)))
+      (print-help-and-exit)))
 
     (lc-quit)))
 
