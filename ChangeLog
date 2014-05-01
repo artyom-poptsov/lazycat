@@ -1,5 +1,7 @@
 2014-05-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* ui/cli/format-table.scm (get-padding-from-fmt): Improve.
+
 	* ui/lc.scm (print-help): Improve.  Rename to
 	`print-help-and-exit'.  Call `exit'.  All callers updated.
 	(main): Update.

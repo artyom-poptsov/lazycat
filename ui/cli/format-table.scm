@@ -54,9 +54,8 @@
 (define (get-padding-from-fmt fmt)
   "Get padding value from a format string FMT."
   (let ((p (string-match ".*~([0-9]+)[a-z].*" fmt)))
-    (if (regexp-match? p)
-        (string->number (match:substring p 1))
-        #f)))
+    (and (regexp-match? p)
+         (string->number (match:substring p 1)))))
 
 (define (equal-length? lst1 lst2)
   "Compare length of two lists."
