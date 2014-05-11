@@ -1,3 +1,9 @@
+2014-05-12  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* ui/lazycat-gtk.scm: Rename to `ui/lazycat-gtk.in'.
+	* ui/lc.scm: Rename to `ui/lc.in'.
+	* ui/Makefile.am: Update.
+
 2014-05-02  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* common/message.scm (message-serialize)

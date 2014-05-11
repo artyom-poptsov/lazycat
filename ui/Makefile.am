@@ -24,11 +24,11 @@ lazycat_ui_cli_DATA	= cli/*
 
 bin_SCRIPTS = lc lazycat-gtk
 
-lc: lc.scm
+lc: lc.in
 	sed -e 's|__DATA_DIR__|$(datadir)|g' $< > $@
 	chmod +x $@
 
-lazycat-gtk: lazycat-gtk.scm
+lazycat-gtk: lazycat-gtk.in
 	sed -e 's|__DATA_DIR__|$(datadir)|g' $< > $@
 	chmod +x $@
 
