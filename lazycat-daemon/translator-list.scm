@@ -33,7 +33,7 @@
   #:use-module (lazycat trans apt)
   #:export (get-translator-for-host))
 
-(define-with-docs tlist
+(define-with-docs %tlist
   "List of translators."
   `(,(make <portage-translator>)
     ,(make <apt-translator>)))
@@ -41,13 +41,12 @@
 (define (get-translator-for-host host)
   "Search applicable translator for HOST.  Return a translator if it
 is found, #f otherwise."
-  (let check ((lst tlist))
-    (if (not (null? lst))
-        (let ((trans (car lst)))
-          (if (understood? trans host)
-              trans
-              (check (cdr lst))))
-        #f)))
+  (let check ((lst %tlist))
+    (and (not (null? lst))
+         (let ((trans (car lst)))
+           (if (understood? trans host)
+               trans
+               (check (cdr lst)))))))
 
 ;;; translator-list.scm ends here
 

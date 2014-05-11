@@ -1,5 +1,8 @@
 2014-05-12  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/translator-list.scm (tlist): Rename to `%tlist'.
+	(get-translator-for-host): Improve coding style a bit.
+
 	* lazycat-daemon/curiosity.scm (*curiosity-thread-prio*): Rename
 	to `%curiosity-thread-prio'.
 	(*lsb-release-cmd*): Rename to `%lsb-release-cmd'.
