@@ -104,7 +104,7 @@
 
   (let ((connection-data (parse-address address)))
 
-    (if (not connection-data)
+    (or connection-data
         (proxy-error "Wrong address" address))
 
     (let* ((username (car connection-data))
@@ -145,7 +145,7 @@
       (let* ((pkey-file   (hash-ref (get-options obj) 'private-key))
              (private-key (private-key-from-file session pkey-file)))
 
-        (if (not private-key)
+        (or private-key
             (begin
               (log-error obj session)
               (proxy-error (get-error session))))
@@ -155,10 +155,10 @@
           (proxy-log-msg obj 'DEBUG "Authenticate user with a public key.")
 
           (let ((res (userauth-pubkey! session public-key private-key)))
-            (if (eqv? res 'error)
-                (begin
-                  (log-error obj session)
-                  (proxy-error (get-error session) res))))
+            (and (eqv? res 'error)
+                 (begin
+                   (log-error obj session)
+                   (proxy-error (get-error session) res))))
 
           session)))))
 
