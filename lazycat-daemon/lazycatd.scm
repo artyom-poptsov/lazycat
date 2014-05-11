@@ -80,7 +80,7 @@
 
 (define *default-ping-interval* 30)     ;Seconds
 
-(define *pid-file* (string-append %lazycat-runtime-home "/lazycat.pid"))
+(define %pid-file (string-append %lazycat-runtime-home "/lazycat.pid"))
 
 ;;; lazycatd instance
 (define lcd #f)
@@ -224,13 +224,13 @@
 
 (define (create-pid-file pid)
   "Create a file that contains the PID of the daemon."
-  (let ((pid-file (open-output-file *pid-file*)))
+  (let ((pid-file (open-output-file %pid-file)))
     (write pid pid-file)
     (close-port pid-file)))
 
 (define (remove-pid-file)
   "Remove the PID file."
-  (delete-file *pid-file*))
+  (delete-file %pid-file))
 
 (define (send-message message port)
   "Send message to a client."

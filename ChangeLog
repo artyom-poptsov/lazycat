@@ -1,5 +1,7 @@
 2014-05-12  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/lazycatd.scm (*pid-file*): Rename to `%pid-file'.
+
 	* lazycat-daemon/lazycatd.scm (make-all-dirs): New procedure.
 	(%lazycat-data-home %lazycat-config-home, %lazycat-runtime-home):
 	New symbols.
