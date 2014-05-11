@@ -70,15 +70,13 @@
 
 ;;;
 
-(define *syslog-tag* "lazycatd")
-
 ;; Possible object types
-(define *object-types* '(host option))
+(define %object-types '(host option))
 
 ;; Accessible options
-(define *options* '(master log-verbosity ping-interval))
+(define %options '(master log-verbosity ping-interval))
 
-(define *default-ping-interval* 30)     ;Seconds
+(define %default-ping-interval 30)     ;Seconds
 
 (define %pid-file (string-append %lazycat-runtime-home "/lazycat.pid"))
 
@@ -149,7 +147,7 @@
   (let ((options (get-options obj)))
     (hash-set! options 'master        #f)
     (hash-set! options 'log-verbosity (if (debug? obj) "4" "1"))
-    (hash-set! options 'ping-interval (number->string *default-ping-interval*)))
+    (hash-set! options 'ping-interval (number->string %default-ping-interval)))
 
   (if (not (host-list-empty?))
       ;; Set default master host (the 1st host from the list)
@@ -293,7 +291,7 @@ Throw lazycat-exception on error."
     (if (not object-type)
         (lazycat-throw "Malformed message"))
 
-    (if (eqv? (member object-type *object-types*) #f)
+    (if (eqv? (member object-type %object-types) #f)
         (lazycat-throw "Wrong object type" object-type))
 
     (log-msg 'DEBUG (string-append "lazycat-list: type: "
@@ -328,7 +326,7 @@ Throw lazycat-exception on error."
     (if (or (not option) (null? option))
         (lazycat-throw "Malformed message"))
 
-    (if (eqv? (member option *options*) #f)
+    (if (eqv? (member option %options) #f)
         (lazycat-throw "No such option" option))
 
     (let ((value   (hash-ref (get-options lcd) option))
@@ -346,7 +344,7 @@ Throw lazycat-exception on error."
     (if (or (not option) (null? option))
         (lazycat-throw "Malformed message"))
 
-    (if (eqv? (member option *options*) #f)
+    (if (eqv? (member option %options) #f)
         (lazycat-throw "No such option" option))
 
     (let ((msg-rsp (make <message> #:type *cmd-set*)))

@@ -1,5 +1,10 @@
 2014-05-12  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/lazycatd.scm (*syslog-tag*): Remove.
+	(*object-types*): Rename to `%object-types'.
+	(*options*): Rename to `%options'.
+	(*default-ping-interval*): Rename to `%default-ping-interval'.
+
 	* common/Makefile.am (pkgdata_DATA): Use explicitly written list
 	of modules.
 
