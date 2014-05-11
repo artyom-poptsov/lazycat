@@ -3,6 +3,7 @@
 	* lazycat-daemon/curiosity.scm (*curiosity-thread-prio*): Rename
 	to `%curiosity-thread-prio'.
 	(*lsb-release-cmd*): Rename to `%lsb-release-cmd'.
+	(set-host-lsb): Improve coding style a bit.
 
 	* proxies/ssh-proxy.scm (make-new-session): Make it work with
 	Guile-SSH 0.6.0.
