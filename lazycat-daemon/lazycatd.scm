@@ -53,8 +53,22 @@
   #:use-module (lazycat lazycat-daemon translator-list)
   #:export (<lazycatd> run))
 
+(define %program-name "lazycat")
+
 
-;;; Constants
+;;; Honor the XDG specs
+;; <http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html>
+
+(define %lazycat-data-home
+  (format #f "~a/.local/share/~a" (getenv "HOME") %program-name))
+
+(define %lazycat-config-home
+  (format #f "~a/.config/~a" (getenv "HOME") %program-name))
+
+(define %lazycat-runtime-home
+  (format #f "~a/.cache/~a" (getenv "HOME") %program-name))
+
+;;;
 
 (define *syslog-tag* "lazycatd")
 
@@ -66,8 +80,7 @@
 
 (define *default-ping-interval* 30)     ;Seconds
 
-;; The pid file placed in /tmp only for debugging.
-(define *pid-file* "/tmp/lazycat/lazycat.pid")
+(define *pid-file* (string-append %lazycat-runtime-home "/lazycat.pid"))
 
 ;;; lazycatd instance
 (define lcd #f)
@@ -182,6 +195,16 @@
 ;; Throw an exception
 (define-method (lazycat-throw msg . info)
   (apply throw 'lazycat-exception msg info))
+
+(define (make-all-dirs)
+  "Make all needed directories."
+  (define (mkdir-if-not-exists dir)
+    (or (file-exists? dir)
+        (mkdir dir)))
+
+  (mkdir-if-not-exists %lazycat-data-home)
+  (mkdir-if-not-exists %lazycat-config-home)
+  (mkdir-if-not-exists %lazycat-runtime-home))
 
 ;;;
 
@@ -628,6 +651,8 @@ starts LazyCat daemon."
 
     (if help-needed?
         (print-help-and-exit))
+
+    (make-all-dirs)
 
     ;; Create the lazycatd instance.
     (set! lcd (make <lazycatd>

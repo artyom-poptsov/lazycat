@@ -1,5 +1,11 @@
 2014-05-12  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/lazycatd.scm (make-all-dirs): New procedure.
+	(%lazycat-data-home %lazycat-config-home, %lazycat-runtime-home):
+	New symbols.
+	(*pid-file*): Store PID file in the runtime home according to XDG
+	specs.
+
 	* ui/lazycat-gtk.scm: Rename to `ui/lazycat-gtk.in'.
 	* ui/lc.scm: Rename to `ui/lc.in'.
 	* ui/Makefile.am: Update.
