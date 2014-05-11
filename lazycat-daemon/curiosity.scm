@@ -48,8 +48,8 @@
 
 ;;; Constants
 
-(define *curiosity-thread-prio* 15)
-(define *lsb-release-cmd* "lsb_release -a")
+(define %curiosity-thread-prio 15)
+(define %lsb-release-cmd "lsb_release -a")
 
 ;;;
 
@@ -88,7 +88,7 @@
 (define (curiosity)
   "Explore network and store information about hosts in the LazyCat
 host list."
-  (setpriority PRIO_PROCESS 0 *curiosity-thread-prio*)
+  (setpriority PRIO_PROCESS 0 %curiosity-thread-prio)
   (set! pid (getpid))
   (prctl-pr-set-name! "curiosity")
   (while #t
@@ -101,7 +101,7 @@ host list."
                  (let* ((host-proxies (host-get-proxy-list host))
                         (host-addr    (host-get-address host))
                         (proxy        (proxy-list-get-proxy (car host-proxies)))
-                        (msg-rsp      (proxy-send-message proxy host-addr *lsb-release-cmd*)))
+                        (msg-rsp      (proxy-send-message proxy host-addr %lsb-release-cmd)))
                    (if (not (message-error? msg-rsp))
                        (let ((lsb-info (lsb->alist (message-field-ref msg-rsp 'response))))
                          (set-host-lsb lsb-info host)))))

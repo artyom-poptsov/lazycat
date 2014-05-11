@@ -1,5 +1,9 @@
 2014-05-12  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat-daemon/curiosity.scm (*curiosity-thread-prio*): Rename
+	to `%curiosity-thread-prio'.
+	(*lsb-release-cmd*): Rename to `%lsb-release-cmd'.
+
 	* proxies/ssh-proxy.scm (make-new-session): Make it work with
 	Guile-SSH 0.6.0.
 	(make-new-session): Improve conditionals a bit.
