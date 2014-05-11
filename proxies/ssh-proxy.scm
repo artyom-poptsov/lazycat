@@ -119,7 +119,7 @@
           (set! session (make-session #:user username
                                           #:host hostname
                                           #:port port
-                                          #:log-verbosity (if (proxy-debug? obj) 1 0))))
+                                          #:log-verbosity (if (proxy-debug? obj) 'protocol 'rare))))
         (lambda (key . args)
           (proxy-error (get-error session) args)))
 
@@ -154,7 +154,7 @@
 
           (proxy-log-msg obj 'DEBUG "Authenticate user with a public key.")
 
-          (let ((res (userauth-pubkey! session #f public-key private-key)))
+          (let ((res (userauth-pubkey! session public-key private-key)))
             (if (eqv? res 'error)
                 (begin
                   (log-error obj session)

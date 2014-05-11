@@ -1,5 +1,8 @@
 2014-05-12  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* proxies/ssh-proxy.scm (make-new-session): Make it work with
+	Guile-SSH 0.6.0.
+
 	* lazycat-daemon/lazycatd.scm (*syslog-tag*): Remove.
 	(*object-types*): Rename to `%object-types'.
 	(*options*): Rename to `%options'.
