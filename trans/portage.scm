@@ -54,8 +54,7 @@ GNU/Linux")
 
 (define-method (understood? (self <portage-translator>) (host <host>))
   (let ((dist-id (host-get-attr host "lsb/distributor-id")))
-    (if dist-id
-        (string=? dist-id "Gentoo")
-        #f)))
+    (and dist-id
+         (string=? dist-id "Gentoo"))))
 
 ;;; portage.scm ends here

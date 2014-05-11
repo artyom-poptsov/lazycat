@@ -55,9 +55,8 @@ Debian based distributions such as Ubuntu GNU/Linux.")
 
 (define-method (understood? (self <apt-translator>) (host <host>))
   (let ((dist-id (host-get-attr host "lsb/distributor-id")))
-    (if dist-id
-        (or (string=? dist-id "Debian")
-            (string=? dist-id "Ubuntu"))
-        #f)))
+    (and dist-id
+         (or (string=? dist-id "Debian")
+             (string=? dist-id "Ubuntu")))))
 
 ;;; apt.scm ends here

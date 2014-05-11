@@ -1,5 +1,8 @@
 2014-05-12  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* trans/apt.scm (understood?): Improve coding style a bit.
+	* trans/portage.scm (understood?): Likewise.
+
 	* lazycat-daemon/translator-list.scm (tlist): Rename to `%tlist'.
 	(get-translator-for-host): Improve coding style a bit.
 
