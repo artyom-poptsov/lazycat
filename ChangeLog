@@ -1,5 +1,8 @@
 2014-05-12  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* common/Makefile.am (pkgdata_DATA): Use explicitly written list
+	of modules.
+
 	* common/logger.scm: Remove.
 
 	* ui/lc.in (lc-quit): Fix a bug: Remove extra arg from `close'

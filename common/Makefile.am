@@ -17,4 +17,9 @@
 ## You should have received a copy of the GNU General Public License
 ## along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
-pkgdata_DATA = *.scm
+pkgdata_DATA = \
+	message.scm		\
+	protocol.scm		\
+	proxy.scm		\
+	translator.scm		\
+	utils.scm
