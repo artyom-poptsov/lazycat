@@ -79,7 +79,7 @@ exec ${GUILE-guile} -l $0 -c "(apply $main (command-line))" "$@"
 
 (define (lc-quit)
   "Quit the application."
-  (close server-port obj))
+  (close server-port))
 
 ;; 
 (define (send-message msg-req)
