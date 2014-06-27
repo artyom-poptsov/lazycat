@@ -1,6 +1,8 @@
 2014-06-28  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
-	* proxies/ssh-proxy.scm: Add missed module: Use (ice-9 rdelim).
+	* proxies/ssh-proxy.scm: Add missed module: (ice-9 rdelim)
+	(make-new-session): Adjust to work with the latest development
+	version of Guile-SSH.
 
 	* lazycat-daemon/host-list.scm (host-list-add-host): Fix wrong
 	argument list in call to `add-host' procedure.

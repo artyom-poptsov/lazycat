@@ -118,9 +118,9 @@
       (catch 'guile-ssh-error
         (lambda ()
           (set! session (make-session #:user username
-                                          #:host hostname
-                                          #:port port
-                                          #:log-verbosity (if (proxy-debug? obj) 'protocol 'rare))))
+                                      #:host hostname
+                                      #:port port
+                                      #:log-verbosity (if (proxy-debug? obj) 'protocol 'rare))))
         (lambda (key . args)
           (proxy-error (get-error session) args)))
 
@@ -144,24 +144,22 @@
       (proxy-log-msg obj 'DEBUG "Get private and public keys.")
 
       (let* ((pkey-file   (hash-ref (get-options obj) 'private-key))
-             (private-key (private-key-from-file session pkey-file)))
+             (private-key (private-key-from-file pkey-file)))
 
         (or private-key
             (begin
               (log-error obj session)
               (proxy-error (get-error session))))
 
-        (let ((public-key (private-key->public-key private-key)))
+        (proxy-log-msg obj 'DEBUG "Authenticate user with a public key.")
 
-          (proxy-log-msg obj 'DEBUG "Authenticate user with a public key.")
+        (let ((res (userauth-public-key! session private-key)))
+          (and (eqv? res 'error)
+               (begin
+                 (log-error obj session)
+                 (proxy-error (get-error session) res))))
 
-          (let ((res (userauth-pubkey! session public-key private-key)))
-            (and (eqv? res 'error)
-                 (begin
-                   (log-error obj session)
-                   (proxy-error (get-error session) res))))
-
-          session)))))
+          session))))
 
 
 ;;; Logging
