@@ -30,6 +30,7 @@
 
 (define-module (lazycat proxies ssh-proxy)
   #:use-module (ice-9 regex)
+  #:use-module (ice-9 rdelim)
   #:use-module (lazycat proxy)
   #:use-module (oop goops)
   #:use-module (ssh channel)

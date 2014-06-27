@@ -1,5 +1,7 @@
 2014-06-28  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* proxies/ssh-proxy.scm: Add missed module: Use (ice-9 rdelim).
+
 	* lazycat-daemon/host-list.scm (host-list-add-host): Fix wrong
 	argument list in call to `add-host' procedure.
 
