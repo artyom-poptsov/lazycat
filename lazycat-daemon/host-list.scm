@@ -242,8 +242,7 @@ state of the host."
   "Add a new host to the host list, and place it to a group.  The
 group will be created if it doesn't exist."
   (set-last-host-id! hlist (1+ (get-last-host-id hlist)))
-  (add-host hlist
-            #:group       group
+  (add-host #:group       group
             #:id          (get-last-host-id hlist)
             #:name        name
             #:proxy-list  proxy-list
