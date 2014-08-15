@@ -1,6 +1,6 @@
 ## Config file for GNU Automake. 
 ##
-## Copyright (C) 2012-2013 Artyom Poptsov <poptsov.artyom@gmail.com>
+## Copyright (C) 2014 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ##
 ## This file is part of LazyCat.
 ## 
@@ -17,8 +17,6 @@
 ## You should have received a copy of the GNU General Public License
 ## along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
-dist_doc_DATA = README NEWS COPYING AUTHORS ChangeLog TODO
+SUBDIRS = daemon
 
-SUBDIRS = lazycat ui proxies host common trans
-
-
+## Makefile.am ends here

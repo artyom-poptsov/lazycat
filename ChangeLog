@@ -1,3 +1,11 @@
+2014-08-15  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat-daemon/: Rename to `lazycat'.  Move its content to the
+	`lazycat/daemon' directory.
+	* lazycat/Makefile.am: New file.
+	* configure.ac (AC_CONFIG_FILES): Update.
+	* Makefile.am (SUBDIRS): Update.
+
 2014-06-28  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* proxies/ssh-proxy.scm: Add missed module: (ice-9 rdelim)
