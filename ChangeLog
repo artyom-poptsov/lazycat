@@ -1,3 +1,11 @@
+2014-08-16  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat/rpc.x: Add to the repository.
+	* lazycat/Makefile.am (pkgdata_DATA): Add RPC related files.
+	(rpc-types+constants.scm, rpc-client.scm, rpc-server.scm): New
+	targets.
+	* lazycat/.gitignore: Ignore RPC related files.
+
 2014-08-15  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* trans/: Move to `lazycat/'.

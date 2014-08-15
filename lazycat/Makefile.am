@@ -24,6 +24,39 @@ pkgdata_DATA = \
 	protocol.scm		\
 	proxy.scm		\
 	translator.scm		\
-	utils.scm
+	utils.scm		\
+	rpc-types+constants.scm	\
+	rpc-client.scm		\
+	rpc-server.scm
+
+rpc-types+constants.scm: rpc.x
+	echo ';;; -*- buffer-read-only: t; -*-' > $@
+	echo ';;; Automatically generated -- do not modify.' >> $@
+	echo '(define-module (lazycat rpc-types+constants)' >> $@
+	echo '  #:use-module (rpc xdr types)' >> $@
+	echo '  #:use-module (rpc xdr))' >> $@
+	$(GRPCC) --xdr --constants < $< |\
+		sed 's|^(define |(define-public |g' >> $@
+
+rpc-client.scm: rpc.x
+	echo ';;; -*- buffer-read-only: t; -*-' > $@
+	echo ';;; Automatically generated -- do not modify.' >> $@
+	echo '(define-module (lazycat rpc-client)' >> $@
+	echo '  #:use-module (lazycat rpc-types+constants)' >> $@
+	echo '  #:use-module (rpc rpc)' >> $@
+	echo '  #:use-module (rpc xdr types))' >> $@
+	$(GRPCC) --client < $< |\
+		sed 's|^(define |(define-public |g' >> $@
+
+rpc-server.scm: rpc.x
+	echo ';;; -*- buffer-read-only: t; -*-' > $@
+	echo ';;; Automatically generated -- do not modify.' >> $@
+	echo '(define-module (lazycat rpc-server)' >> $@
+	echo '  #:use-module (lazycat rpc-types+constants)' >> $@
+	echo '  #:use-module (srfi srfi-1)' >> $@
+	echo '  #:use-module (rpc rpc server)' >> $@
+	echo '  #:use-module (rpc xdr types))' >> $@
+	$(GRPCC) --server < $< |\
+		sed 's|^(define |(define-public |g' >> $@
 
 ## Makefile.am ends here

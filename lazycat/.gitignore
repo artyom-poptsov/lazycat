@@ -1,0 +1,6 @@
+# -*- mode: shell-script -*-
+
+# RPC related files
+rpc-client.scm
+rpc-server.scm
+rpc-types+constants.scm
