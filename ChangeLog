@@ -1,5 +1,8 @@
 2014-08-15  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat/daemon/Makefile.am (lazycat_daemon_DATA): Specify Guile
+	modules explicitly.
+
 	* lazycat/daemon/config.scm, lazycat/daemon/curiosity.scm,
 	lazycat/daemon/diff.scm, lazycat/daemon/host-list.scm,
 	lazycat/daemon/host.scm, lazycat/daemon/lazycatd.scm,
@@ -9,6 +12,7 @@
 	* lazycat/daemon/lazycat-daemon.c (inner_main): Likewise.
 	* lazycat/daemon/Makefile.am (lazycat_daemondir): Change
 	directory.
+
 	* common/translator.scm, trans/apt.scm, trans/portage.scm: Update.
 
 	* lazycat-daemon/: Rename to `lazycat'.  Move its content to the

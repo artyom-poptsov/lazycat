@@ -24,6 +24,15 @@ AM_LDFLAGS = $(GUILE_LDFLAGS)
 bin_PROGRAMS = lazycat-daemon
 
 lazycat_daemondir	= $(pkgdatadir)/daemon
-lazycat_daemon_DATA	= *.scm
+lazycat_daemon_DATA	= \
+	config.scm				\
+	curiosity.scm				\
+	diff.scm				\
+	host-list.scm				\
+	host.scm				\
+	lazycatd.scm				\
+	periodical-ping.scm			\
+	proxy-list.scm				\
+	translator-list.scm
 
 lazycat_daemon_SOURCES = lazycat-daemon.c
