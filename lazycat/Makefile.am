@@ -19,4 +19,11 @@
 
 SUBDIRS = daemon
 
+pkgdata_DATA = \
+	message.scm		\
+	protocol.scm		\
+	proxy.scm		\
+	translator.scm		\
+	utils.scm
+
 ## Makefile.am ends here

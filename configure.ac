@@ -56,7 +56,6 @@ AC_CONFIG_FILES([
         ui/Makefile
         proxies/Makefile
         host/Makefile
-        common/Makefile
         trans/Makefile
 ])
 
