@@ -1,10 +1,16 @@
 2014-08-15  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* trans/: Move to `lazycat/'.
+	* lazycat/Makefile.am (SUBDIRS): Add `trans/'.
+	* configure.ac (AC_CONFIG_FILES): Update.
+	* Makefile.am (SUBDIRS): Update.
+
 	* common/message.scm, common/protocol.scm, common/proxy.scm,
 	common/translator.scm, common/utils.scm: Move to `lazycat/'.
 	* lazycat/Makefile.am (pkgdata_DATA): Add common modules.
 	* configure.ac (AC_CONFIG_FILES): Update.
 	* Makefile.am (SUBDIRS): Update.
+
 	* common/: Remove.
 
 	* lazycat/daemon/Makefile.am (lazycat_daemon_DATA): Specify Guile

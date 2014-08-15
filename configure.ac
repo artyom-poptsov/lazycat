@@ -53,10 +53,10 @@ AC_CONFIG_FILES([
 	Makefile
         lazycat/Makefile
         lazycat/daemon/Makefile
+        lazycat/trans/Makefile
         ui/Makefile
         proxies/Makefile
         host/Makefile
-        trans/Makefile
 ])
 
 # Generate a Makefile, based on the results.
