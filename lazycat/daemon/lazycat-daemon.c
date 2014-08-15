@@ -80,7 +80,7 @@ inner_main (void* closure, int argc, char** argv)
 
   scm_c_define_module ("lazycat prctl", init_prctl_module, NULL);
 
-  module = scm_c_resolve_module ("lazycat lazycat-daemon lazycatd");
+  module = scm_c_resolve_module ("lazycat daemon lazycatd");
   scm_set_current_module (module);
 
   scm_c_define_gsubr ("c-set-lazycat-signals", 0, 0, 0, set_lazycat_signals);

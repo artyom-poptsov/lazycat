@@ -30,13 +30,13 @@
 
 ;;; Code:
 
-(define-module (lazycat lazycat-daemon curiosity)
+(define-module (lazycat daemon curiosity)
   ;; Logging
   #:use-module (logging logger)
 
-  #:use-module (lazycat lazycat-daemon host)
-  #:use-module (lazycat lazycat-daemon host-list)
-  #:use-module (lazycat lazycat-daemon proxy-list)
+  #:use-module (lazycat daemon host)
+  #:use-module (lazycat daemon host-list)
+  #:use-module (lazycat daemon proxy-list)
   #:use-module (lazycat proxy)
   #:use-module (lazycat message)
   #:use-module (lazycat protocol)

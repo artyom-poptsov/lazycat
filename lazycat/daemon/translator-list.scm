@@ -25,7 +25,7 @@
 
 ;;; Code:
 
-(define-module (lazycat lazycat-daemon translator-list)
+(define-module (lazycat daemon translator-list)
   #:use-module (oop goops)
   #:use-module (scheme documentation)
   #:use-module (lazycat translator)

@@ -30,7 +30,7 @@
 
 ;;; Code:
 
-(define-module (lazycat lazycat-daemon proxy-list)
+(define-module (lazycat daemon proxy-list)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-13)
   #:use-module (oop goops)

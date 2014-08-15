@@ -26,16 +26,16 @@
 
 ;;; Code:
 
-(define-module (lazycat lazycat-daemon periodical-ping)
+(define-module (lazycat daemon periodical-ping)
   #:use-module (logging logger)
   #:use-module (scheme documentation)
   ;; LazyCat modules:
   #:use-module (lazycat message)
   #:use-module (lazycat proxy)
   #:use-module (lazycat prctl)
-  #:use-module (lazycat lazycat-daemon host)
-  #:use-module (lazycat lazycat-daemon host-list)
-  #:use-module (lazycat lazycat-daemon proxy-list)
+  #:use-module (lazycat daemon host)
+  #:use-module (lazycat daemon host-list)
+  #:use-module (lazycat daemon proxy-list)
   #:export (periodical-ping periodical-ping-get-pid))
 
 (define-with-docs *periodical-ping-thread-prio*

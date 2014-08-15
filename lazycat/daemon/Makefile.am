@@ -23,7 +23,7 @@ AM_LDFLAGS = $(GUILE_LDFLAGS)
 
 bin_PROGRAMS = lazycat-daemon
 
-lazycat_daemondir	= $(pkgdatadir)/lazycat-daemon
+lazycat_daemondir	= $(pkgdatadir)/daemon
 lazycat_daemon_DATA	= *.scm
 
 lazycat_daemon_SOURCES = lazycat-daemon.c

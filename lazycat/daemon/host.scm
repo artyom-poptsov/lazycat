@@ -38,7 +38,7 @@
 
 ;;; Module definition
 
-(define-module (lazycat lazycat-daemon host)
+(define-module (lazycat daemon host)
   #:use-module (oop goops)
   #:export (<host>
             host-get-id host-get-name host-get-proxy-list host-get-address

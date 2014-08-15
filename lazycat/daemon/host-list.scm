@@ -46,15 +46,15 @@
 
 ;;; Code:
 
-(define-module (lazycat lazycat-daemon host-list)
+(define-module (lazycat daemon host-list)
   #:use-module (oop goops)
   #:use-module (ice-9 common-list)
   #:use-module (ice-9 optargs)
   #:use-module (scheme documentation)
   ;; LazyCat modules:
   #:use-module (lazycat utils)
-  #:use-module (lazycat lazycat-daemon config)
-  #:use-module (lazycat lazycat-daemon host)
+  #:use-module (lazycat daemon config)
+  #:use-module (lazycat daemon host)
   #:export (<host-list>
             set-default-host-list!
             host-list-load

@@ -26,7 +26,7 @@
 
 (define-module (lazycat translator)
   #:use-module (oop goops)
-  #:use-module (lazycat lazycat-daemon host)
+  #:use-module (lazycat daemon host)
   #:use-module (scheme documentation)
   #:export (<translator> translate understood?))
 

@@ -31,7 +31,7 @@
   #:use-module (scheme documentation)
   #:use-module (lazycat utils)
   #:use-module (lazycat translator)
-  #:use-module (lazycat lazycat-daemon host)
+  #:use-module (lazycat daemon host)
   #:re-export  (translate understood?)
   #:export     (<apt-translator>))
 

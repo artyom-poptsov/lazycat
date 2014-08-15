@@ -29,7 +29,7 @@
 
 ;;; Code:
 
-(define-module (lazycat lazycat-daemon lazycatd)
+(define-module (lazycat daemon lazycatd)
   #:use-module (oop goops)
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 threads)
@@ -44,13 +44,13 @@
   #:use-module (lazycat protocol)
   #:use-module (lazycat message)
   #:use-module (lazycat translator)
-  #:use-module (lazycat lazycat-daemon host)
-  #:use-module (lazycat lazycat-daemon host-list)
-  #:use-module (lazycat lazycat-daemon proxy-list)
-  #:use-module (lazycat lazycat-daemon diff)
-  #:use-module (lazycat lazycat-daemon curiosity)
-  #:use-module (lazycat lazycat-daemon periodical-ping)
-  #:use-module (lazycat lazycat-daemon translator-list)
+  #:use-module (lazycat daemon host)
+  #:use-module (lazycat daemon host-list)
+  #:use-module (lazycat daemon proxy-list)
+  #:use-module (lazycat daemon diff)
+  #:use-module (lazycat daemon curiosity)
+  #:use-module (lazycat daemon periodical-ping)
+  #:use-module (lazycat daemon translator-list)
   #:export (<lazycatd> run))
 
 (define %program-name "lazycat")

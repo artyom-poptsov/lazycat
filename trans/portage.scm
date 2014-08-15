@@ -29,7 +29,7 @@
   #:use-module (oop goops)
   #:use-module (lazycat utils)
   #:use-module (lazycat translator)
-  #:use-module (lazycat lazycat-daemon host)
+  #:use-module (lazycat daemon host)
   #:use-module (scheme documentation)
   #:re-export  (translate understood?)
   #:export     (<portage-translator>))

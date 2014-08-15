@@ -1,5 +1,16 @@
 2014-08-15  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
+	* lazycat/daemon/config.scm, lazycat/daemon/curiosity.scm,
+	lazycat/daemon/diff.scm, lazycat/daemon/host-list.scm,
+	lazycat/daemon/host.scm, lazycat/daemon/lazycatd.scm,
+	lazycat/daemon/periodical-ping.scm, lazycat/daemon/proxy-list.scm,
+	lazycat/daemon/translator-list.scm: Move to `(lazycat daemon)'
+	module.
+	* lazycat/daemon/lazycat-daemon.c (inner_main): Likewise.
+	* lazycat/daemon/Makefile.am (lazycat_daemondir): Change
+	directory.
+	* common/translator.scm, trans/apt.scm, trans/portage.scm: Update.
+
 	* lazycat-daemon/: Rename to `lazycat'.  Move its content to the
 	`lazycat/daemon' directory.
 	* lazycat/Makefile.am: New file.
