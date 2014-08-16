@@ -17,5 +17,5 @@
 ## You should have received a copy of the GNU General Public License
 ## along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
-lazycat_proxiesdir	= $(pkgdatadir)/proxies
+lazycat_proxiesdir	= $(pkgdatadir)/proxy
 lazycat_proxies_DATA	= *.scm

@@ -37,8 +37,8 @@
   #:use-module (scheme documentation)
   #:use-module (lazycat proxy)
   ;; Proxies
-  #:use-module (lazycat proxies ssh-proxy)
-  #:use-module (lazycat proxies tcp-proxy)
+  #:use-module (lazycat proxy ssh-proxy)
+  #:use-module (lazycat proxy tcp-proxy)
   #:export (<proxy-list>
             set-default-proxy-list!
             proxy-list-get-proxy

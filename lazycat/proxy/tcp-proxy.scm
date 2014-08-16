@@ -25,7 +25,7 @@
 
 ;;; Code:
 
-(define-module (lazycat proxies tcp-proxy)
+(define-module (lazycat proxy tcp-proxy)
   #:use-module (ice-9 regex)
   #:use-module (oop goops)
   #:use-module (ice-9 rdelim)
