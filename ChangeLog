@@ -1,6 +1,7 @@
 2014-08-17  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* ui/: Move to `lazycat/'.
+	* proxies/: Likewise.
 	* lazycat/Makefile.am (SUBDIRS): Update.
 	* configure.ac: Update.
 	* Makefile.am (SUBDIRS): Update.

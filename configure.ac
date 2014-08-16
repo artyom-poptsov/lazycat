@@ -55,7 +55,7 @@ AC_CONFIG_FILES([
         lazycat/daemon/Makefile
         lazycat/trans/Makefile
         lazycat/ui/Makefile
-        proxies/Makefile
+        lazycat/proxies/Makefile
         host/Makefile
 ])
 

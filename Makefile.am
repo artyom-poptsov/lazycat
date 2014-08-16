@@ -19,6 +19,6 @@
 
 dist_doc_DATA = README NEWS COPYING AUTHORS ChangeLog TODO
 
-SUBDIRS = lazycat proxies host
+SUBDIRS = lazycat host
 
 
