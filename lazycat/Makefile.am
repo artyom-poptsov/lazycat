@@ -17,7 +17,7 @@
 ## You should have received a copy of the GNU General Public License
 ## along with LazyCat.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = daemon trans
+SUBDIRS = daemon trans ui proxy
 
 pkgdata_DATA = \
 	message.scm		\

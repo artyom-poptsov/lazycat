@@ -28,7 +28,7 @@
 
 ;;; Code:
 
-(define-module (lazycat proxies ssh-proxy)
+(define-module (lazycat proxy ssh-proxy)
   #:use-module (ice-9 regex)
   #:use-module (ice-9 rdelim)
   #:use-module (lazycat proxy)

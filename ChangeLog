@@ -1,3 +1,18 @@
+2014-08-17  Artyom Poptsov  <poptsov.artyom@gmail.com>
+
+	* lazycat/proxies/: Rename to `lazycat/proxy/'.
+	* lazycat/proxy/ssh-proxy.scm, lazycat/proxy/tcp-proxy.scm: Move
+	to `(proxy ssh-proxy)'.
+	* lazycat/daemon/proxy-list.scm: Update.
+	* lazycat/Makefile.am (SUBDIRS): Update.
+	* configure.ac: Update.
+
+	* ui/: Move to `lazycat/'.
+	* proxies/: Likewise.
+	* lazycat/Makefile.am (SUBDIRS): Update.
+	* configure.ac: Update.
+	* Makefile.am (SUBDIRS): Update.
+
 2014-08-16  Artyom Poptsov  <poptsov.artyom@gmail.com>
 
 	* lazycat/rpc.x: Add to the repository.
